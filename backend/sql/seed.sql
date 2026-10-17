@@ -198,6 +198,17 @@ VALUES
     (69, 'expense', 'Conta de luz', 18330, 5, date('now', '-3 hours', 'start of month', '-11 months', '+14 days'),
          'Enel', 'pix', NULL, NULL, NULL, NULL, NULL);
 
+-- Each transaction was recorded on the day it happened, during the day
+-- (08:00-17:59, varied by id), never later than now. Without this, created_at
+-- would be the seed's own moment, and the adjustment history (which compares
+-- same-day movements by created_at) would treat every seeded movement as
+-- recorded after the adjustments of its day.
+UPDATE transactions
+SET created_at = min(
+    datetime(occurred_on, '+' || (8 + id % 10) || ' hours', '+' || (id * 7 % 60) || ' minutes'),
+    datetime('now', '-3 hours')
+);
+
 -- Friend shares. settled_on is set iff status <> 'em_aberto', never before
 -- occurred_on and never in the future (min() caps it at Brasília today).
 INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_on) VALUES

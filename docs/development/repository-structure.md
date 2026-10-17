@@ -34,19 +34,21 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │   ├── db.py                 # sqlite3 connection, PRAGMA foreign_keys, schema + seed load (ephemeral)
 │   │   ├── schemas.py            # Pydantic request/response models (the API contract)
 │   │   ├── services/             # Business rules and SQL, one module per domain
-│   │   │   ├── __init__.py       # DomainError: business-rule errors mapped to 422 by main.py
-│   │   │   ├── balance.py        # Balance, adjustments and the profile (initial balance)
+│   │   │   ├── __init__.py       # DomainError (mapped to 4xx by main.py) and brasilia_today()
+│   │   │   ├── balance.py        # Balance, adjustments, budget usage and the profile (initial balance)
+│   │   │   ├── friends.py        # Friends list and add (accent/case-insensitive duplicates)
 │   │   │   ├── transactions.py   # Includes strictly 1-to-1 split calculation
 │   │   │   ├── reimbursements.py
 │   │   │   └── categories.py
 │   │   └── routers/              # HTTP only: parse, call service, return schema
 │   │       ├── health.py
 │   │       ├── profile.py
+│   │       ├── friends.py
 │   │       ├── dashboard.py
 │   │       ├── transactions.py
 │   │       ├── reimbursements.py
 │   │       ├── categories.py
-│   │       └── balance.py
+│   │       └── balance.py        # /balance, /balance/adjustments and /budget
 │   ├── sql/
 │   │   ├── schema.sql            # Tables, PK/FK, CHECK and NOT NULL constraints
 │   │   ├── seed.sql              # pt-BR mock data, internally consistent

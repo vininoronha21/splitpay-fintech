@@ -1,3 +1,4 @@
+import time
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -8,15 +9,28 @@ VALIDATION_ERROR = {
 }
 
 
+def counts_for_adjustment(row, until: str) -> bool:
+    """An income or expense counts toward an adjustment made at `until`
+    (YYYY-MM-DD HH:MM:SS) if dated before its day, or dated that day and
+    recorded no later than it."""
+    day = until[:10]
+    return row["occurred_on"] < day or (
+        row["occurred_on"] == day and row["created_at"] <= until
+    )
+
+
 def expected_parts(db, until: str | None = None) -> dict[str, int]:
     """Balance parts summed in Python from raw rows, independent of the service SQL.
 
-    With `until` (YYYY-MM-DD), only movements dated on or before it count, and
-    adjustments are left out (the caller adds the running total).
+    With `until` (an adjustment's created_at), only movements up to that
+    adjustment count (pago shares by date only), and adjustments are left out
+    (the caller adds the running total).
     """
     incomes = expenses = reimbursements = 0
-    for row in db.execute("SELECT type, amount_cents, occurred_on FROM transactions"):
-        if until is not None and row["occurred_on"] > until:
+    for row in db.execute(
+        "SELECT type, amount_cents, occurred_on, created_at FROM transactions"
+    ):
+        if until is not None and not counts_for_adjustment(row, until):
             continue
         if row["type"] == "income":
             incomes += row["amount_cents"]
@@ -25,7 +39,7 @@ def expected_parts(db, until: str | None = None) -> dict[str, int]:
     for row in db.execute("SELECT share_cents, status, settled_on FROM split_share"):
         if row["status"] != "pago":
             continue
-        if until is not None and row["settled_on"] > until:
+        if until is not None and row["settled_on"] > until[:10]:
             continue
         reimbursements += row["share_cents"]
     adjustments = sum(
@@ -152,6 +166,15 @@ def test_create_adjustment_trims_reason(client, db):
     assert stored == "Ajuste do extrato"
 
 
+def test_create_adjustment_trims_invisible_characters_at_the_ends(client):
+    reason = "\u200b\ufeff Ajuste do extrato \u200b\u00a0"
+
+    response = post_adjustment(client, current_balance(client) + 1, reason)
+
+    assert response.status_code == 201
+    assert response.json()["reason"] == "Ajuste do extrato"
+
+
 @pytest.mark.parametrize("reason", ["a" * 10, "b" * 200, "  " + "c" * 200 + "  "])
 def test_create_adjustment_accepts_reason_length_limits(client, reason):
     assert post_adjustment(client, current_balance(client) + 1, reason).status_code == 201
@@ -164,6 +187,10 @@ def test_create_adjustment_accepts_reason_length_limits(client, reason):
         {"new_balance_cents": 1, "reason": "   " + "a" * 9 + "   "},
         {"new_balance_cents": 1, "reason": "a" * 201},
         {"new_balance_cents": 1, "reason": " " * 20},
+        {"new_balance_cents": 1, "reason": "\u200b" * 12},
+        {"new_balance_cents": 1, "reason": "\ufeff\u200c\u200d\u2060\u00a0\u3000" * 3},
+        {"new_balance_cents": 1, "reason": "a" + "\u200b" * 11},
+        {"new_balance_cents": 1, "reason": "\u2028\u2029\t\n" * 5},
         {"new_balance_cents": 1},
         {"new_balance_cents": 1, "reason": 1234567890},
         {"reason": VALID_REASON},
@@ -177,6 +204,10 @@ def test_create_adjustment_accepts_reason_length_limits(client, reason):
         "reason_9_after_trim",
         "reason_201",
         "reason_blank",
+        "reason_zero_width_only",
+        "reason_mixed_invisible_only",
+        "reason_9_invisible_padding",
+        "reason_line_separators_only",
         "reason_missing",
         "reason_number",
         "balance_missing",
@@ -238,7 +269,7 @@ def test_history_balances_match_independent_computation(client, db):
     running = 0
     for row in adjustments:
         running += row["delta_cents"]
-        parts = expected_parts(db, until=row["created_at"][:10])
+        parts = expected_parts(db, until=row["created_at"])
         movements = parts["balance_cents"] - parts["adjustments_cents"]
         expected[row["id"]] = movements + running
 
@@ -279,6 +310,91 @@ def test_history_newest_entry_matches_balance_after_creation(client):
     assert history[0] == second
     assert history[0]["new_balance_cents"] == current_balance(client) == -1000
     assert history[1]["new_balance_cents"] == history[0]["previous_balance_cents"]
+
+
+def post_expense(client, amount_cents, occurred_on=None):
+    body = {"type": "expense", "description": "Padaria", "amount_cents": amount_cents}
+    if occurred_on is not None:
+        body["occurred_on"] = occurred_on
+    response = client.post("/transactions", json=body)
+    assert response.status_code == 201
+    return response.json()
+
+
+def wait_for_next_second(db, timestamp: str) -> None:
+    """created_at has whole seconds, and a movement recorded in the same second
+    as an adjustment counts as before it. Wait until SQLite's Brasília clock
+    has moved past `timestamp`, so the next row is clearly recorded after it."""
+    timestamp = timestamp.replace("T", " ")
+    while db.execute("SELECT datetime('now', '-3 hours')").fetchone()[0] <= timestamp:
+        time.sleep(0.02)
+
+
+def test_same_day_expense_after_adjustment_keeps_typed_balance(client, db):
+    # Business Rule 12: the history shows the balance the user typed, even
+    # after an expense dated today is added later the same day.
+    adjustment = post_adjustment(client, 123456).json()
+    wait_for_next_second(db, adjustment["created_at"])
+
+    post_expense(client, 100)
+
+    entry = client.get("/balance/adjustments").json()[0]
+    assert entry["id"] == adjustment["id"]
+    assert entry["new_balance_cents"] == 123456
+    assert entry == adjustment
+    assert current_balance(client) == 123356
+
+
+def test_same_day_income_after_adjustment_keeps_typed_balance(client, db):
+    adjustment = post_adjustment(client, 123456).json()
+    wait_for_next_second(db, adjustment["created_at"])
+
+    client.post(
+        "/transactions",
+        json={"type": "income", "description": "Pix recebido", "amount_cents": 700},
+    )
+
+    assert client.get("/balance/adjustments").json()[0] == adjustment
+    assert current_balance(client) == 124156
+
+
+def test_back_dated_expense_shifts_adjustment_entry(client):
+    # The history shows the balance as of the adjustment's date, so an expense
+    # dated before it, added afterwards, shifts the entry.
+    adjustment = post_adjustment(client, 123456).json()
+    yesterday = (datetime.fromisoformat(adjustment["created_at"]) - timedelta(days=1)).date()
+
+    post_expense(client, 100, occurred_on=yesterday.isoformat())
+
+    entry = client.get("/balance/adjustments").json()[0]
+    assert entry["id"] == adjustment["id"]
+    assert entry["delta_cents"] == adjustment["delta_cents"]
+    assert entry["previous_balance_cents"] == adjustment["previous_balance_cents"] - 100
+    assert entry["new_balance_cents"] == 123356
+    assert current_balance(client) == 123356
+
+
+def test_history_matches_independent_computation_after_new_transactions(client, db):
+    first = post_adjustment(client, 500000).json()
+    wait_for_next_second(db, first["created_at"])
+    post_expense(client, 2500)
+    post_expense(client, 4000, occurred_on="2026-01-02")
+    post_adjustment(client, 480000)
+
+    adjustments = db.execute(
+        "SELECT id, delta_cents, created_at FROM balance_adjustment ORDER BY created_at, id"
+    ).fetchall()
+    expected = {}
+    running = 0
+    for row in adjustments:
+        running += row["delta_cents"]
+        parts = expected_parts(db, until=row["created_at"])
+        expected[row["id"]] = parts["balance_cents"] - parts["adjustments_cents"] + running
+
+    history = client.get("/balance/adjustments").json()
+
+    assert {entry["id"]: entry["new_balance_cents"] for entry in history} == expected
+    assert history[0]["new_balance_cents"] == current_balance(client) == 480000
 
 
 def test_history_entries_have_contract_fields(client):

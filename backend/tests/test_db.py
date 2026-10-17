@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.db import SQL_DIR, connect
 from app.main import create_app
+from app.services import brasilia_today
 
 # A valid split expense (id 100) and a valid income (id 101) that the
 # constraint cases below build on.
@@ -257,6 +258,23 @@ def test_seed_newest_dates_are_not_after_brasilia_today(db):
     assert newest_settled_on is not None and newest_settled_on <= today
 
 
+def test_seed_transactions_were_recorded_on_their_day_during_the_day(db):
+    # The adjustment history compares same-day movements by created_at, so a
+    # seeded row must look recorded on its own day, not at seed time.
+    assert count(
+        db,
+        "SELECT count(*) FROM transactions"
+        " WHERE date(created_at) IS NOT occurred_on"
+        " OR created_at > datetime('now', '-3 hours')",
+    ) == 0
+    assert count(
+        db,
+        "SELECT count(*) FROM transactions"
+        " WHERE created_at < datetime('now', '-3 hours', 'start of day')"
+        " AND time(created_at) NOT BETWEEN '08:00:00' AND '17:59:59'",
+    ) == 0
+
+
 def test_seed_has_every_status_split_mode_and_incomes(db):
     statuses = {row[0] for row in db.execute("SELECT DISTINCT status FROM split_share")}
     modes = {
@@ -317,6 +335,14 @@ def test_connect_enables_foreign_keys_and_named_columns(database_path):
         conn.close()
 
 
+def test_connect_waits_for_other_writers(database_path):
+    conn = connect(database_path)
+    try:
+        assert conn.execute("PRAGMA busy_timeout").fetchone()[0] == 5000
+    finally:
+        conn.close()
+
+
 def test_app_startup_rebuilds_database_file(database_path):
     Path(database_path).write_bytes(b"not a database")
 
@@ -346,3 +372,9 @@ def test_app_startup_discards_previous_data(database_path):
         assert conn.execute("SELECT count(*) FROM balance_adjustment").fetchone()[0] == 2
     finally:
         conn.close()
+
+
+def test_brasilia_today_matches_sql_brasilia_date(db):
+    sql_today = db.execute("SELECT date('now', '-3 hours')").fetchone()[0]
+
+    assert brasilia_today().isoformat() == sql_today

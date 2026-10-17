@@ -76,3 +76,25 @@ def test_internal_error_has_no_cors_header_for_other_origin(database_path):
 
     assert response.status_code == 500
     assert "access-control-allow-origin" not in response.headers
+
+
+def test_openapi_documents_every_error_with_error_response(client):
+    spec = client.get("/openapi.json").json()
+
+    assert "HTTPValidationError" not in spec["components"]["schemas"]
+    assert set(spec["components"]["schemas"]["ErrorResponse"]["properties"]) == {"error"}
+    for path, operations in spec["paths"].items():
+        for method, operation in operations.items():
+            for status, response in operation["responses"].items():
+                if status.startswith(("4", "5")):
+                    schema = response["content"]["application/json"]["schema"]
+                    assert schema["$ref"].endswith("/ErrorResponse"), (path, method, status)
+
+
+def test_openapi_documents_003_error_codes(client):
+    paths = client.get("/openapi.json").json()["paths"]
+
+    assert "validation_error" in paths["/profile"]["patch"]["responses"]["422"]["description"]
+    post_adjustment = paths["/balance/adjustments"]["post"]["responses"]["422"]
+    assert "validation_error" in post_adjustment["description"]
+    assert "no_change" in post_adjustment["description"]
