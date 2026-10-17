@@ -1,5 +1,7 @@
 -- SplitPay schema (SQLite). Rebuilt on every API start from this file + seed.sql.
 -- Money is INTEGER cents. Dates are ISO 'YYYY-MM-DD' text, timestamps ISO 8601 text.
+-- Dates and timestamps are Brasília time: a fixed UTC-3 offset ('now', '-3 hours'),
+-- exact because Brazil has had no daylight saving time since 2019.
 -- Enums are text values validated by CHECK constraints.
 -- CHECK pitfall: a CHECK that evaluates to NULL passes. So integer columns use
 -- typeof(x) = 'integer' (INTEGER affinity alone still stores 10.5 or 'abc'),
@@ -49,7 +51,7 @@ CREATE TABLE transactions (
     notes              TEXT    CHECK (notes IS NULL OR length(notes) <= 500),
     split_mode         TEXT    CHECK (split_mode IN ('equal', 'percentage', 'fixed')),
     split_percent      INTEGER,
-    created_at         TEXT    NOT NULL DEFAULT (datetime('now'))
+    created_at         TEXT    NOT NULL DEFAULT (datetime('now', '-3 hours'))
                        CHECK (datetime(created_at) IS created_at),
     -- Installment (display only): both null, or 1 <= number <= total.
     -- Explicit IS NOT NULL: a CHECK that evaluates to NULL would pass.
@@ -90,7 +92,7 @@ CREATE TABLE balance_adjustment (
     id          INTEGER PRIMARY KEY,
     delta_cents INTEGER NOT NULL CHECK (typeof(delta_cents) = 'integer' AND delta_cents <> 0),
     reason      TEXT    NOT NULL CHECK (length(reason) BETWEEN 10 AND 200),
-    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now', '-3 hours'))
                 CHECK (datetime(created_at) IS created_at)
 );
 

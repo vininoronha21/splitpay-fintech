@@ -85,7 +85,6 @@ Each rule lists what was chosen, why, and the rejected alternative.
 | 8 | Category rules (US02) | Create and delete only (edit = delete + create). Matching ignores case and accents. User rules win over default ones; on a tie the longest keyword wins. | Covers the criterion with one form and a deterministic match. | Full CRUD: extra screen and endpoint with no demo value. |
 | 9 | Chart periods (US04) | Calendar periods (current week, month, year) with previous/next navigation. | Makes the empty-period state ("Nenhum dado encontrado") demonstrable. | Rolling windows ("last 7 days"): rarely empty with the seed. |
 | 10 | Demo persistence | Keep rebuilding the DB from seed on every start. Before presenting, open `/health` to wake the API and run the demo in one sequence. | Predictable demo with zero infrastructure. Accepted free-tier ephemeral constraint. | Persistent database: outside the free tiers and the scope. |
-
 | 11 | Friends | Seeded list plus "add friend" (name only). No edit or delete. The new-expense form selects exactly one friend. | Tagging a friend is the core of US01, and visitors may want their own names. | Full friend CRUD: no demo value. Checkbox multi-select from the reference screen: breaks 1-to-1. |
 | 12 | Balance adjustment input | The user types the desired new balance and a reason (at least 10 characters). The API computes and stores the signed delta. | Matches the reference screen and keeps one source of truth (rule 3). | Typing the delta: easy to get the sign wrong. |
 | 13 | Monthly budget | Fixed by the seed, shown on the dashboard. | No story asks to edit it. | Budget settings screen. |
@@ -93,13 +92,16 @@ Each rule lists what was chosen, why, and the rejected alternative.
 | 15 | Installments and amounts | A transaction's amount is what was paid now (the installment value); `3/10` is display-only (rule 2). | Budget and charts reflect this month's real money. | Storing the full purchase price and dividing it. |
 | 16 | Charts (US04) | "Spending" is the user's own share (same as the budget). "By person" is the sum of each friend's shares in the period. | Charts and budget tell the same story. | Charting the full amount paid: double-counts what friends will repay. |
 | 17 | Shared demo data | Every visitor reads and writes the same data; restarting the API restores the seed. | The project is a public demonstration. | Per-visitor data: needs real accounts, out of scope. |
+| 18 | Time | Every date and timestamp is Brasília time, a fixed UTC−3 offset (`'now', '-3 hours'` in SQL). `created_at` uses `YYYY-MM-DD HH:MM:SS`; the API never sends it and relies on the column default (only the seed writes it explicitly). | Brazil has had no daylight saving time since 2019, and Render runs in UTC, so evening entries would otherwise land on the next day. | `'localtime'` (server is UTC); a timezone library for a fixed offset. |
+| 19 | Adjustment history ordering | An income or expense dated on an adjustment's day counts toward it only if it was created no later than the adjustment; back-dated entries shift history, which shows the balance as of that date. | A same-day entry made after the adjustment must not change the balance the user typed. | Ordering by date only: the typed value changed after any same-day expense. |
 
 ## Open Questions
 
-Carried from the 002 audit; each is resolved in the named feature's spec:
+Carried from audits; each is resolved in the named feature's spec:
 
-- Timezone: SQLite `'now'` is UTC, so between 21:00 and 24:00 in Brasília "today" rows fall on tomorrow (003, 007).
-- Timestamps: `created_at` accepts only `YYYY-MM-DD HH:MM:SS`; services rely on the column default (003).
 - Week start for chart periods: Monday or Sunday (007).
-- A `fixed` split with a zero friend share is allowed by the schema; the API must reject it (004).
+- Marking a share `pago` later on the same day as an adjustment still shifts that adjustment, because `settled_on` has no time; decide whether to add one (006).
+- Friend names and category keywords: treat blank "letter" characters (Hangul fillers, empty Braille cell) as spaces in `normalize_text` (005).
+- `backend/app/schemas.py` reached 300 lines; split it by domain before adding 005's models (005).
+- A reimbursement's `settled_on` must not be in the future, or the newest adjustment's computed balance stops matching the current balance (006). Transaction dates are already checked (004).
 - Category keywords must be stripped of accents by the service before insert; the schema only enforces lowercase (005).

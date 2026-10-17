@@ -6,11 +6,17 @@ from fastapi import Request
 
 SQL_DIR = Path(__file__).resolve().parent.parent / "sql"
 
+# How long a write waits for another visitor's write to finish before failing.
+# Writes take milliseconds, so 5 s only matters under a burst. Every write
+# starts with BEGIN IMMEDIATE, so this wait applies to it (a lock upgrade after
+# a read would fail at once instead of waiting).
+BUSY_TIMEOUT_SECONDS = 5.0
+
 
 def connect(path: str) -> sqlite3.Connection:
     # check_same_thread=False: FastAPI may open the connection in one worker
     # thread and run the endpoint in another. It is never shared across requests.
-    conn = sqlite3.connect(path, check_same_thread=False)
+    conn = sqlite3.connect(path, timeout=BUSY_TIMEOUT_SECONDS, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn

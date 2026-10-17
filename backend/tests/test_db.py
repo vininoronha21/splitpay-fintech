@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.db import SQL_DIR, connect
 from app.main import create_app
+from app.services import brasilia_today
 
 # A valid split expense (id 100) and a valid income (id 101) that the
 # constraint cases below build on.
@@ -206,16 +207,17 @@ def count(db, sql: str) -> int:
 @pytest.mark.parametrize(
     "period_start",
     [
-        "date('now', 'weekday 0', '-6 days')",  # Monday of the current week
-        "date('now', 'start of month')",
-        "date('now', 'start of year')",
+        "date('now', '-3 hours', 'weekday 0', '-6 days')",  # Monday of the current week
+        "date('now', '-3 hours', 'start of month')",
+        "date('now', '-3 hours', 'start of year')",
     ],
     ids=["week", "month", "year"],
 )
 def test_seed_covers_current_period(db, period_start):
     rows = count(
         db,
-        f"SELECT count(*) FROM transactions WHERE occurred_on BETWEEN {period_start} AND date('now')",
+        f"SELECT count(*) FROM transactions WHERE occurred_on BETWEEN {period_start}"
+        " AND date('now', '-3 hours')",
     )
 
     assert rows > 0
@@ -225,17 +227,51 @@ def test_seed_has_nothing_older_than_12_months_or_in_the_future(db):
     assert count(
         db,
         "SELECT count(*) FROM transactions"
-        " WHERE occurred_on < date('now', '-12 months') OR occurred_on > date('now')",
+        " WHERE occurred_on < date('now', '-3 hours', '-12 months')"
+        " OR occurred_on > date('now', '-3 hours')",
     ) == 0
     assert count(
         db,
         "SELECT count(*) FROM split_share"
-        " WHERE settled_on < date('now', '-12 months') OR settled_on > date('now')",
+        " WHERE settled_on < date('now', '-3 hours', '-12 months')"
+        " OR settled_on > date('now', '-3 hours')",
     ) == 0
     assert count(
         db,
         "SELECT count(*) FROM balance_adjustment"
-        " WHERE created_at < datetime('now', '-12 months') OR created_at > datetime('now')",
+        " WHERE created_at < datetime('now', '-3 hours', '-12 months')"
+        " OR created_at > datetime('now', '-3 hours')",
+    ) == 0
+
+
+def test_seed_newest_dates_are_not_after_brasilia_today(db):
+    # AC7: "today" is Brasília time (UTC-3), so a seed built on UTC 'now'
+    # between 21:00 and 23:59 Brasília would be dated tomorrow.
+    row = db.execute(
+        "SELECT (SELECT max(occurred_on) FROM transactions),"
+        " (SELECT max(settled_on) FROM split_share),"
+        " date('now', '-3 hours')"
+    ).fetchone()
+    newest_occurred_on, newest_settled_on, today = row
+
+    assert newest_occurred_on is not None and newest_occurred_on <= today
+    assert newest_settled_on is not None and newest_settled_on <= today
+
+
+def test_seed_transactions_were_recorded_on_their_day_during_the_day(db):
+    # The adjustment history compares same-day movements by created_at, so a
+    # seeded row must look recorded on its own day, not at seed time.
+    assert count(
+        db,
+        "SELECT count(*) FROM transactions"
+        " WHERE date(created_at) IS NOT occurred_on"
+        " OR created_at > datetime('now', '-3 hours')",
+    ) == 0
+    assert count(
+        db,
+        "SELECT count(*) FROM transactions"
+        " WHERE created_at < datetime('now', '-3 hours', 'start of day')"
+        " AND time(created_at) NOT BETWEEN '08:00:00' AND '17:59:59'",
     ) == 0
 
 
@@ -299,6 +335,14 @@ def test_connect_enables_foreign_keys_and_named_columns(database_path):
         conn.close()
 
 
+def test_connect_waits_for_other_writers(database_path):
+    conn = connect(database_path)
+    try:
+        assert conn.execute("PRAGMA busy_timeout").fetchone()[0] == 5000
+    finally:
+        conn.close()
+
+
 def test_app_startup_rebuilds_database_file(database_path):
     Path(database_path).write_bytes(b"not a database")
 
@@ -328,3 +372,9 @@ def test_app_startup_discards_previous_data(database_path):
         assert conn.execute("SELECT count(*) FROM balance_adjustment").fetchone()[0] == 2
     finally:
         conn.close()
+
+
+def test_brasilia_today_matches_sql_brasilia_date(db):
+    sql_today = db.execute("SELECT date('now', '-3 hours')").fetchone()[0]
+
+    assert brasilia_today().isoformat() == sql_today
