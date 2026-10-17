@@ -1,6 +1,6 @@
 # 003 Balance — Plan
 
-Status: draft
+Status: approved
 
 ## Files to Create/Modify
 

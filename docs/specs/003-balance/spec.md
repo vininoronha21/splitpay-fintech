@@ -1,6 +1,6 @@
 # 003 Balance — Spec
 
-Stories: US05 | Status: draft
+Stories: US05 | Status: approved
 
 ## Problem
 
