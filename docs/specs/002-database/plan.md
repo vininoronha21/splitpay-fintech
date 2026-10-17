@@ -1,6 +1,6 @@
 # 002 Database — Plan
 
-Status: draft
+Status: approved
 
 ## Files to Create/Modify
 

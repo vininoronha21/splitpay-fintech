@@ -1,6 +1,6 @@
 # 002 Database — Spec
 
-Stories: foundation for US05, US01, US02, US03, US04 | Status: draft
+Stories: foundation for US05, US01, US02, US03, US04 | Status: approved
 
 ## Problem
 
