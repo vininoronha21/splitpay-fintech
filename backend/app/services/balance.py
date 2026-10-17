@@ -7,7 +7,7 @@ Business Rule 3: balance = initial + incomes + reimbursements received
 import sqlite3
 from typing import Any
 
-from app.services import DomainError
+from app.services import DomainError, brasilia_today
 
 
 class NoChangeError(DomainError):
@@ -78,6 +78,19 @@ FROM history
 """
 
 
+# Own share = amount, minus the friend's share when split (Business Rule 5).
+# The month is passed in as 'YYYY-MM' from brasilia_today(), the same clock
+# that dates new transactions.
+BUDGET_SQL = """
+SELECT
+    (SELECT monthly_budget_cents FROM user_profile WHERE id = 1) AS budget_cents,
+    (SELECT coalesce(sum(t.amount_cents - coalesce(s.share_cents, 0)), 0)
+     FROM transactions t
+     LEFT JOIN split_share s ON s.transaction_id = t.id
+     WHERE t.type = 'expense' AND strftime('%Y-%m', t.occurred_on) = ?) AS spent_cents
+"""
+
+
 def get_profile(conn: sqlite3.Connection) -> dict[str, Any]:
     return dict(conn.execute(PROFILE_SQL).fetchone())
 
@@ -140,3 +153,23 @@ def create_adjustment(
         conn.rollback()
         raise
     return entry
+
+
+def get_budget(conn: sqlite3.Connection) -> dict[str, Any]:
+    """Budget usage for the current Brasília month. Incomes are left out."""
+    month = brasilia_today().strftime("%Y-%m")
+    budget = dict(conn.execute(BUDGET_SQL, (month,)).fetchone())
+    budget_cents, spent_cents = budget["budget_cents"], budget["spent_cents"]
+    if budget_cents > 0:
+        used_percent = spent_cents * 100 // budget_cents
+    else:
+        # The seed always sets a budget (Business Rule 13); this only avoids
+        # dividing by zero: no budget and any spending means fully used.
+        used_percent = 100 if spent_cents > 0 else 0
+    return {
+        "month": month,
+        "budget_cents": budget_cents,
+        "spent_cents": spent_cents,
+        "remaining_cents": budget_cents - spent_cents,
+        "used_percent": used_percent,
+    }

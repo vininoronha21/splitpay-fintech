@@ -280,3 +280,16 @@ class TransactionSummary(BaseModel):
     occurred_on: date
     friend_name: str | None
     split_status: SplitStatus | None
+
+
+# --- Budget -------------------------------------------------------------------
+
+
+class Budget(BaseModel):
+    """Business Rule 5: only the user's own share counts against the budget."""
+
+    month: str = Field(description="Current Brasília month, YYYY-MM.", examples=["2026-10"])
+    budget_cents: StrictInt
+    spent_cents: StrictInt = Field(description="The user's own share of this month's expenses.")
+    remaining_cents: StrictInt = Field(description="budget - spent; negative when over budget.")
+    used_percent: StrictInt = Field(description="floor(spent * 100 / budget); may pass 100.")
