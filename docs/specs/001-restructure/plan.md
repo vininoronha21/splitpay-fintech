@@ -46,4 +46,4 @@ Not created yet (rule 5, no speculative structure): `backend/app/db.py`, `schema
 
 - Python: docs say 3.12+; the cloud container has 3.13. Pins above support both. Render's Python version is fixed in phase 3.
 - The 500 handler must not leak exception text; the test asserts the body equals the generic message.
-- Early smoke deploy (optional, needs your Render and Vercel accounts): deploying `/health` and the home screen right after this feature surfaces CORS and env issues months before the presentation instead of in phase 3.
+- Early smoke deploy (optional, needs your Render and Vercel accounts): deploying `/health` and the home screen right after this feature surfaces CORS and env issues weeks before the presentation instead of in phase 3.
