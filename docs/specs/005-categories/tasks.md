@@ -4,4 +4,4 @@
 - [x] T2 — Categories list and suggestion | owner: backend-engineer | files: `backend/app/services/categories.py`, `backend/app/routers/categories.py`, `backend/app/schemas/categories.py`, `backend/app/main.py`, `backend/tests/test_categories.py` | verify: `pytest tests/test_categories.py` passes
 - [x] T3 — Rule create, list and delete | owner: backend-engineer | files: same as T2, `backend/tests/test_category_rules.py` | verify: `pytest tests/test_category_rules.py` passes
 - [x] T4 — Docs sync | owner: main session | files: `docs/development/repository-structure.md`, `docs/context.md` | verify: new files listed; 005 questions closed
-- [ ] T5 — Audit | owner: auditor | files: `docs/specs/005-categories/audit.md` | verify: verdict PASS
+- [x] T5 — Audit | owner: auditor | files: `docs/specs/005-categories/audit.md` | verify: verdict PASS
