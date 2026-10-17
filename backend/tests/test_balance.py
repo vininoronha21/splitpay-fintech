@@ -247,6 +247,17 @@ def test_history_balances_match_independent_computation(client, db):
     assert {entry["id"]: entry["new_balance_cents"] for entry in history} == expected
 
 
+def test_history_seed_balances_are_positive(client):
+    # A demo history that dips below zero reads as a bug, so every seeded
+    # adjustment must sit on a positive balance before and after it.
+    history = client.get("/balance/adjustments").json()
+
+    assert len(history) == 2
+    for entry in history:
+        assert entry["previous_balance_cents"] > 0
+        assert entry["new_balance_cents"] > 0
+
+
 def test_history_new_minus_previous_equals_delta(client):
     post_adjustment(client, current_balance(client) + 300)
     post_adjustment(client, current_balance(client) - 4500)
