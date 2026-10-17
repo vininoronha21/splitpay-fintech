@@ -75,7 +75,7 @@ main session: spec ─(user ok)→ plan ─(user ok)→ tasks
 
 Follows the backlog priority in `goal.md`. All splits are strictly 1-to-1:
 
-1. `001-restructure`: repository moves and deletions, backend scaffold, `/health`.
+1. `001-restructure`: repository layout, backend scaffold with `/health`, frontend scaffold that calls it.
 2. `002-database`: `schema.sql`, `seed.sql`, `checks.sql`, DB init.
 3. `003-balance` (US05).
 4. `004-split` (US01 - 1-to-1 only).

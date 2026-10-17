@@ -1,0 +1,8 @@
+# 001 Restructure — Tasks
+
+- [x] T1 — Backend scaffold, config and `/health` | owner: backend-engineer | files: `backend/requirements.txt`, `backend/.env.example`, `backend/app/__init__.py`, `backend/app/config.py`, `backend/app/main.py`, `backend/app/routers/__init__.py`, `backend/app/routers/health.py`, `backend/tests/__init__.py`, `backend/tests/conftest.py`, `backend/tests/test_health.py` | verify: `pytest tests/test_health.py` passes
+- [x] T2 — Error shape and CORS allow-list | owner: backend-engineer | files: `backend/app/main.py`, `backend/tests/test_errors.py`, `backend/tests/test_cors.py` | verify: `pytest` passes
+- [x] T3 — Frontend scaffold (Vite, React, TS strict, Tailwind, router) | owner: frontend-engineer | files: `frontend/package.json`, `frontend/package-lock.json`, `frontend/index.html`, `frontend/vite.config.ts`, `frontend/tsconfig.json`, `frontend/tsconfig.node.json`, `frontend/.env.example`, `frontend/src/main.tsx`, `frontend/src/vite-env.d.ts`, `frontend/src/app/App.tsx`, `frontend/src/app/routes.tsx`, `frontend/src/styles/theme.css` | verify: `npm run build` passes
+- [x] T4 — API service and health screen | owner: frontend-engineer | files: `frontend/src/services/api.ts`, `frontend/src/types/api.ts`, `frontend/src/app/components/HealthStatus.tsx`, `frontend/src/app/routes.tsx` | verify: `npm run build` passes; screen shows "API online" with `uvicorn` running and "API indisponível" without it
+- [x] T5 — Docs sync | owner: main session | files: `docs/development/repository-structure.md`, `README.md` | verify: README commands run as written
+- [x] T6 — Audit | owner: auditor | files: `docs/specs/001-restructure/audit.md` | verify: verdict PASS

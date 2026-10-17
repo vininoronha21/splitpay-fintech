@@ -1,6 +1,6 @@
 # CLAUDE.md — SplitPay
 
-Shared-expense fintech MVP for a FIAP presentation. Simple, explainable, not over-engineered, with a strict 1-month deadline.
+Shared-expense fintech MVP for a FIAP presentation. Simple, explainable, not over-engineered, with a target of about one month.
 
 ## Mandatory Reading (before any task)
 
@@ -44,11 +44,11 @@ The main session orchestrates: it dispatches one implementer per task, then the 
 | Web dev server | `npm run dev` | `frontend/` |
 | Web build & TS check | `npm run build` | `frontend/` |
 
-Commands become valid once the directories exist (phase 1 creates `backend/`, the restructure task creates `frontend/`).
+Commands become valid once `001-restructure` creates `backend/` and `frontend/`.
 
 ## Git
 
-- Agents work on `feature/mvp-plan` in the worktree `.worktrees/mvp-plan/`. Never commit on `dev` or `main` directly (see `git-workflow.md`).
+- Every complete change is a conventional commit on `feature/mvp-plan` (worktree `.worktrees/mvp-plan/` locally). Each mini sprint (feature) merges into `dev`; each sprint merges into `main` as `commit vX.X`. Never commit on `dev` or `main` directly (see `git-workflow.md`).
 - Conventional commits with a scope: `feat(api): ...`, `feat(web): ...`, `feat(db): ...`, `docs: ...`, `chore: ...`, `test(api): ...`.
 - One logical change per commit. Review `git status` and `git diff --staged` before committing.
 - Never commit `.env`, `*.db` or `node_modules/`.
