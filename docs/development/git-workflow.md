@@ -7,11 +7,25 @@ feature/mvp-plan ──(feature passes audit)──▶ dev ──(tests & TS bui
  agents commit here      merge --no-ff          test/integration               merge --no-ff, "commit vX.X"
 ```
 
+## Cadence
+
+- **Every complete change** (one task, one doc update) is one conventional commit on `feature/mvp-plan`.
+- **Mini sprint** = one numbered feature (`docs/specs/NNN-<feature>/`). When its audit is **PASS**, it is merged into `dev` as `merge: NNN-<feature>`.
+- **Sprint** = a group of mini sprints that forms a demonstrable increment. When it is complete and green on `dev`, `dev` is merged into `main` as `commit vX.X`.
+
+| Sprint | Mini sprints | Release on `main` |
+| --- | --- | --- |
+| 1. Foundation | `001-restructure`, `002-database` | `commit v2.1` |
+| 2. Money core | `003-balance` (US05), `004-split` (US01) | `commit v2.2` |
+| 3. Organization and insight | `005-categories` (US02), `006-reimbursements` (US03), `007-dashboard` (US04) | `commit v3.0` (phase 1 done) |
+
+Phase 2 and phase 3 sprints are added here when their specs exist.
+
 ## Branches
 
 | Branch | Role | Commits |
 | --- | --- | --- |
-| `feature/mvp-plan` | Where the agents work, one task per commit. Checked out as a worktree at `.worktrees/mvp-plan/` (git-ignored). | Conventional commits (see `CLAUDE.md`). |
+| `feature/mvp-plan` | Where the agents work, one task per commit. Locally it is checked out as a worktree at `.worktrees/mvp-plan/` (git-ignored); cloud sessions check it out directly. | Conventional commits (see `CLAUDE.md`). |
 | `dev` | Test and integration. Receives `feature/mvp-plan` when a feature's audit is **PASS**. `pytest` and `npm run build` (which includes TS type checking) must pass here. | Merge commits from `feature/mvp-plan`, conventional style (e.g. `merge: 001-restructure`). |
 | `main` | Stable, presentable state. Receives only merges from `dev`. | One merge commit per release, named `commit vX.X`. |
 
@@ -23,7 +37,7 @@ feature/mvp-plan ──(feature passes audit)──▶ dev ──(tests & TS bui
 4. `dev` → `main` only after backend tests (`pytest`) and frontend builds (`npm run build` to enforce TS types) pass on `dev`.
 5. Versions: the last name used was `commit v2.0`, for the archived Java work. The next release on `main` is `commit v2.1`. Each later release bumps the minor number; finishing a phase bumps the major number.
 6. Before starting a new feature, `feature/mvp-plan` merges `dev` back in if `dev` received anything else.
-7. Pushes to `origin` are run by the user.
+7. Cloud sessions push `feature/mvp-plan` after each commit and `dev`/`main` right after each merge, because their containers are ephemeral and unpushed work is lost. Local sessions leave pushes to the user.
 
 ## Commands
 
