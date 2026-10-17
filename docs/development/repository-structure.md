@@ -10,7 +10,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 ├── README.md                     # Human entry point: what it is, how to run, live URLs
 ├── .gitignore
 ├── .claude/
-│   └── agents/                   # One file per agent role (see CLAUDE.md)
+│   └── agents/                   # One file per agent role, with name/description frontmatter (see CLAUDE.md)
 ├── docs/
 │   ├── goal.md                   # Purpose, user stories (1-to-1 splits), success criteria, out-of-scope items
 │   ├── context.md                # Current state, stack (TS, GSAP, SQLite ephemeral), decisions
@@ -19,7 +19,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │   ├── sdd-guide.md          # Workflow to prevent scope creep
 │   │   └── git-workflow.md       # Branch flow: feature/mvp-plan → dev → main
 │   ├── specs/
-│   │   ├── TEMPLATE/             # Standard templates for SDD (plan.md, tasks.md, audit.md)
+│   │   ├── TEMPLATE/             # Standard templates for SDD (spec.md, plan.md, tasks.md, audit.md)
 │   │   └── NNN-<feature>/        # One folder per feature, numbered in order
 │   │       ├── spec.md           # What and why (approved by the user)
 │   │       ├── plan.md           # How: files, decisions, risks
