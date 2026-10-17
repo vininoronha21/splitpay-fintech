@@ -55,7 +55,7 @@ WHERE t.type = 'income' AND (t.split_mode IS NOT NULL OR s.id IS NOT NULL);
 -- check: dates_parse
 SELECT 'transactions' AS tbl, id, occurred_on AS value
 FROM transactions
-WHERE date(occurred_on) IS NOT occurred_on OR datetime(created_at) IS NULL
+WHERE date(occurred_on) IS NOT occurred_on OR datetime(created_at) IS NOT created_at
 UNION ALL
 SELECT 'split_share', id, settled_on
 FROM split_share
@@ -63,7 +63,24 @@ WHERE settled_on IS NOT NULL AND date(settled_on) IS NOT settled_on
 UNION ALL
 SELECT 'balance_adjustment', id, created_at
 FROM balance_adjustment
-WHERE datetime(created_at) IS NULL;
+WHERE datetime(created_at) IS NOT created_at;
+
+-- check: money_is_integer_cents
+SELECT 'user_profile' AS tbl, id, initial_balance_cents AS value
+FROM user_profile
+WHERE typeof(initial_balance_cents) <> 'integer' OR typeof(monthly_budget_cents) <> 'integer'
+UNION ALL
+SELECT 'transactions', id, amount_cents
+FROM transactions
+WHERE typeof(amount_cents) <> 'integer'
+UNION ALL
+SELECT 'split_share', id, share_cents
+FROM split_share
+WHERE typeof(share_cents) <> 'integer'
+UNION ALL
+SELECT 'balance_adjustment', id, delta_cents
+FROM balance_adjustment
+WHERE typeof(delta_cents) <> 'integer';
 
 -- check: profile_row_exists
 SELECT 'user_profile row id = 1 is missing' AS problem

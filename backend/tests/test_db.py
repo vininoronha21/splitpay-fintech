@@ -77,6 +77,70 @@ CONSTRAINT_CASES = {
     "fk_rule_category": (
         "INSERT INTO category_rule (keyword, category_id) VALUES ('teste', 999)"
     ),
+    # Type and format: INTEGER affinity and date() alone let these through.
+    "occurred_on_text": insert_tx("", "").replace("date('now')", "'abc'"),
+    "occurred_on_with_time": insert_tx("", "").replace("date('now')", "datetime('now')"),
+    "created_at_text": insert_tx(", created_at", ", 'abc'"),
+    "created_at_julian_number": insert_tx(", created_at", ", 2461000.5"),
+    "settled_on_text": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_on)"
+        " VALUES (100, 1, 100, 'pago', 'abc')"
+    ),
+    "adjustment_created_at_text": (
+        "INSERT INTO balance_adjustment (delta_cents, reason, created_at)"
+        " VALUES (100, 'Motivo válido aqui', 'abc')"
+    ),
+    "amount_real": insert_tx("", "").replace("1000", "10.5"),
+    "amount_text": insert_tx("", "").replace("1000", "'abc'"),
+    "share_real": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 5.5)"
+    ),
+    "share_text": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 'abc')"
+    ),
+    "adjustment_delta_real": (
+        "INSERT INTO balance_adjustment (delta_cents, reason) VALUES (0.5, 'Motivo válido aqui')"
+    ),
+    "adjustment_delta_text": (
+        "INSERT INTO balance_adjustment (delta_cents, reason) VALUES ('abc', 'Motivo válido aqui')"
+    ),
+    "initial_balance_real": "UPDATE user_profile SET initial_balance_cents = 100.5",
+    "monthly_budget_text": "UPDATE user_profile SET monthly_budget_cents = 'abc'",
+    "installment_number_real": insert_tx(
+        ", installment_number, installment_total", ", 1.5, 3"
+    ),
+    "installment_total_text": insert_tx(
+        ", installment_number, installment_total", ", 1, 'abc'"
+    ),
+    "percent_real": insert_tx(", split_mode, split_percent", ", 'percentage', 33.3"),
+    "is_default_text": (
+        "INSERT INTO category_rule (keyword, category_id, is_default) VALUES ('teste', 1, 'abc')"
+    ),
+    # UPDATE paths: editing either side must not break the existing share.
+    "update_amount_below_share": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 500);"
+        "UPDATE transactions SET amount_cents = 499 WHERE id = 100"
+    ),
+    "update_clear_split_mode": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 500);"
+        "UPDATE transactions SET split_mode = NULL WHERE id = 100"
+    ),
+    "update_split_expense_to_income": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 500);"
+        "UPDATE transactions SET type = 'income', split_mode = NULL WHERE id = 100"
+    ),
+    "update_share_above_amount": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 500);"
+        "UPDATE split_share SET share_cents = 1001 WHERE transaction_id = 100"
+    ),
+    "update_share_to_income": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 500);"
+        "UPDATE split_share SET transaction_id = 101 WHERE transaction_id = 100"
+    ),
+    "update_share_real": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 500);"
+        "UPDATE split_share SET share_cents = 500.5 WHERE transaction_id = 100"
+    ),
 }
 
 
@@ -94,6 +158,27 @@ def test_fixture_rows_are_valid(db):
     db.execute(
         "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 1000)"
     )
+
+
+def test_valid_edits_and_integer_like_values_are_accepted(db):
+    # Guards the type and UPDATE cases: valid edits pass, and values that
+    # INTEGER affinity converts losslessly ('1000', 10.0) are stored as integers.
+    db.executescript(FIXTURE_ROWS)
+    db.execute(
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 500)"
+    )
+    db.execute("UPDATE transactions SET amount_cents = 500, split_mode = 'equal' WHERE id = 100")
+    db.execute("UPDATE split_share SET share_cents = 250 WHERE transaction_id = 100")
+    db.execute(
+        "INSERT INTO transactions (type, description, amount_cents, occurred_on, created_at)"
+        " VALUES ('expense', 'Teste', '1000', date('now'), datetime('now'))"
+    )
+    db.execute(
+        "INSERT INTO balance_adjustment (delta_cents, reason) VALUES (10.0, 'Motivo válido aqui')"
+    )
+
+    for check_name, sql in CHECKS:
+        assert db.execute(sql).fetchall() == [], check_name
 
 
 def load_checks() -> list[tuple[str, str]]:
