@@ -102,3 +102,13 @@ None.
 **PASS**
 
 All seven acceptance criteria, the Data Rules and the Out of Scope list hold under real requests. The evidence is 565 passing tests, about 160 adversarial TestClient checks, raw HTTP probes, and concurrency bursts with exactly one winner and no 5xx. T1 is a true refactor: the 461 original tests pass unmodified, and every pre-existing OpenAPI path and schema is byte-identical. The only behavior change is the intended one (blank letters as spaces), which closes 004 n2. SQL is parameterized, layers are clean, and `checks.sql` returns zero rows. Expanding normalizations (`ß`, ligatures, `ﷺ`) never reach the DB `CHECK`. m1 (a missing concurrency regression test) and m2 (one sentence of spec) do not block. Both should be fixed before 005 merges into `dev`.
+
+## Follow-up (minors m1, m2)
+
+- **m1: Closed** (`848c423`). `parallel_requests` moved to `tests/conftest.py`, with a new `send_in_parallel` for a client that already holds data. `test_transactions.py` imports it and its tests are unchanged. `repository-structure.md` updates the `conftest.py` line. New tests: `test_parallel_creates_same_keyword_one_wins` (20 parallel creates of `pizza`, `sorveteria` and `uber eats`, with exactly one `201`, nineteen `409` and no 5xx) and `test_parallel_deletes_same_rule_one_wins` (exactly one `204`, nineteen `404`).
+  - Mutation check: with `create_rule` (`services/categories.py:108`) changed to plain `BEGIN`, `test_parallel_creates_same_keyword_one_wins` failed in 3 of 3 runs with a burst of `500`s. With the line restored, it passes. `git diff -- backend/app` is empty afterwards.
+  - The implementer says `BEGIN IMMEDIATE` in `delete_rule` cannot be tested. **Accepted.** With `delete_rule` (`:139`) changed to plain `BEGIN`, the delete test passed in 5 of 5 runs. The first statement is the `DELETE`, which takes the RESERVED lock even when it matches no rows. So there is no read-then-upgrade window, and contention waits on `busy_timeout` (`db.py:19`) instead of failing. The follow-up `SELECT` runs after the lock is already held. Here `IMMEDIATE` is defensive consistency, not a fix for a bug, so no test can pin it. The delete test still guards the one-winner outcome.
+- **m2: Closed** (`f951b46`). AC5 now lists "a keyword longer than 80 characters as typed" as a `422 validation_error`. This matches `VisibleText(max_length=80)`.
+- **Suite:** `.venv/bin/pytest -q` gives 567 passed (565 before, plus the 2 new tests).
+
+**Final verdict: PASS.** No open findings block 005. n1 to n3 stay informational.
