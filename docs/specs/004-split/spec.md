@@ -1,6 +1,6 @@
 # 004 Split — Spec
 
-Stories: US01 (plus the transaction base used by US03 and US04) | Status: draft
+Stories: US01 (plus the transaction base used by US03 and US04) | Status: approved
 
 ## Problem
 
