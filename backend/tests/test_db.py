@@ -258,6 +258,23 @@ def test_seed_newest_dates_are_not_after_brasilia_today(db):
     assert newest_settled_on is not None and newest_settled_on <= today
 
 
+def test_seed_transactions_were_recorded_on_their_day_during_the_day(db):
+    # The adjustment history compares same-day movements by created_at, so a
+    # seeded row must look recorded on its own day, not at seed time.
+    assert count(
+        db,
+        "SELECT count(*) FROM transactions"
+        " WHERE date(created_at) IS NOT occurred_on"
+        " OR created_at > datetime('now', '-3 hours')",
+    ) == 0
+    assert count(
+        db,
+        "SELECT count(*) FROM transactions"
+        " WHERE created_at < datetime('now', '-3 hours', 'start of day')"
+        " AND time(created_at) NOT BETWEEN '08:00:00' AND '17:59:59'",
+    ) == 0
+
+
 def test_seed_has_every_status_split_mode_and_incomes(db):
     statuses = {row[0] for row in db.execute("SELECT DISTINCT status FROM split_share")}
     modes = {

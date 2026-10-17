@@ -37,10 +37,22 @@ FROM user_profile p
 WHERE p.id = 1
 """
 
-# An adjustment's new balance = initial + movements dated on or before the
-# adjustment's date + every adjustment up to and including it. The running
-# total uses a window ordered by (created_at, id), which is unique, so each row
-# sums exactly the rows before it plus itself.
+# An adjustment's new balance = initial + movements up to the adjustment +
+# every adjustment up to and including it. The running total uses a window
+# ordered by (created_at, id), which is unique, so each row sums exactly the
+# rows before it plus itself.
+#
+# "Up to the adjustment" for an income or expense: dated before the
+# adjustment's day, or dated that same day and recorded (created_at) no later
+# than the adjustment. So an expense added later the same day does not change
+# the balance the user typed; a back-dated one still does, because the history
+# shows the balance as of that date. A 'pago' share has only a date
+# (settled_on), so it counts when settled on or before the adjustment's day.
+COUNTS_FOR_ADJUSTMENT = """
+    (t.occurred_on < date(r.created_at)
+     OR (t.occurred_on = date(r.created_at) AND t.created_at <= r.created_at))
+"""
+
 HISTORY_SQL = """
 WITH running AS (
     SELECT
@@ -58,12 +70,12 @@ history AS (
         r.delta_cents,
         r.reason,
         (SELECT initial_balance_cents FROM user_profile WHERE id = 1)
-        + (SELECT coalesce(sum(amount_cents), 0) FROM transactions
-           WHERE type = 'income' AND occurred_on <= date(r.created_at))
+        + (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
+           WHERE t.type = 'income' AND """ + COUNTS_FOR_ADJUSTMENT + """)
         + (SELECT coalesce(sum(share_cents), 0) FROM split_share
            WHERE status = 'pago' AND settled_on <= date(r.created_at))
-        - (SELECT coalesce(sum(amount_cents), 0) FROM transactions
-           WHERE type = 'expense' AND occurred_on <= date(r.created_at))
+        - (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
+           WHERE t.type = 'expense' AND """ + COUNTS_FOR_ADJUSTMENT + """)
         + r.adjustments_to_date AS new_balance_cents
     FROM running r
 )
