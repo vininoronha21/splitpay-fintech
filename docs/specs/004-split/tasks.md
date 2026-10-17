@@ -6,4 +6,4 @@
 - [x] T4 — Transaction endpoints with 1-to-1 split | owner: backend-engineer | files: `backend/app/services/transactions.py`, `backend/app/routers/transactions.py`, `backend/app/schemas.py`, `backend/app/main.py`, `backend/tests/test_transactions.py` | verify: `pytest tests/test_transactions.py` passes
 - [x] T5 — Budget usage | owner: backend-engineer | files: `backend/app/services/balance.py`, `backend/app/routers/balance.py`, `backend/app/schemas.py`, `backend/tests/test_budget.py` | verify: `pytest tests/test_budget.py` passes
 - [x] T6 — Docs sync | owner: main session | files: `docs/development/repository-structure.md`, `docs/context.md` | verify: new files listed; carried questions closed
-- [ ] T7 — Audit | owner: auditor | files: `docs/specs/004-split/audit.md` | verify: verdict PASS
+- [x] T7 — Audit | owner: auditor | files: `docs/specs/004-split/audit.md` | verify: verdict PASS

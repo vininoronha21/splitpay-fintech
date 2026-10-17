@@ -66,4 +66,4 @@ This feature also closes the minors carried from the 002 and 003 audits that bel
 | One `POST /transactions` for expenses and incomes, with an optional `split` object | One form with a type toggle (Business Rule 14); a `split` object makes "exactly one friend" visible in the contract. | Separate `/expenses` and `/incomes` endpoints. |
 | Friends get their own router and service (`friends.py`) | A friend is its own resource used by splits, reimbursements and charts. | Hiding friend endpoints inside `transactions.py`. |
 | `GET /budget` lives with the balance service | Budget usage is a money summary like the balance. | A separate budget module for one query. |
-| Reject future dates | Keeps the 003 history rule true (newest adjustment equals the current balance) and matches a real statement. | Allowing scheduled expenses. |
+| Reject future dates | Keeps the 003 history rule true (each adjustment shows the balance at the moment it was created) and matches a real statement. | Allowing scheduled expenses. |
