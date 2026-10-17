@@ -1,29 +1,10 @@
 """Friends the user can split an expense with (Business Rule 11: list and add only)."""
 
 import sqlite3
-import unicodedata
 from typing import Any
 
 from app.services import DomainError
-
-
-def normalize_text(text: str) -> str:
-    """Lowercase without accents or invisible characters, so "Âna  Lima",
-    "A\u200bna Lima" and "ana lima" compare equal.
-
-    NFKD splits "Â" into "A" + a combining accent; dropping the combining marks
-    leaves the base letters. Format characters (category Cf, such as the
-    zero-width space) render as nothing, so they are dropped too, and split()
-    + join collapses every run of whitespace into one space. casefold() is
-    lower() that also handles "ß".
-    """
-    decomposed = unicodedata.normalize("NFKD", text)
-    visible = "".join(
-        char
-        for char in decomposed
-        if not unicodedata.combining(char) and unicodedata.category(char) != "Cf"
-    )
-    return " ".join(visible.split()).casefold()
+from app.text import normalize_text
 
 
 def list_friends(conn: sqlite3.Connection) -> list[dict[str, Any]]:

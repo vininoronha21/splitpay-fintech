@@ -4,13 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path
 
 from app.db import get_db
-from app.schemas import (
-    MAX_ID,
-    TransactionCreate,
-    TransactionDetail,
-    TransactionSummary,
-    error_responses,
-)
+from app.schemas.common import MAX_ID, error_responses
+from app.schemas.transactions import TransactionCreate, TransactionDetail, TransactionSummary
 from app.services import transactions as transactions_service
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])

@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.friends import normalize_text
+from app.text import normalize_text
 
 SEED_FRIENDS = [
     "Ana Lima",
