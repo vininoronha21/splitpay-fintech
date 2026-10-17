@@ -1,6 +1,6 @@
 # 001 Restructure — Spec
 
-Stories: none (foundation for all) | Status: draft
+Stories: none (foundation for all) | Status: approved
 
 ## Problem
 
