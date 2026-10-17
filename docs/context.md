@@ -93,11 +93,15 @@ Each rule lists what was chosen, why, and the rejected alternative.
 | 16 | Charts (US04) | "Spending" is the user's own share (same as the budget). "By person" is the sum of each friend's shares in the period. | Charts and budget tell the same story. | Charting the full amount paid: double-counts what friends will repay. |
 | 17 | Shared demo data | Every visitor reads and writes the same data; restarting the API restores the seed. | The project is a public demonstration. | Per-visitor data: needs real accounts, out of scope. |
 | 18 | Time | Every date and timestamp is Brasília time, a fixed UTC−3 offset (`'now', '-3 hours'` in SQL). `created_at` uses `YYYY-MM-DD HH:MM:SS`; the API never sends it and relies on the column default (only the seed writes it explicitly). | Brazil has had no daylight saving time since 2019, and Render runs in UTC, so evening entries would otherwise land on the next day. | `'localtime'` (server is UTC); a timezone library for a fixed offset. |
+| 19 | Adjustment history ordering | An income or expense dated on an adjustment's day counts toward it only if it was created no later than the adjustment; back-dated entries shift history, which shows the balance as of that date. | A same-day entry made after the adjustment must not change the balance the user typed. | Ordering by date only: the typed value changed after any same-day expense. |
 
 ## Open Questions
 
 Carried from audits; each is resolved in the named feature's spec:
 
 - Week start for chart periods: Monday or Sunday (007).
+- Marking a share `pago` later on the same day as an adjustment still shifts that adjustment, because `settled_on` has no time; decide whether to add one (006).
+- Friend names and category keywords: treat blank "letter" characters (Hangul fillers, empty Braille cell) as spaces in `normalize_text` (005).
+- `backend/app/schemas.py` reached 300 lines; split it by domain before adding 005's models (005).
 - A reimbursement's `settled_on` must not be in the future, or the newest adjustment's computed balance stops matching the current balance (006). Transaction dates are already checked (004).
 - Category keywords must be stripped of accents by the service before insert; the schema only enforces lowercase (005).

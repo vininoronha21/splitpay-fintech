@@ -672,8 +672,8 @@ def test_income_moves_balance_up(client):
 
 
 def test_back_dated_expense_keeps_history_consistent(client):
-    # Business Rule 3: the newest adjustment still equals the current balance
-    # after a past-dated expense, because dates are never in the future.
+    # Business Rule 3: each adjustment shows the balance at the moment it was
+    # created; a past-dated expense shifts it, and dates are never in the future.
     client.post(
         "/transactions",
         json=expense(occurred_on=(brasilia_today() - timedelta(days=1)).isoformat()),
