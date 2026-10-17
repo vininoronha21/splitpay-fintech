@@ -9,10 +9,9 @@ Read with `goal.md`. This file records the current state, the stack, the decisio
 
 ## Current State of the Repository
 
-- `frontend/`: React 18 + Vite 6 + Tailwind 4 + React Router 7 + TypeScript + Recharts.
-- Screens in `frontend/src/app/components/`: `Dashboard`, `NewExpense`, `Reimbursements` (statement), `FinancialSettings`, `LandingPage` (with GSAP), and `Layout`. All data is currently mocked.
-- `backend/`: FastAPI scaffold with `GET /health`, a CORS allow-list from `FRONTEND_ORIGIN`, one JSON error shape (`{"error": {"code", "message"}}`), and pytest tests. No database yet.
-- Reference material (`tela_*.png`, `USER-STORIES.pdf`, Figma UI/UX ideas) is in `docs/assets/`. The visual identity is a dark theme with a yellow accent.
+- Documentation only. The previous `frontend/` and `backend/` were deleted on purpose; both are rebuilt from scratch, starting with `001-restructure`.
+- Agents are in `.claude/agents/`; reference material (`tela_*.png`, `USER-STORIES.pdf`) is in `docs/assets/`. The visual identity is a dark theme with a yellow accent.
+- The reference screens are **visual inspiration only**. They show group splits, an "Em Atraso" status and "Lembrar" buttons, all of which are out of scope (see Business Rules 1 and 6).
 - No linting and no CI.
 
 ## Architecture
@@ -40,7 +39,7 @@ Browser ── Vercel (React + Vite + TypeScript SPA)
 | Tests | Pytest + FastAPI `TestClient`, fresh DB per test | Acceptance criteria become executable. |
 | Frontend | React/Vite with **TypeScript**, service layer `src/services/api.ts` | TS catches API contract errors early. One place handles API calls. |
 | **Mobile Strategy** | **Mobile-first Web (Tailwind) + PWA** | **Avoids the overhead of Swift/React Native for a 1-month MVP. Provides a native-like banking app experience on mobile via browser installation.** |
-| Fake login | Display name only, stored in `localStorage` | Personalization without the scope of real auth. |
+| Fake login | Display name only, stored in `localStorage`; every visitor sees the same shared demo data | Personalization without the scope of real auth. The app is a public demo, not a per-user product. |
 | Animation | GSAP on Landing Page and Phase 2 UI | Polished, dynamic, and interactive feel for the academic presentation. |
 | Deploy | Vercel (web), Render Web Service (API, `/health` healthcheck) | Free tiers with git-based deploys. |
 | Config | `VITE_API_URL` (web), `FRONTEND_ORIGIN` (API CORS allow-list) | No secrets exist in this MVP. CORS is restricted to the known origin. |
@@ -79,14 +78,28 @@ Each rule lists what was chosen, why, and the rejected alternative.
 | 1 | Reimbursement status | `em_aberto` (UI label "Aguardando Reembolso"), `pago`, `acertado`. `pago` enters the balance as an inflow; `acertado` closes the debt without changing the balance. | Matches the user stories, and the two closed states differ in a concrete way. | *pendente / atrasado / pago*: "atrasado" needs due dates. |
 | 2 | Installment (US03) | Display-only `installment_number` / `installment_total` (e.g. "3/10"), with 1 ≤ number ≤ total. | The criterion only asks the detail view to show it. | Generating future transactions: cascading dates and edits. |
 | 3 | Balance formula | `balance = initial + inflows − outflows + Σ adjustment deltas`. Adjustments store a signed delta and a required short reason. | One source of truth; the history still shows previous/new balance by computing it. | Storing the new balance: two values that can diverge. |
-| 4 | Initial balance | Set once at first access (with the fake login). Later changes go through a manual adjustment. Rejects non-numeric and negative values; zero is allowed. | Keeps every change traceable, which is the point of US05. | Free editing: rewrites history without a trace. |
+| 4 | Initial balance | The seed ships a ready profile, so the demo opens with data. The fake-login screen asks for a name and shows the initial balance prefilled; the visitor may change it there (validated: rejects non-numeric and negative values, zero allowed). After that, changes go only through manual adjustments. | Demonstrates the US05 validation without an empty first screen. | Empty onboarding: the demo would open with no data. Free editing in settings: rewrites history without a trace. |
 | 5 | Balance vs. budget | The full amount the user paid leaves the balance; a share marked `pago` enters it; only the user's own share counts against the monthly budget. | Balance mirrors real money; budget mirrors real consumption. | Counting only the user's share in the balance: hides money actually spent. |
-| 6 | Split participants | 1-to-1 only. The user always pays and splits with exactly ONE friend. Remainder cents go to the user. | Greatly simplifies the MVP backend logic for a 1-month deadline. | Multi-person groups: deferred to future roadmap. |
-| 7 | Percentage split | Whole-number percentages (0–100) that sum to exactly 100. | No extra rounding rule to explain. | Decimal percentages (33.33%). |
+| 6 | Split participants | 1-to-1 only. The user always pays and splits with exactly ONE friend. Remainder cents go to the user. The MVP therefore shows only what friends owe the user ("a receber"), never what the user owes. `split_share` keeps one row per person, so group splits later relax a constraint instead of changing the model. | Greatly simplifies the MVP backend logic. | Multi-person groups: planned right after the MVP (backend, infra and design done). |
+| 7 | Split input | Equal: friend share = floor(total / 2), user keeps the remainder. Percentage: the user types the **friend's** whole-number percentage (0–100); friend share = floor(total × pct / 100). Fixed: the user types the **friend's** amount in cents (0 < amount ≤ total). The user's share is always total − friend share. | One input in every mode, and shares sum to the total by construction. | Typing both shares and validating the sum: two inputs that can disagree. Decimal percentages (33.33%). |
 | 8 | Category rules (US02) | Create and delete only (edit = delete + create). Matching ignores case and accents. User rules win over default ones; on a tie the longest keyword wins. | Covers the criterion with one form and a deterministic match. | Full CRUD: extra screen and endpoint with no demo value. |
 | 9 | Chart periods (US04) | Calendar periods (current week, month, year) with previous/next navigation. | Makes the empty-period state ("Nenhum dado encontrado") demonstrable. | Rolling windows ("last 7 days"): rarely empty with the seed. |
 | 10 | Demo persistence | Keep rebuilding the DB from seed on every start. Before presenting, open `/health` to wake the API and run the demo in one sequence. | Predictable demo with zero infrastructure. Accepted free-tier ephemeral constraint. | Persistent database: outside the free tiers and the scope. |
 
+| 11 | Friends | Seeded list plus "add friend" (name only). No edit or delete. The new-expense form selects exactly one friend. | Tagging a friend is the core of US01, and visitors may want their own names. | Full friend CRUD: no demo value. Checkbox multi-select from the reference screen: breaks 1-to-1. |
+| 12 | Balance adjustment input | The user types the desired new balance and a reason (at least 10 characters). The API computes and stores the signed delta. | Matches the reference screen and keeps one source of truth (rule 3). | Typing the delta: easy to get the sign wrong. |
+| 13 | Monthly budget | Fixed by the seed, shown on the dashboard. | No story asks to edit it. | Budget settings screen. |
+| 14 | Income | A transaction can be an expense or an income (no split for income). Inflows = incomes + reimbursements marked `pago`. | US05 needs inflows to exist; one form with a type toggle covers it. | A separate income module. |
+| 15 | Installments and amounts | A transaction's amount is what was paid now (the installment value); `3/10` is display-only (rule 2). | Budget and charts reflect this month's real money. | Storing the full purchase price and dividing it. |
+| 16 | Charts (US04) | "Spending" is the user's own share (same as the budget). "By person" is the sum of each friend's shares in the period. | Charts and budget tell the same story. | Charting the full amount paid: double-counts what friends will repay. |
+| 17 | Shared demo data | Every visitor reads and writes the same data; restarting the API restores the seed. | The project is a public demonstration. | Per-visitor data: needs real accounts, out of scope. |
+
 ## Open Questions
 
-None. New questions are added here and resolved in the feature's spec.
+Carried from the 002 audit; each is resolved in the named feature's spec:
+
+- Timezone: SQLite `'now'` is UTC, so between 21:00 and 24:00 in Brasília "today" rows fall on tomorrow (003, 007).
+- Timestamps: `created_at` accepts only `YYYY-MM-DD HH:MM:SS`; services rely on the column default (003).
+- Week start for chart periods: Monday or Sunday (007).
+- A `fixed` split with a zero friend share is allowed by the schema; the API must reject it (004).
+- Category keywords must be stripped of accents by the service before insert; the schema only enforces lowercase (005).

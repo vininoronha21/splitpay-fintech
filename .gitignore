@@ -1,0 +1,27 @@
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Agent worktrees
+.worktrees/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# SQLite (rebuilt from schema.sql + seed.sql on startup)
+*.db
+*.db-journal
+
+# Node / Vite
+node_modules/
+dist/
+*.tsbuildinfo

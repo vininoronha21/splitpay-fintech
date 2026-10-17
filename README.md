@@ -28,7 +28,7 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env          # FRONTEND_ORIGIN=http://localhost:5173
-uvicorn app.main:app --reload # http://localhost:8000/health, http://localhost:8000/docs
+uvicorn app.main:app --reload --env-file .env # http://localhost:8000/health, /docs
 pytest                        # run the tests
 ```
 
@@ -37,10 +37,11 @@ pytest                        # run the tests
 ```bash
 cd frontend
 npm install
+cp .env.example .env   # VITE_API_URL=http://localhost:8000 (optional, same default)
 npm run dev     # http://localhost:5173
 npm run build   # production build & TypeScript validation
 ```
 
 ## Attributions
 
-See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) (shadcn/ui theme tokens, GSAP).
+See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) (third-party credits, GSAP).

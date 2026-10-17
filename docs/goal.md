@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Build a demonstrable MVP of a personal-finance fintech whose differentiator is **shared expense splitting**. It is an academic project (FIAP, class 1TDSOE). It must be presentable, built within a strict 1-month timeframe, and easy to explain. It must cover the core software concepts (database, backend, API, frontend, deploy) **without over-engineering**.
+Build a demonstrable MVP of a personal-finance fintech whose differentiator is **shared expense splitting**. It is an academic project (FIAP, class 1TDSOE). It must be presentable, built with a target of about one month (a sizing guide, not a hard deadline), and easy to explain. It is a **public demonstration**: visitors on desktop or mobile share the same demo data. It must cover the core software concepts (database, backend, API, frontend, deploy) **without over-engineering**.
 
 ## Epic
 
@@ -24,7 +24,7 @@ Priority order is fixed by the backlog matrix.
 
 - Every acceptance criterion above passes through the real API, backed by automated tests.
 - Money is always exact. No float rounding drift, and split shares always sum to the total.
-- The MVP is delivered within the 1-month deadline.
+- The MVP is delivered in about one month.
 - The frontend is built with React and TypeScript, deployed on Vercel. The API is on Render; the public Swagger UI (`/docs`) opens.
 - **The design is strictly mobile-first, closely resembling a native mobile banking app. It will be configured as a PWA (Progressive Web App) so users can install it on their phones.**
 - Each technical decision can be explained in one or two sentences during the presentation.
@@ -38,4 +38,4 @@ Priority order is fixed by the backlog matrix.
 
 ## Out of Scope
 
-Real authentication (passwords, JWT, OAuth), multi-person/group splits (deferred to future roadmap), ORM, migrations framework, Docker, real banking/Pix/payments, notifications, cloud infrastructure beyond free tiers, microservices.
+Real authentication (passwords, JWT, OAuth), multi-person/group splits (next step after the MVP's backend, infrastructure and design are done), ORM, migrations framework, Docker, real banking/Pix/payments, notifications, cloud infrastructure beyond free tiers, microservices.
