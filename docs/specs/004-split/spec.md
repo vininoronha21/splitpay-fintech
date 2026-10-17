@@ -20,7 +20,7 @@ This feature also closes the minors carried from the 002 and 003 audits that bel
    - an income with a split; a split with a list of friends or any second friend field (1-to-1 only);
    - an unknown `person_id` (`friend_not_found`) or `category_id` (`category_not_found`);
    - amount ≤ 0 or above the cents limit; non-integer money (as in 003);
-   - `occurred_on` after Brasília today, or not a valid date;
+   - `occurred_on` after Brasília today (`future_date`), or not a valid date;
    - `percent` outside 0–100 or present outside `percentage` mode; `share_cents` outside `fixed` mode, 0, or above the amount;
    - installment fields not both present, or not 1 ≤ number ≤ total;
    - text that is empty or invisible after trimming (including zero-width characters) for required fields.
@@ -38,13 +38,14 @@ This feature also closes the minors carried from the 002 and 003 audits that bel
 - `occurred_on` defaults to Brasília today when omitted. `created_at` comes from the column default.
 - Own share for budget and lists: `amount` for an unsplit expense, `amount − share` for a split one.
 - Added during implementation: installments are limited to 1–360; ids in paths and bodies to 1..2⁶³−1 (an id of 0 is a `validation_error`); `occurred_on` accepts only `YYYY-MM-DD`; text fields trim whitespace, zero-width and control characters before length checks; with a zero budget, `used_percent` is 100 if anything was spent, else 0.
+- Adjustment history (refines 003): an income or expense dated on an adjustment's day counts toward it only if it was created before the adjustment, so a later same-day entry never changes the balance the user typed. Back-dated entries still shift history, which then shows the balance as of that date. Added after the 004 audit.
 - Friend name comparison ignores case and accents (`Ana` = `ana` = `Âna`); the stored name keeps what the user typed.
 
 ## API Contract
 
 | Method | Path | Request | Response | Errors |
 | --- | --- | --- | --- | --- |
-| POST | `/transactions` | `{type, description, amount_cents, occurred_on?, category_id?, place?, payment_method?, installment_number?, installment_total?, notes?, split?: {person_id, mode, percent?, share_cents?}}` | `201` detail | `422 validation_error`, `friend_not_found`, `category_not_found` |
+| POST | `/transactions` | `{type, description, amount_cents, occurred_on?, category_id?, place?, payment_method?, installment_number?, installment_total?, notes?, split?: {person_id, mode, percent?, share_cents?}}` | `201` detail | `422 validation_error`, `friend_not_found`, `category_not_found`, `future_date` |
 | GET | `/transactions` | none | `200 [summary]` | none |
 | GET | `/transactions/{id}` | none | `200` detail | `404 not_found` |
 | GET | `/friends` | none | `200 [{id, name}]` | none |
