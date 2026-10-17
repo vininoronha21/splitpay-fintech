@@ -34,7 +34,8 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │   ├── db.py                 # sqlite3 connection, PRAGMA foreign_keys, schema + seed load (ephemeral)
 │   │   ├── schemas.py            # Pydantic request/response models (the API contract)
 │   │   ├── services/             # Business rules and SQL, one module per domain
-│   │   │   ├── balance.py
+│   │   │   ├── __init__.py       # DomainError: business-rule errors mapped to 422 by main.py
+│   │   │   ├── balance.py        # Balance, adjustments and the profile (initial balance)
 │   │   │   ├── transactions.py   # Includes strictly 1-to-1 split calculation
 │   │   │   ├── reimbursements.py
 │   │   │   └── categories.py

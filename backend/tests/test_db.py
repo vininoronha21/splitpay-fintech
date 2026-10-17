@@ -206,16 +206,17 @@ def count(db, sql: str) -> int:
 @pytest.mark.parametrize(
     "period_start",
     [
-        "date('now', 'weekday 0', '-6 days')",  # Monday of the current week
-        "date('now', 'start of month')",
-        "date('now', 'start of year')",
+        "date('now', '-3 hours', 'weekday 0', '-6 days')",  # Monday of the current week
+        "date('now', '-3 hours', 'start of month')",
+        "date('now', '-3 hours', 'start of year')",
     ],
     ids=["week", "month", "year"],
 )
 def test_seed_covers_current_period(db, period_start):
     rows = count(
         db,
-        f"SELECT count(*) FROM transactions WHERE occurred_on BETWEEN {period_start} AND date('now')",
+        f"SELECT count(*) FROM transactions WHERE occurred_on BETWEEN {period_start}"
+        " AND date('now', '-3 hours')",
     )
 
     assert rows > 0
@@ -225,18 +226,35 @@ def test_seed_has_nothing_older_than_12_months_or_in_the_future(db):
     assert count(
         db,
         "SELECT count(*) FROM transactions"
-        " WHERE occurred_on < date('now', '-12 months') OR occurred_on > date('now')",
+        " WHERE occurred_on < date('now', '-3 hours', '-12 months')"
+        " OR occurred_on > date('now', '-3 hours')",
     ) == 0
     assert count(
         db,
         "SELECT count(*) FROM split_share"
-        " WHERE settled_on < date('now', '-12 months') OR settled_on > date('now')",
+        " WHERE settled_on < date('now', '-3 hours', '-12 months')"
+        " OR settled_on > date('now', '-3 hours')",
     ) == 0
     assert count(
         db,
         "SELECT count(*) FROM balance_adjustment"
-        " WHERE created_at < datetime('now', '-12 months') OR created_at > datetime('now')",
+        " WHERE created_at < datetime('now', '-3 hours', '-12 months')"
+        " OR created_at > datetime('now', '-3 hours')",
     ) == 0
+
+
+def test_seed_newest_dates_are_not_after_brasilia_today(db):
+    # AC7: "today" is Brasília time (UTC-3), so a seed built on UTC 'now'
+    # between 21:00 and 23:59 Brasília would be dated tomorrow.
+    row = db.execute(
+        "SELECT (SELECT max(occurred_on) FROM transactions),"
+        " (SELECT max(settled_on) FROM split_share),"
+        " date('now', '-3 hours')"
+    ).fetchone()
+    newest_occurred_on, newest_settled_on, today = row
+
+    assert newest_occurred_on is not None and newest_occurred_on <= today
+    assert newest_settled_on is not None and newest_settled_on <= today
 
 
 def test_seed_has_every_status_split_mode_and_incomes(db):
