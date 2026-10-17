@@ -1,6 +1,6 @@
 # 005 Categories — Spec
 
-Stories: US02 | Status: draft
+Stories: US02 | Status: approved
 
 ## Problem
 
