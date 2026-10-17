@@ -35,7 +35,7 @@ All paths are already in `repository-structure.md`. No new dependency (stdlib `s
 | `balance_adjustment` | `id` PK, `delta_cents ≠ 0`, `reason` 10–200 chars, `created_at` |
 
   Rules that span two tables (share ≤ amount, no split on income) are enforced by `BEFORE INSERT/UPDATE` triggers on `split_share`, and also listed in `checks.sql`.
-- **checks.sql invariants:** a split transaction has exactly one share and a non-split one has none; share ≤ amount; the share matches the mode (equal = floor(amount / 2), percentage = floor(amount × pct / 100)); `settled_on` is set if and only if status ≠ `em_aberto`; no income has a category rule mismatch (income has no split); dates parse; the profile row exists.
+- **checks.sql invariants:** a split transaction has exactly one share and a non-split one has none; share ≤ amount; the share matches the mode (equal = floor(amount / 2), percentage = floor(amount × pct / 100)); `settled_on` is set if and only if status ≠ `em_aberto`; no income transaction has a split share; dates parse; the profile row exists.
 - **Accent-insensitive keywords:** stored normalized (lowercase, no accents) so matching in 005 is a plain comparison; the seed writes them that way.
 - **Frontend TS Interfaces:** none beyond the `vite-env.d.ts` fix.
 
