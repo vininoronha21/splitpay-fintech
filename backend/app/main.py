@@ -9,7 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import DATABASE_PATH, FRONTEND_ORIGIN
 from app.db import init_db
-from app.routers import balance, friends, health, profile
+from app.routers import balance, friends, health, profile, transactions
 from app.services import DomainError
 
 HTTP_ERRORS = {
@@ -82,6 +82,7 @@ def create_app(database_path: str | None = None) -> FastAPI:
     app.include_router(profile.router)
     app.include_router(balance.router)
     app.include_router(friends.router)
+    app.include_router(transactions.router)
     return app
 
 
