@@ -71,10 +71,13 @@ def error_responses(errors: dict[int, str]) -> dict[int | str, dict[str, Any]]:
 # Whitespace (Zs/Zl/Zp), format characters such as U+200B zero-width space
 # (Cf) and control characters (Cc). str.strip() alone keeps Cf characters.
 INVISIBLE_CATEGORIES = frozenset({"Cc", "Cf", "Zs", "Zl", "Zp"})
+# Blank but counted as letters or symbols: Hangul fillers, empty Braille cell.
+INVISIBLE_CHARACTERS = frozenset("\u115f\u1160\u3164\uffa0\u2800")
 
 
 def _is_invisible(char: str) -> bool:
-    return char.isspace() or unicodedata.category(char) in INVISIBLE_CATEGORIES
+    category = unicodedata.category(char)
+    return char.isspace() or char in INVISIBLE_CHARACTERS or category in INVISIBLE_CATEGORIES
 
 
 def trim_invisible(value: Any) -> Any:
@@ -155,6 +158,8 @@ class Adjustment(BaseModel):
 
 
 class FriendCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")  # an "id" sent by the client is a 422
+
     name: VisibleText(max_length=60)
 
 
