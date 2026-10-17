@@ -37,6 +37,7 @@ This feature also closes the minors carried from the 002 and 003 audits that bel
 - The stored `split_share.share_cents` is the friend's share; the user's share is always `amount − share` (002).
 - `occurred_on` defaults to Brasília today when omitted. `created_at` comes from the column default.
 - Own share for budget and lists: `amount` for an unsplit expense, `amount − share` for a split one.
+- Added during implementation: installments are limited to 1–360; ids in paths and bodies to 1..2⁶³−1 (an id of 0 is a `validation_error`); `occurred_on` accepts only `YYYY-MM-DD`; text fields trim whitespace, zero-width and control characters before length checks; with a zero budget, `used_percent` is 100 if anything was spent, else 0.
 - Friend name comparison ignores case and accents (`Ana` = `ana` = `Âna`); the stored name keeps what the user typed.
 
 ## API Contract

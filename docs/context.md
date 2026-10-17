@@ -96,11 +96,8 @@ Each rule lists what was chosen, why, and the rejected alternative.
 
 ## Open Questions
 
-Carried from the 002 audit; each is resolved in the named feature's spec:
+Carried from audits; each is resolved in the named feature's spec:
 
 - Week start for chart periods: Monday or Sunday (007).
-- A `fixed` split with a zero friend share is allowed by the schema; the API must reject it (004).
-- 422 responses are documented in Swagger as FastAPI's default `{"detail": ...}` instead of the real error shape; add an `ErrorResponse` model (004).
-- Text fields must reject invisible-only content such as zero-width spaces, which `str.strip()` keeps (004).
-- Transactions and `settled_on` must not be dated in the future, or the newest adjustment's computed balance stops matching the current balance (004).
+- A reimbursement's `settled_on` must not be in the future, or the newest adjustment's computed balance stops matching the current balance (006). Transaction dates are already checked (004).
 - Category keywords must be stripped of accents by the service before insert; the schema only enforces lowercase (005).
