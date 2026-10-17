@@ -583,6 +583,60 @@ def test_list_orders_by_date_before_id(client):
     assert body[-1]["id"] == old["id"]
 
 
+# --- 006: status filter -------------------------------------------------------------
+
+
+@pytest.mark.parametrize("status", ["em_aberto", "pago", "acertado"])
+def test_list_filtered_by_split_status(client, db, status):
+    expected_ids = {
+        row[0]
+        for row in db.execute(
+            "SELECT transaction_id FROM split_share WHERE status = ?", (status,)
+        )
+    }
+    full = client.get("/transactions").json()
+
+    response = client.get("/transactions", params={"status": status})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert expected_ids
+    assert {item["id"] for item in body} == expected_ids
+    assert all(item["split_status"] == status for item in body)
+    # Same items, same order as the unfiltered list.
+    assert body == [item for item in full if item["split_status"] == status]
+
+
+def test_list_filter_follows_a_settlement(client):
+    created = client.post(
+        "/transactions", json=expense(split={"person_id": ANA, "mode": "equal"})
+    ).json()
+    open_ids = [item["id"] for item in client.get("/transactions?status=em_aberto").json()]
+    assert created["id"] in open_ids
+
+    client.patch(f"/reimbursements/{created['id']}", json={"status": "pago"})
+
+    open_ids = [item["id"] for item in client.get("/transactions?status=em_aberto").json()]
+    paid_ids = [item["id"] for item in client.get("/transactions?status=pago").json()]
+    assert created["id"] not in open_ids
+    assert paid_ids[0] == created["id"]
+
+
+@pytest.mark.parametrize("status", ["", "Pago", "aberto", "income", "null"])
+def test_list_invalid_status_is_422(client, status):
+    response = client.get("/transactions", params={"status": status})
+
+    assert response.status_code == 422
+    assert response.json() == VALIDATION_ERROR
+
+
+def test_list_without_status_is_unchanged(client, db):
+    body = client.get("/transactions").json()
+
+    assert len(body) == db.execute("SELECT count(*) FROM transactions").fetchone()[0]
+    assert {item["split_status"] for item in body} == {None, "em_aberto", "pago", "acertado"}
+
+
 # --- AC5: detail -----------------------------------------------------------------
 
 
@@ -708,6 +762,10 @@ def test_openapi_documents_transaction_endpoints(client):
         assert code in post["responses"]["422"]["description"]
     detail = paths["/transactions/{transaction_id}"]["get"]["responses"]
     assert "not_found" in detail["404"]["description"]
+    assert "validation_error" in paths["/transactions"]["get"]["responses"]["422"]["description"]
+    status = next(p for p in paths["/transactions"]["get"]["parameters"] if p["name"] == "status")
+    assert status["in"] == "query"
+    assert status["required"] is False
     listing = paths["/transactions"]["get"]["responses"]["200"]
     assert listing["content"]["application/json"]["schema"]["items"]["$ref"].endswith(
         "/TransactionSummary"
