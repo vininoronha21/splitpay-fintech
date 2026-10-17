@@ -93,13 +93,13 @@ Each rule lists what was chosen, why, and the rejected alternative.
 | 15 | Installments and amounts | A transaction's amount is what was paid now (the installment value); `3/10` is display-only (rule 2). | Budget and charts reflect this month's real money. | Storing the full purchase price and dividing it. |
 | 16 | Charts (US04) | "Spending" is the user's own share (same as the budget). "By person" is the sum of each friend's shares in the period. | Charts and budget tell the same story. | Charting the full amount paid: double-counts what friends will repay. |
 | 17 | Shared demo data | Every visitor reads and writes the same data; restarting the API restores the seed. | The project is a public demonstration. | Per-visitor data: needs real accounts, out of scope. |
+| 18 | Time | Every date and timestamp is Brasília time, a fixed UTC−3 offset (`'now', '-3 hours'` in SQL). `created_at` is always written by the column default as `YYYY-MM-DD HH:MM:SS`. | Brazil has had no daylight saving time since 2019, and Render runs in UTC, so evening entries would otherwise land on the next day. | `'localtime'` (server is UTC); a timezone library for a fixed offset. |
 
 ## Open Questions
 
 Carried from the 002 audit; each is resolved in the named feature's spec:
 
-- Timezone: SQLite `'now'` is UTC, so between 21:00 and 24:00 in Brasília "today" rows fall on tomorrow (003, 007).
-- Timestamps: `created_at` accepts only `YYYY-MM-DD HH:MM:SS`; services rely on the column default (003).
 - Week start for chart periods: Monday or Sunday (007).
 - A `fixed` split with a zero friend share is allowed by the schema; the API must reject it (004).
+- Transactions and `settled_on` must not be dated in the future, or the newest adjustment's computed balance stops matching the current balance (004).
 - Category keywords must be stripped of accents by the service before insert; the schema only enforces lowercase (005).

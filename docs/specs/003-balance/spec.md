@@ -23,6 +23,8 @@ US05 asks for a trustworthy balance: the user sets an initial balance, the app s
 ## Data Rules
 
 - Money in and out of the API is integer cents (`StrictInt`): JSON numbers only, no strings, no decimals.
+- Every cents value in a request is limited to ±10¹² (R$ 10 bilhões); beyond that SQLite's 64-bit integers could overflow and return 500 instead of 422. Added during implementation.
+- `created_at` is returned as ISO 8601 without offset (`2026-10-17T17:45:01`), always Brasília time. Added during implementation.
 - The new balance in an adjustment may be negative (a real account can be overdrawn); the initial balance may not.
 - History balances: an adjustment's *new balance* is the balance counting every movement dated on or before the adjustment's date, plus all adjustments up to and including it (ordered by `created_at`, then `id`). *Previous balance* = new balance − delta. For the newest adjustment, the new balance equals `GET /balance` at the moment it was created.
 - Movement dates: income and expense use `occurred_on`; a reimbursement uses `settled_on`; an adjustment uses the date of `created_at`.
