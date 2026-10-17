@@ -1,0 +1,92 @@
+# SplitPay — Project Context
+
+Read with `goal.md`. This file records the current state, the stack, the decisions already made, and the open questions for the 1-month MVP.
+
+## Language Policy
+
+- All `.md` files, code, identifiers and commit messages: **en-US**.
+- User-facing UI text and seed data (names, categories, descriptions): **pt-BR**.
+
+## Current State of the Repository
+
+- `frontend/`: React 18 + Vite 6 + Tailwind 4 + React Router 7 + TypeScript + Recharts.
+- Screens in `frontend/src/app/components/`: `Dashboard`, `NewExpense`, `Reimbursements` (statement), `FinancialSettings`, `LandingPage` (with GSAP), and `Layout`. All data is currently mocked.
+- `backend/`: FastAPI scaffold with `GET /health`, a CORS allow-list from `FRONTEND_ORIGIN`, one JSON error shape (`{"error": {"code", "message"}}`), and pytest tests. No database yet.
+- Reference material (`tela_*.png`, `USER-STORIES.pdf`, Figma UI/UX ideas) is in `docs/assets/`. The visual identity is a dark theme with a yellow accent.
+- No linting and no CI.
+
+## Architecture
+
+```text
+Browser ── Vercel (React + Vite + TypeScript SPA)
+              │  HTTPS / JSON, base URL from VITE_API_URL
+              ▼
+           Render (FastAPI + Uvicorn)
+              │  sqlite3 (stdlib), parameterized SQL
+              ▼
+           SQLite file, created from schema.sql + seed.sql at startup
+```
+
+## Stack and Decisions
+
+| Area | Choice | Why |
+| --- | --- | --- |
+| API | Python 3.12+, FastAPI, Pydantic, Uvicorn | Real REST API with automatic validation and Swagger. Easy to explain. |
+| Database | SQLite through stdlib `sqlite3`, raw SQL, no ORM | Shows real relational modeling, constraints and queries with zero infrastructure. |
+| Schema | `schema.sql` (tables, PK/FK, `CHECK`, `NOT NULL`) + `seed.sql` | The model is readable and auditable as plain SQL. |
+| Money | Integer **cents** (`INTEGER`), formatted to BRL only in the UI | No float error. Split shares sum exactly to the total. |
+| Split rounding | Remainder cents go to the payer (the user) | Deterministic, and shares always sum to the total. |
+| Persistence | DB rebuilt from seed on every start | Render's free disk is ephemeral. This is an accepted, explainable trade-off for a free-tier MVP. |
+| Tests | Pytest + FastAPI `TestClient`, fresh DB per test | Acceptance criteria become executable. |
+| Frontend | React/Vite with **TypeScript**, service layer `src/services/api.ts` | TS catches API contract errors early. One place handles API calls. |
+| **Mobile Strategy** | **Mobile-first Web (Tailwind) + PWA** | **Avoids the overhead of Swift/React Native for a 1-month MVP. Provides a native-like banking app experience on mobile via browser installation.** |
+| Fake login | Display name only, stored in `localStorage` | Personalization without the scope of real auth. |
+| Animation | GSAP on Landing Page and Phase 2 UI | Polished, dynamic, and interactive feel for the academic presentation. |
+| Deploy | Vercel (web), Render Web Service (API, `/health` healthcheck) | Free tiers with git-based deploys. |
+| Config | `VITE_API_URL` (web), `FRONTEND_ORIGIN` (API CORS allow-list) | No secrets exist in this MVP. CORS is restricted to the known origin. |
+
+## Domain Model (initial, refined in the spec)
+
+- `user_profile`: display name, initial balance, monthly budget (single user).
+- `person`: friends the user can split with.
+- `category` and `category_rule`: keyword → category.
+- `transaction`: description, total, category, date, type (expense/income), place, installment number and total (display only), payment method, notes, split mode.
+- `split_share`: transaction × person (strictly 1-to-1 for now), share amount, reimbursement status (`em_aberto` / `pago` / `acertado`).
+- `balance_adjustment`: signed delta in cents, reason, timestamp. Previous and new balance are computed when listing the history, never stored.
+
+## Security Baseline (audited in phase 1)
+
+- Parameterized SQL only; no string-built queries.
+- Every input passes through Pydantic: positive amounts, bounded string lengths, enums for status and split mode, percentages that sum to 100, fixed shares that sum to the total.
+- CORS allow-list from env; no wildcard in production.
+- No stack traces or SQL in error responses. Errors use a consistent JSON shape.
+- No secrets in the repo. `.env` is git-ignored and `.env.example` is committed.
+
+## Data Consistency Checks (audited in phase 1)
+
+- For every transaction, the sum of its split shares equals its total.
+- Every foreign key resolves (`PRAGMA foreign_keys = ON`).
+- Displayed balance equals initial balance + inflows − outflows + adjustments, recomputed from rows, never stored as a free-standing number.
+- Budget usage counts only the user's own share.
+- Seed dates cover the weekly, monthly and yearly filters, plus at least one empty period.
+
+## Business Rules (approved 2026-10)
+
+Each rule lists what was chosen, why, and the rejected alternative.
+
+| # | Topic | Decision | Why | Rejected |
+| --- | --- | --- | --- | --- |
+| 1 | Reimbursement status | `em_aberto` (UI label "Aguardando Reembolso"), `pago`, `acertado`. `pago` enters the balance as an inflow; `acertado` closes the debt without changing the balance. | Matches the user stories, and the two closed states differ in a concrete way. | *pendente / atrasado / pago*: "atrasado" needs due dates. |
+| 2 | Installment (US03) | Display-only `installment_number` / `installment_total` (e.g. "3/10"), with 1 ≤ number ≤ total. | The criterion only asks the detail view to show it. | Generating future transactions: cascading dates and edits. |
+| 3 | Balance formula | `balance = initial + inflows − outflows + Σ adjustment deltas`. Adjustments store a signed delta and a required short reason. | One source of truth; the history still shows previous/new balance by computing it. | Storing the new balance: two values that can diverge. |
+| 4 | Initial balance | Set once at first access (with the fake login). Later changes go through a manual adjustment. Rejects non-numeric and negative values; zero is allowed. | Keeps every change traceable, which is the point of US05. | Free editing: rewrites history without a trace. |
+| 5 | Balance vs. budget | The full amount the user paid leaves the balance; a share marked `pago` enters it; only the user's own share counts against the monthly budget. | Balance mirrors real money; budget mirrors real consumption. | Counting only the user's share in the balance: hides money actually spent. |
+| 6 | Split participants | 1-to-1 only. The user always pays and splits with exactly ONE friend. Remainder cents go to the user. | Greatly simplifies the MVP backend logic for a 1-month deadline. | Multi-person groups: deferred to future roadmap. |
+| 7 | Percentage split | Whole-number percentages (0–100) that sum to exactly 100. | No extra rounding rule to explain. | Decimal percentages (33.33%). |
+| 8 | Category rules (US02) | Create and delete only (edit = delete + create). Matching ignores case and accents. User rules win over default ones; on a tie the longest keyword wins. | Covers the criterion with one form and a deterministic match. | Full CRUD: extra screen and endpoint with no demo value. |
+| 9 | Chart periods (US04) | Calendar periods (current week, month, year) with previous/next navigation. | Makes the empty-period state ("Nenhum dado encontrado") demonstrable. | Rolling windows ("last 7 days"): rarely empty with the seed. |
+| 10 | Demo persistence | Keep rebuilding the DB from seed on every start. Before presenting, open `/health` to wake the API and run the demo in one sequence. | Predictable demo with zero infrastructure. Accepted free-tier ephemeral constraint. | Persistent database: outside the free tiers and the scope. |
+
+## Open Questions
+
+None. New questions are added here and resolved in the feature's spec.
