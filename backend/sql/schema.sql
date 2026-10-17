@@ -59,7 +59,7 @@ CREATE TABLE transactions (
     CHECK (type = 'expense' OR split_mode IS NULL),
     -- The friend's percentage exists only in percentage mode, 0..100.
     CHECK (
-        (split_mode = 'percentage' AND split_percent IS NOT NULL AND split_percent BETWEEN 0 AND 100)
+        (split_mode IS 'percentage' AND split_percent IS NOT NULL AND split_percent BETWEEN 0 AND 100)
         OR (split_mode IS NOT 'percentage' AND split_percent IS NULL)
     )
 );
