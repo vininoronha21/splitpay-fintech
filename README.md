@@ -43,4 +43,4 @@ npm run build   # production build & TypeScript validation
 
 ## Attributions
 
-See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) (shadcn/ui theme tokens, GSAP).
+See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) (third-party credits, GSAP).

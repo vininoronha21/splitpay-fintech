@@ -1,6 +1,6 @@
 # CLAUDE.md — SplitPay
 
-Shared-expense fintech MVP for a FIAP presentation. Simple, explainable, not over-engineered, with a strict 1-month deadline.
+Shared-expense fintech MVP for a FIAP presentation. Simple, explainable, not over-engineered, with a target of about one month.
 
 ## Mandatory Reading (before any task)
 
@@ -44,7 +44,7 @@ The main session orchestrates: it dispatches one implementer per task, then the 
 | Web dev server | `npm run dev` | `frontend/` |
 | Web build & TS check | `npm run build` | `frontend/` |
 
-Commands become valid once the directories exist (phase 1 creates `backend/`, the restructure task creates `frontend/`).
+Commands become valid once `001-restructure` creates `backend/` and `frontend/`.
 
 ## Git
 
