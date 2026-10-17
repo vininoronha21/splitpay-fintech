@@ -38,7 +38,7 @@ This feature also closes the minors carried from the 002 and 003 audits that bel
 - `occurred_on` defaults to Brasília today when omitted. `created_at` comes from the column default.
 - Own share for budget and lists: `amount` for an unsplit expense, `amount − share` for a split one.
 - Added during implementation: installments are limited to 1–360; ids in paths and bodies to 1..2⁶³−1 (an id of 0 is a `validation_error`); `occurred_on` accepts only `YYYY-MM-DD`; text fields trim whitespace, zero-width and control characters before length checks; with a zero budget, `used_percent` is 100 if anything was spent, else 0.
-- Adjustment history (refines 003): an income or expense dated on an adjustment's day counts toward it only if it was created before the adjustment, so a later same-day entry never changes the balance the user typed. Back-dated entries still shift history, which then shows the balance as of that date. Added after the 004 audit.
+- Adjustment history (refines 003): an income or expense dated on an adjustment's day counts toward it only if it was created no later than the adjustment (timestamps have whole seconds, so a same-second tie counts as before), so a later same-day entry never changes the balance the user typed. Back-dated entries still shift history, which then shows the balance as of that date. Added after the 004 audit.
 - Friend name comparison ignores case and accents (`Ana` = `ana` = `Âna`); the stored name keeps what the user typed.
 
 ## API Contract
