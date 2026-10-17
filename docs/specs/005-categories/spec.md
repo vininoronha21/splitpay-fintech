@@ -23,7 +23,7 @@ This feature also closes the three Open Questions in `context.md` assigned to 00
 4. `GET /categories/rules` lists every rule with `{id, keyword, category_id, category_name, is_default}`: user rules first (newest first), then defaults by keyword.
 5. `POST /categories/rules` with `{keyword, category_id}` creates a user rule and returns it with `201`. The keyword is stored normalized: lowercase, no accents, punctuation dropped, single spaces ("  Uber-Eats " → "uber eats").
    - unknown `category_id` → `422 category_not_found`;
-   - a keyword with no letter or digit, or longer than 40 characters after normalizing → `422 validation_error`;
+   - a keyword longer than 80 characters as typed, with no letter or digit, or longer than 40 characters after normalizing → `422 validation_error`;
    - a keyword equal to an existing one after normalizing ("Ubér" vs "uber") → `409 rule_exists`.
 6. `DELETE /categories/rules/{id}` deletes a user rule (`204`). Unknown id → `404 not_found`; a default rule → `409 rule_is_default`.
 7. Swagger documents every error response with `ErrorResponse`, as in 004.
