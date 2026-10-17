@@ -34,17 +34,32 @@ WHERE (t.split_mode = 'equal' AND s.share_cents <> t.amount_cents / 2)
    OR (t.split_mode = 'percentage' AND s.share_cents <> t.amount_cents * t.split_percent / 100)
    OR (t.split_mode = 'fixed' AND (s.share_cents <= 0 OR s.share_cents > t.amount_cents));
 
--- check: settled_on_iff_closed
-SELECT s.id, s.status, s.settled_on
+-- check: settled_at_iff_closed
+SELECT s.id, s.status, s.settled_at
 FROM split_share s
-WHERE (s.status = 'em_aberto' AND s.settled_on IS NOT NULL)
-   OR (s.status <> 'em_aberto' AND s.settled_on IS NULL);
+WHERE (s.status = 'em_aberto' AND s.settled_at IS NOT NULL)
+   OR (s.status <> 'em_aberto' AND s.settled_at IS NULL);
 
--- check: settled_on_not_before_occurred_on
-SELECT s.id, s.settled_on, t.occurred_on
+-- check: settled_at_not_before_occurred_on
+SELECT s.id, s.settled_at, t.occurred_on
 FROM split_share s
 JOIN transactions t ON t.id = s.transaction_id
-WHERE s.settled_on IS NOT NULL AND s.settled_on < t.occurred_on;
+WHERE s.settled_at IS NOT NULL AND date(s.settled_at) < t.occurred_on;
+
+-- check: settled_at_not_before_created_at
+-- A share cannot be settled before its expense was recorded (also a trigger
+-- in schema.sql; kept here so a fresh database is checked end to end).
+SELECT s.id, s.settled_at, t.created_at
+FROM split_share s
+JOIN transactions t ON t.id = s.transaction_id
+WHERE s.settled_at IS NOT NULL AND s.settled_at < t.created_at;
+
+-- check: settled_at_not_in_future
+-- Not a CHECK or trigger: "now" moves, so a row valid when written could only
+-- be judged against the clock at read time. Brasília time, as in the schema.
+SELECT s.id, s.settled_at
+FROM split_share s
+WHERE s.settled_at > datetime('now', '-3 hours');
 
 -- check: income_has_no_split
 SELECT t.id, t.split_mode, s.id AS share_id
@@ -57,9 +72,9 @@ SELECT 'transactions' AS tbl, id, occurred_on AS value
 FROM transactions
 WHERE date(occurred_on) IS NOT occurred_on OR datetime(created_at) IS NOT created_at
 UNION ALL
-SELECT 'split_share', id, settled_on
+SELECT 'split_share', id, settled_at
 FROM split_share
-WHERE settled_on IS NOT NULL AND date(settled_on) IS NOT settled_on
+WHERE settled_at IS NOT NULL AND datetime(settled_at) IS NOT settled_at
 UNION ALL
 SELECT 'balance_adjustment', id, created_at
 FROM balance_adjustment

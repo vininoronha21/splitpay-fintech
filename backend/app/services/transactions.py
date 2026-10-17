@@ -99,7 +99,8 @@ SELECT
     p.name AS person_name,
     s.share_cents,
     s.status,
-    s.settled_on
+    -- The API exposes the settlement day; the column keeps the full time.
+    date(s.settled_at) AS settled_on
 FROM transactions t
 LEFT JOIN category c ON c.id = t.category_id
 LEFT JOIN split_share s ON s.transaction_id = t.id

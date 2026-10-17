@@ -194,7 +194,7 @@ def test_equal_split(client, db, amount, friend, user):
     ).fetchone()
     assert tuple(row) == ("equal", None)
     share = db.execute(
-        "SELECT person_id, share_cents, status, settled_on FROM split_share"
+        "SELECT person_id, share_cents, status, settled_at FROM split_share"
         " WHERE transaction_id = ?",
         (tx_id,),
     ).fetchone()
@@ -595,8 +595,9 @@ def test_detail_of_seed_fixed_split_that_was_paid(client, db):
     assert body["description"] == "Aluguel"
     assert body["category_name"] == "Moradia"
     assert set(body["split"]) == SPLIT_FIELDS
+    # The column is a timestamp; the API exposes its date as settled_on.
     settled_on = db.execute(
-        "SELECT settled_on FROM split_share WHERE transaction_id = 7"
+        "SELECT date(settled_at) FROM split_share WHERE transaction_id = 7"
     ).fetchone()[0]
     assert body["split"] == {
         "person_id": 4,
