@@ -59,3 +59,59 @@ Minor:
 **CHANGES REQUIRED**
 
 All 8 acceptance criteria pass with evidence, the 001 carry-overs are fixed, and there is no scope creep. One major remains: the schema accepts non-date text in date columns and non-integer values in money columns, and `checks.sql` does not catch the money cases. The fix is small (a few CHECK expressions and tests) and should land before 003 starts writing rows. The data-engineer fixes Major 1, then the auditor re-checks. The minors may be fixed in the same pass or carried into the named features.
+
+---
+
+## Re-audit
+
+Auditor run: 2026-10-17, branch `feature/mvp-plan` at `c72fd60` (`fix(db): enforce integer cents and parseable dates in schema`). The commit touches exactly 3 files: `backend/sql/schema.sql`, `backend/sql/checks.sql` and `backend/tests/test_db.py` (+120/−13). It is a conventional commit with a scope. No other files changed and no dependencies were added.
+
+### Evidence
+
+- `cd backend && .venv/bin/pytest -q`: **83 passed, 1 warning** (the known Starlette/httpx deprecation). Before the fix it was 57.
+- **Schema changes.** Every integer or cents column now has `typeof(col) = 'integer'` in its CHECK. That covers `initial_balance_cents`, `monthly_budget_cents`, `is_default`, `amount_cents`, `installment_number/total`, `split_percent`, `share_cents` and `delta_cents`. Date and timestamp CHECKs now use `IS`: `date(occurred_on) IS occurred_on`, `date(settled_on) IS settled_on` (NULL-safe, since `date(NULL) IS NULL`), and `datetime(created_at) IS created_at` on both tables. The header comment explains the NULL-passes pitfall.
+- **`checks.sql`.** It adds the block `money_is_integer_cents`, which covers all 4 money tables. `dates_parse` now uses `IS NOT` for `created_at`.
+- **Hand reproduction of Major 1** (python3 sqlite3 3.45.1, fresh schema + seed, scratch script). The cases below were **accepted** before the fix. Each is now **rejected** with `IntegrityError`:
+  - Dates:
+    - `occurred_on` = `'abc'`, `''`, `20261017`, `2461000.5` (and `2026-02-30`)
+    - `settled_on = 'abc'` with `pago`
+    - `created_at = 'abc'` (transactions and balance_adjustment)
+    - `UPDATE transactions SET occurred_on='abc'`
+  - Money and integer columns:
+    - `amount_cents` = `10.5`, `'abc'`, `'10.5'`, `x'01'`
+    - `share_cents` = `5.5` and `'abc'` on a valid split transaction with no share
+    - `delta_cents` = `0.5`, `'abc'`
+    - `initial_balance_cents = 100.5`, `monthly_budget_cents = 'abc'`
+    - `installment_number = 1.5`, `split_percent = 33.3`, `is_default = 'abc'`
+    - UPDATE paths `amount_cents + 0.5`, `amount_cents = 'abc'`, `share_cents + 0.5`
+  - Values that INTEGER affinity converts losslessly (`'500'`, `1e3`, `10.0`) are still accepted and stored as `integer`. This is correct and is covered by `test_valid_edits_and_integer_like_values_are_accepted`.
+- **No loosening.** I re-ran the earlier probes and every one is still rejected:
+  - NULL probes: NULL `occurred_on`, `amount_cents`, `created_at`, `share_cents`, `delta_cents` and `initial_balance_cents`; `pago` with NULL `settled_on`; installment number without total; `percentage` with NULL percent; percent 101; percent on `equal`; amount 0; delta 0; share −1.
+  - UPDATE-path probes: share above amount, share moved to an income, share moved to a non-split transaction, split transaction turned into an income, split mode cleared, amount lowered below the share, transaction id changed (FK), delete of a person or category in use (FK).
+- **`checks.sql` on the seed.** All 11 blocks return `[]` on a fresh schema + seed, including the new `money_is_integer_cents`, and `PRAGMA foreign_key_check` returns `[]`. Every `amount_cents` is `integer` (35/35). I also replaced `'now'` with 00:00:01 and 23:59:59 on 7 boundary days (2026-01-01, a Sunday 01-04, 02-28, 03-01, 12-31, leap day 2028-02-29, 2027-01-03): 0 check failures.
+- **Test harness sanity.** The multi-statement UPDATE cases first insert a share of 500 on fixture transaction 100. `test_fixture_rows_are_valid` proves that this insert is valid, so each case can only fail on its UPDATE. It cannot pass vacuously.
+
+### Status of earlier findings
+
+| Finding | Status |
+| --- | --- |
+| Major 1: type and format CHECKs bypassed | **Fixed.** All reproduced cases are rejected. 18 type/format pytest cases were added, plus the `checks.sql` block `money_is_integer_cents`. |
+| Minor 1: UPDATE-path triggers untested | **Fixed.** 6 UPDATE cases were added (amount below share, clear mode, expense to income, share above amount, share to income, REAL share). |
+| Minor 2: keyword accents not enforced | Carried to 005 (keyword normalization). No harm now. |
+| Minor 3: `'now'` is UTC | Carried to 003/007. No harm now. |
+| Minor 4: week-start assumption | Carried to 007. No harm now. |
+| Minor 5: `share_cents = 0` allowed in `fixed` | Carried to 004 (Pydantic input validation). `checks.sql` still catches it. No harm now. |
+
+### New findings
+
+Blocker: none. Major: none.
+
+Minor:
+
+6. `backend/sql/schema.sql:53,94` `CHECK (datetime(created_at) IS created_at)`: this now accepts only the exact form `YYYY-MM-DD HH:MM:SS`. `'2026-10-17T10:00:00'` (Python `datetime.isoformat()`) and fractional seconds are rejected. The header comment at `schema.sql:2` still says "timestamps ISO 8601 text". This causes no harm now, because the seed and the column defaults use `datetime(...)`. 003 (transactions) and the balance-adjustment endpoint must rely on the DEFAULT, or format with `strftime('%Y-%m-%d %H:%M:%S')`. Optionally tighten the comment to "'YYYY-MM-DD HH:MM:SS' text". Carry this with Minor 3 (timezone convention).
+
+### Re-audit verdict
+
+**PASS**
+
+Major 1 and Minor 1 are fixed, and the evidence above confirms it. Nothing was loosened. The seed passes every consistency check, including the new one. Minors 2–5 and the new Minor 6 are accepted as carried to 003/004/005/007.
