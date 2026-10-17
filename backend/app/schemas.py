@@ -129,3 +129,15 @@ class Adjustment(BaseModel):
     reason: str
     previous_balance_cents: StrictInt
     new_balance_cents: StrictInt
+
+
+# --- Friends ------------------------------------------------------------------
+
+
+class FriendCreate(BaseModel):
+    name: VisibleText(max_length=60)
+
+
+class Friend(BaseModel):
+    id: StrictInt
+    name: str
