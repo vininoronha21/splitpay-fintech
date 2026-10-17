@@ -9,7 +9,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import DATABASE_PATH, FRONTEND_ORIGIN
 from app.db import init_db
-from app.routers import health
+from app.routers import balance, health, profile
+from app.services import DomainError
 
 HTTP_ERRORS = {
     400: ("bad_request", "Requisição inválida."),
@@ -43,6 +44,10 @@ async def validation_exception_handler(
     return error_response(422, "validation_error", "Dados inválidos na requisição.")
 
 
+async def domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:
+    return error_response(exc.status_code, exc.code, exc.message)
+
+
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     response = error_response(500, "internal_error", "Erro interno do servidor.")
     # This handler runs in Starlette's ServerErrorMiddleware, outside
@@ -71,8 +76,11 @@ def create_app(database_path: str | None = None) -> FastAPI:
     )
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(DomainError, domain_error_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
     app.include_router(health.router)
+    app.include_router(profile.router)
+    app.include_router(balance.router)
     return app
 
 
