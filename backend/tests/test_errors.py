@@ -1,6 +1,17 @@
 from fastapi.testclient import TestClient
 
+from app.config import FRONTEND_ORIGIN
 from app.main import create_app
+
+
+def crashing_app(database_path: str):
+    app = create_app(database_path)
+
+    @app.get("/test-crash")
+    def crash() -> dict:
+        raise RuntimeError("secret detail: SELECT * FROM users")
+
+    return app
 
 
 def test_unknown_route_returns_not_found(client):
@@ -19,8 +30,8 @@ def test_wrong_method_returns_method_not_allowed(client):
     assert response.json()["error"]["code"] == "method_not_allowed"
 
 
-def test_validation_failure_returns_validation_error():
-    app = create_app()
+def test_validation_failure_returns_validation_error(database_path):
+    app = create_app(database_path)
 
     @app.get("/test-validation")
     def needs_int(amount_cents: int) -> dict:
@@ -37,17 +48,31 @@ def test_validation_failure_returns_validation_error():
     }
 
 
-def test_unhandled_exception_returns_generic_internal_error():
-    app = create_app()
+def test_unhandled_exception_returns_generic_internal_error(database_path):
+    client = TestClient(crashing_app(database_path), raise_server_exceptions=False)
 
-    @app.get("/test-crash")
-    def crash() -> dict:
-        raise RuntimeError("secret detail: SELECT * FROM users")
-
-    response = TestClient(app, raise_server_exceptions=False).get("/test-crash")
+    response = client.get("/test-crash")
 
     assert response.status_code == 500
     assert response.json() == {
         "error": {"code": "internal_error", "message": "Erro interno do servidor."}
     }
     assert "secret detail" not in response.text
+
+
+def test_internal_error_carries_cors_header_for_allowed_origin(database_path):
+    client = TestClient(crashing_app(database_path), raise_server_exceptions=False)
+
+    response = client.get("/test-crash", headers={"Origin": FRONTEND_ORIGIN})
+
+    assert response.status_code == 500
+    assert response.headers["access-control-allow-origin"] == FRONTEND_ORIGIN
+
+
+def test_internal_error_has_no_cors_header_for_other_origin(database_path):
+    client = TestClient(crashing_app(database_path), raise_server_exceptions=False)
+
+    response = client.get("/test-crash", headers={"Origin": "http://evil.example.com"})
+
+    assert response.status_code == 500
+    assert "access-control-allow-origin" not in response.headers

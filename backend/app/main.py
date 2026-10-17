@@ -1,10 +1,14 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.config import FRONTEND_ORIGIN
+from app.config import DATABASE_PATH, FRONTEND_ORIGIN
+from app.db import init_db
 from app.routers import health
 
 HTTP_ERRORS = {
@@ -40,11 +44,25 @@ async def validation_exception_handler(
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    return error_response(500, "internal_error", "Erro interno do servidor.")
+    response = error_response(500, "internal_error", "Erro interno do servidor.")
+    # This handler runs in Starlette's ServerErrorMiddleware, outside
+    # CORSMiddleware, so the allowed origin must be added here or the browser
+    # hides the error body from the frontend.
+    if request.headers.get("origin") == FRONTEND_ORIGIN:
+        response.headers["Access-Control-Allow-Origin"] = FRONTEND_ORIGIN
+        response.headers["Vary"] = "Origin"
+    return response
 
 
-def create_app() -> FastAPI:
-    app = FastAPI(title="SplitPay API")
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    init_db(app.state.database_path)
+    yield
+
+
+def create_app(database_path: str | None = None) -> FastAPI:
+    app = FastAPI(title="SplitPay API", lifespan=lifespan)
+    app.state.database_path = database_path or DATABASE_PATH
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[FRONTEND_ORIGIN],
