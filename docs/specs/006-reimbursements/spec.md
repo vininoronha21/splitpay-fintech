@@ -1,6 +1,6 @@
 # 006 Reimbursements — Spec
 
-Stories: US03 (plus the inflow side of US05) | Status: draft
+Stories: US03 (plus the inflow side of US05) | Status: approved
 
 ## Problem
 
