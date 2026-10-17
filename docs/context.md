@@ -96,4 +96,10 @@ Each rule lists what was chosen, why, and the rejected alternative.
 
 ## Open Questions
 
-None. New questions are added here and resolved in the feature's spec.
+Carried from the 002 audit; each is resolved in the named feature's spec:
+
+- Timezone: SQLite `'now'` is UTC, so between 21:00 and 24:00 in Brasília "today" rows fall on tomorrow (003, 007).
+- Timestamps: `created_at` accepts only `YYYY-MM-DD HH:MM:SS`; services rely on the column default (003).
+- Week start for chart periods: Monday or Sunday (007).
+- A `fixed` split with a zero friend share is allowed by the schema; the API must reject it (004).
+- Category keywords must be stripped of accents by the service before insert; the schema only enforces lowercase (005).
