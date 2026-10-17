@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.db import get_db
-from app.schemas import Adjustment, AdjustmentCreate, Balance
+from app.schemas import Adjustment, AdjustmentCreate, Balance, error_responses
 from app.services import balance as balance_service
 
 router = APIRouter(prefix="/balance", tags=["balance"])
@@ -22,7 +22,12 @@ def list_adjustments(conn: Db) -> list[Adjustment]:
     return [Adjustment.model_validate(row) for row in balance_service.list_adjustments(conn)]
 
 
-@router.post("/adjustments", response_model=Adjustment, status_code=201)
+@router.post(
+    "/adjustments",
+    response_model=Adjustment,
+    status_code=201,
+    responses=error_responses({422: "validation_error, no_change"}),
+)
 def create_adjustment(body: AdjustmentCreate, conn: Db) -> Adjustment:
     entry = balance_service.create_adjustment(conn, body.new_balance_cents, body.reason)
     return Adjustment.model_validate(entry)

@@ -152,6 +152,15 @@ def test_create_adjustment_trims_reason(client, db):
     assert stored == "Ajuste do extrato"
 
 
+def test_create_adjustment_trims_invisible_characters_at_the_ends(client):
+    reason = "\u200b\ufeff Ajuste do extrato \u200b\u00a0"
+
+    response = post_adjustment(client, current_balance(client) + 1, reason)
+
+    assert response.status_code == 201
+    assert response.json()["reason"] == "Ajuste do extrato"
+
+
 @pytest.mark.parametrize("reason", ["a" * 10, "b" * 200, "  " + "c" * 200 + "  "])
 def test_create_adjustment_accepts_reason_length_limits(client, reason):
     assert post_adjustment(client, current_balance(client) + 1, reason).status_code == 201
@@ -164,6 +173,10 @@ def test_create_adjustment_accepts_reason_length_limits(client, reason):
         {"new_balance_cents": 1, "reason": "   " + "a" * 9 + "   "},
         {"new_balance_cents": 1, "reason": "a" * 201},
         {"new_balance_cents": 1, "reason": " " * 20},
+        {"new_balance_cents": 1, "reason": "\u200b" * 12},
+        {"new_balance_cents": 1, "reason": "\ufeff\u200c\u200d\u2060\u00a0\u3000" * 3},
+        {"new_balance_cents": 1, "reason": "a" + "\u200b" * 11},
+        {"new_balance_cents": 1, "reason": "\u2028\u2029\t\n" * 5},
         {"new_balance_cents": 1},
         {"new_balance_cents": 1, "reason": 1234567890},
         {"reason": VALID_REASON},
@@ -177,6 +190,10 @@ def test_create_adjustment_accepts_reason_length_limits(client, reason):
         "reason_9_after_trim",
         "reason_201",
         "reason_blank",
+        "reason_zero_width_only",
+        "reason_mixed_invisible_only",
+        "reason_9_invisible_padding",
+        "reason_line_separators_only",
         "reason_missing",
         "reason_number",
         "balance_missing",

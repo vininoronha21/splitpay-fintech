@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.db import SQL_DIR, connect
 from app.main import create_app
+from app.services import brasilia_today
 
 # A valid split expense (id 100) and a valid income (id 101) that the
 # constraint cases below build on.
@@ -346,3 +347,9 @@ def test_app_startup_discards_previous_data(database_path):
         assert conn.execute("SELECT count(*) FROM balance_adjustment").fetchone()[0] == 2
     finally:
         conn.close()
+
+
+def test_brasilia_today_matches_sql_brasilia_date(db):
+    sql_today = db.execute("SELECT date('now', '-3 hours')").fetchone()[0]
+
+    assert brasilia_today().isoformat() == sql_today
