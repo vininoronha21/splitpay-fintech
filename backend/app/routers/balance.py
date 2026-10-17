@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.db import get_db
-from app.schemas import Adjustment, AdjustmentCreate, Balance, Budget, error_responses
+from app.schemas.balance import Adjustment, AdjustmentCreate, Balance, Budget
+from app.schemas.common import error_responses
 from app.services import balance as balance_service
 
 # No prefix: /budget lives here too, as a money summary like the balance.

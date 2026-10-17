@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.db import get_db
-from app.schemas import Profile, ProfileUpdate, error_responses
+from app.schemas.balance import Profile, ProfileUpdate
+from app.schemas.common import error_responses
 from app.services import balance as balance_service
 
 router = APIRouter(prefix="/profile", tags=["profile"])

@@ -9,7 +9,8 @@ Read with `goal.md`. This file records the current state, the stack, the decisio
 
 ## Current State of the Repository
 
-- Documentation only. The previous `frontend/` and `backend/` were deleted on purpose; both are rebuilt from scratch, starting with `001-restructure`.
+- Phase 1 (API) in progress. Done and merged: 001 restructure, 002 database, 003 balance, 004 split; 005 categories implemented. Next: 006 reimbursements, 007 dashboard.
+- `frontend/` is a Vite + React + TypeScript scaffold that calls `/health`; screens come in phase 2.
 - Agents are in `.claude/agents/`; reference material (`tela_*.png`, `USER-STORIES.pdf`) is in `docs/assets/`. The visual identity is a dark theme with a yellow accent.
 - The reference screens are **visual inspiration only**. They show group splits, an "Em Atraso" status and "Lembrar" buttons, all of which are out of scope (see Business Rules 1 and 6).
 - No linting and no CI.
@@ -82,7 +83,7 @@ Each rule lists what was chosen, why, and the rejected alternative.
 | 5 | Balance vs. budget | The full amount the user paid leaves the balance; a share marked `pago` enters it; only the user's own share counts against the monthly budget. | Balance mirrors real money; budget mirrors real consumption. | Counting only the user's share in the balance: hides money actually spent. |
 | 6 | Split participants | 1-to-1 only. The user always pays and splits with exactly ONE friend. Remainder cents go to the user. The MVP therefore shows only what friends owe the user ("a receber"), never what the user owes. `split_share` keeps one row per person, so group splits later relax a constraint instead of changing the model. | Greatly simplifies the MVP backend logic. | Multi-person groups: planned right after the MVP (backend, infra and design done). |
 | 7 | Split input | Equal: friend share = floor(total / 2), user keeps the remainder. Percentage: the user types the **friend's** whole-number percentage (0–100); friend share = floor(total × pct / 100). Fixed: the user types the **friend's** amount in cents (0 < amount ≤ total). The user's share is always total − friend share. | One input in every mode, and shares sum to the total by construction. | Typing both shares and validating the sum: two inputs that can disagree. Decimal percentages (33.33%). |
-| 8 | Category rules (US02) | Create and delete only (edit = delete + create). Matching ignores case and accents. User rules win over default ones; on a tie the longest keyword wins. | Covers the criterion with one form and a deterministic match. | Full CRUD: extra screen and endpoint with no demo value. |
+| 8 | Category rules (US02) | Create and delete only (edit = delete + create); default rules cannot be deleted. Matching ignores case and accents and compares whole words ("bar" does not match "Barbearia"). User rules win over default ones; on a tie the longest keyword wins, then the oldest rule. | Covers the criterion with one form and a deterministic match. | Full CRUD: extra screen and endpoint with no demo value. |
 | 9 | Chart periods (US04) | Calendar periods (current week, month, year) with previous/next navigation. | Makes the empty-period state ("Nenhum dado encontrado") demonstrable. | Rolling windows ("last 7 days"): rarely empty with the seed. |
 | 10 | Demo persistence | Keep rebuilding the DB from seed on every start. Before presenting, open `/health` to wake the API and run the demo in one sequence. | Predictable demo with zero infrastructure. Accepted free-tier ephemeral constraint. | Persistent database: outside the free tiers and the scope. |
 | 11 | Friends | Seeded list plus "add friend" (name only). No edit or delete. The new-expense form selects exactly one friend. | Tagging a friend is the core of US01, and visitors may want their own names. | Full friend CRUD: no demo value. Checkbox multi-select from the reference screen: breaks 1-to-1. |
@@ -101,7 +102,4 @@ Carried from audits; each is resolved in the named feature's spec:
 
 - Week start for chart periods: Monday or Sunday (007).
 - Marking a share `pago` later on the same day as an adjustment still shifts that adjustment, because `settled_on` has no time; decide whether to add one (006).
-- Friend names and category keywords: treat blank "letter" characters (Hangul fillers, empty Braille cell) as spaces in `normalize_text` (005).
-- `backend/app/schemas.py` reached 300 lines; split it by domain before adding 005's models (005).
 - A reimbursement's `settled_on` must not be in the future, or the newest adjustment's computed balance stops matching the current balance (006). Transaction dates are already checked (004).
-- Category keywords must be stripped of accents by the service before insert; the schema only enforces lowercase (005).

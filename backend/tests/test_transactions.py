@@ -1,5 +1,3 @@
-import threading
-from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 import pytest
@@ -7,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.services import brasilia_today
+from tests.conftest import parallel_requests
 from tests.test_db import CHECKS
 
 VALIDATION_ERROR = {
@@ -722,26 +721,6 @@ def test_openapi_split_create_forbids_extra_fields(client):
 
 
 # --- Concurrency (shared public demo, Business Rule 17) -----------------------------
-
-
-def parallel_requests(database_path, requests):
-    """Send every (method, path, body) at the same moment, one thread each, to a
-    real database file. Returns the status codes in request order.
-
-    raise_server_exceptions=False turns a server error into the 500 a visitor
-    would get, instead of an exception inside the worker thread.
-    """
-    barrier = threading.Barrier(len(requests))
-
-    with TestClient(create_app(database_path), raise_server_exceptions=False) as client:
-
-        def send(request):
-            method, path, body = request
-            barrier.wait()
-            return client.request(method, path, json=body).status_code
-
-        with ThreadPoolExecutor(max_workers=len(requests)) as pool:
-            return list(pool.map(send, requests))
 
 
 def test_parallel_split_expenses_with_category_all_succeed(database_path):

@@ -32,14 +32,20 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │   ├── main.py               # App factory: CORS, routers, error handlers, startup DB init
 │   │   ├── config.py             # Settings read from environment variables
 │   │   ├── db.py                 # sqlite3 connection, PRAGMA foreign_keys, schema + seed load (ephemeral)
-│   │   ├── schemas.py            # Pydantic request/response models (the API contract)
+│   │   ├── text.py               # Invisible-character trim, normalize_text, words (shared by schemas and services)
+│   │   ├── schemas/              # Pydantic request/response models (the API contract), one module per domain
+│   │   │   ├── common.py         # Money and id types, ErrorResponse, visible-text types
+│   │   │   ├── balance.py
+│   │   │   ├── friends.py
+│   │   │   ├── transactions.py
+│   │   │   └── categories.py
 │   │   ├── services/             # Business rules and SQL, one module per domain
 │   │   │   ├── __init__.py       # DomainError (mapped to 4xx by main.py) and brasilia_today()
 │   │   │   ├── balance.py        # Balance, adjustments, budget usage and the profile (initial balance)
 │   │   │   ├── friends.py        # Friends list and add (accent/case-insensitive duplicates)
 │   │   │   ├── transactions.py   # Includes strictly 1-to-1 split calculation
 │   │   │   ├── reimbursements.py
-│   │   │   └── categories.py
+│   │   │   └── categories.py     # Category list, keyword suggestion, user rules
 │   │   └── routers/              # HTTP only: parse, call service, return schema
 │   │       ├── health.py
 │   │       ├── profile.py
@@ -55,7 +61,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │   └── checks.sql            # Consistency queries; returns zero rows when data is valid
 │   ├── tests/
 │   │   ├── __init__.py           # Lets `pytest` put backend/ on sys.path
-│   │   ├── conftest.py           # Fresh database and TestClient per test
+│   │   ├── conftest.py           # Fresh database and TestClient per test, parallel-request helper
 │   │   └── test_<domain>.py
 │   ├── requirements.txt          # Pinned versions
 │   └── .env.example
