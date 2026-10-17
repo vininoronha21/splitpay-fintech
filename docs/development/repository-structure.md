@@ -59,13 +59,14 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 └── frontend/                     # React + Vite + TypeScript SPA
     ├── index.html
     ├── package.json
+    ├── package-lock.json         # Exact dependency tree (pinned versions)
     ├── tsconfig.json             # TypeScript configuration
     ├── tsconfig.node.json
-    ├── vite.config.ts
-    ├── postcss.config.mjs
+    ├── vite.config.ts            # React + Tailwind 4 (@tailwindcss/vite plugin, no PostCSS config)
     ├── .env.example              # VITE_API_URL
     └── src/
         ├── main.tsx
+        ├── vite-env.d.ts         # Types for import.meta.env (VITE_API_URL)
         ├── app/
         │   ├── App.tsx
         │   ├── routes.tsx
