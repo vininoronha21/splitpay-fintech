@@ -61,7 +61,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │   └── checks.sql            # Consistency queries; returns zero rows when data is valid
 │   ├── tests/
 │   │   ├── __init__.py           # Lets `pytest` put backend/ on sys.path
-│   │   ├── conftest.py           # Fresh database and TestClient per test
+│   │   ├── conftest.py           # Fresh database and TestClient per test, parallel-request helper
 │   │   └── test_<domain>.py
 │   ├── requirements.txt          # Pinned versions
 │   └── .env.example

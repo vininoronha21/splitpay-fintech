@@ -1,4 +1,8 @@
 import pytest
+from fastapi.testclient import TestClient
+
+from app.main import create_app
+from tests.conftest import parallel_requests, send_in_parallel
 
 VALIDATION_ERROR = {
     "error": {"code": "validation_error", "message": "Dados inválidos na requisição."}
@@ -260,6 +264,35 @@ def test_deleted_keyword_can_be_created_again(client):
     client.delete(f"/categories/rules/{created['id']}")
 
     assert create(client, "Pizza").status_code == 201
+
+
+# --- Concurrency (shared public demo) ------------------------------------------
+# With a deferred BEGIN, the duplicate check reads before the INSERT, and SQLite
+# refuses the lock upgrade at once ("database is locked" -> 500).
+
+
+def test_parallel_creates_same_keyword_one_wins(database_path):
+    for keyword in ("pizza", "sorveteria", "uber eats"):
+        requests = [("POST", "/categories/rules", {"keyword": keyword, "category_id": 1})] * 20
+
+        statuses = parallel_requests(database_path, requests)
+
+        assert not [status for status in statuses if status >= 500], statuses
+        assert statuses.count(201) == 1, statuses
+        assert statuses.count(409) == len(requests) - 1, statuses
+
+
+def test_parallel_deletes_same_rule_one_wins(database_path):
+    with TestClient(create_app(database_path), raise_server_exceptions=False) as client:
+        rule = client.post("/categories/rules", json={"keyword": "pizza", "category_id": 1})
+        assert rule.status_code == 201
+        requests = [("DELETE", f"/categories/rules/{rule.json()['id']}", None)] * 20
+
+        statuses = send_in_parallel(client, requests)
+
+    assert not [status for status in statuses if status >= 500], statuses
+    assert statuses.count(204) == 1, statuses
+    assert statuses.count(404) == len(requests) - 1, statuses
 
 
 # --- Swagger --------------------------------------------------------------------
