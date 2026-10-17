@@ -1,7 +1,11 @@
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
 import pytest
+from fastapi.testclient import TestClient
 
+from app.main import create_app
 from app.services import brasilia_today
 from tests.test_db import CHECKS
 
@@ -709,3 +713,80 @@ def test_openapi_split_create_forbids_extra_fields(client):
 
     assert schemas["SplitCreate"]["additionalProperties"] is False
     assert schemas["TransactionCreate"]["additionalProperties"] is False
+
+
+# --- Concurrency (shared public demo, Business Rule 17) -----------------------------
+
+
+def parallel_requests(database_path, requests):
+    """Send every (method, path, body) at the same moment, one thread each, to a
+    real database file. Returns the status codes in request order.
+
+    raise_server_exceptions=False turns a server error into the 500 a visitor
+    would get, instead of an exception inside the worker thread.
+    """
+    barrier = threading.Barrier(len(requests))
+
+    with TestClient(create_app(database_path), raise_server_exceptions=False) as client:
+
+        def send(request):
+            method, path, body = request
+            barrier.wait()
+            return client.request(method, path, json=body).status_code
+
+        with ThreadPoolExecutor(max_workers=len(requests)) as pool:
+            return list(pool.map(send, requests))
+
+
+def test_parallel_split_expenses_with_category_all_succeed(database_path):
+    # A split or a category means a read before the INSERT; with a deferred
+    # BEGIN, SQLite refused the lock upgrade at once ("database is locked").
+    requests = [
+        (
+            "POST",
+            "/transactions",
+            expense(
+                description=f"Conta paralela {i}",
+                amount_cents=1001 + i,
+                category_id=1,
+                split={"person_id": 1 + i % 8, "mode": "equal"},
+            ),
+        )
+        for i in range(20)
+    ]
+
+    for _ in range(3):
+        assert parallel_requests(database_path, requests) == [201] * len(requests)
+
+
+def test_parallel_mixed_writes_all_succeed(database_path):
+    requests = []
+    for i in range(24):
+        kind = i % 4
+        if kind == 0:
+            body = expense(
+                description=f"Mercado paralelo {i}",
+                category_id=1,
+                split={"person_id": 2, "mode": "percentage", "percent": 40},
+            )
+            requests.append(("POST", "/transactions", body))
+        elif kind == 1:
+            body = {"new_balance_cents": 100000 + i, "reason": "Ajuste em paralelo"}
+            requests.append(("POST", "/balance/adjustments", body))
+        elif kind == 2:
+            requests.append(("POST", "/friends", {"name": f"Pessoa paralela {i}"}))
+        else:
+            requests.append(("PATCH", "/profile", {"initial_balance_cents": 250000 + i}))
+
+    statuses = parallel_requests(database_path, requests)
+
+    assert 500 not in statuses
+    for (_, path, _), status in zip(requests, statuses, strict=True):
+        if path == "/balance/adjustments":
+            # Two targets may meet the same balance (no_change) only by chance;
+            # every other write must be created.
+            assert status in (201, 422)
+        elif path == "/profile":
+            assert status == 200
+        else:
+            assert status == 201

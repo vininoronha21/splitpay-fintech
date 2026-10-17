@@ -96,7 +96,11 @@ def get_profile(conn: sqlite3.Connection) -> dict[str, Any]:
 
 
 def set_initial_balance(conn: sqlite3.Connection, initial_balance_cents: int) -> dict[str, Any]:
-    """Business Rule 4. Changes the balance directly; it is not an adjustment."""
+    """Business Rule 4. Changes the balance directly; it is not an adjustment.
+
+    BEGIN IMMEDIATE like every other write, so all writers queue the same way.
+    """
+    conn.execute("BEGIN IMMEDIATE")
     try:
         conn.execute(
             "UPDATE user_profile SET initial_balance_cents = ? WHERE id = 1",

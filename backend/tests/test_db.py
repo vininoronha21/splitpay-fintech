@@ -318,6 +318,14 @@ def test_connect_enables_foreign_keys_and_named_columns(database_path):
         conn.close()
 
 
+def test_connect_waits_for_other_writers(database_path):
+    conn = connect(database_path)
+    try:
+        assert conn.execute("PRAGMA busy_timeout").fetchone()[0] == 5000
+    finally:
+        conn.close()
+
+
 def test_app_startup_rebuilds_database_file(database_path):
     Path(database_path).write_bytes(b"not a database")
 

@@ -152,6 +152,11 @@ def create_transaction(conn: sqlite3.Connection, data: dict[str, Any]) -> dict[s
     Pydantic already checked the shape; this checks what needs the database or
     the clock: the friend and category exist, and the date is not in the future.
     A new share starts as 'em_aberto' (column default).
+
+    BEGIN IMMEDIATE takes the write lock before the existence checks. With a
+    plain BEGIN, the SELECTs take a read lock first, and SQLite refuses to
+    upgrade it while another visitor is writing ("database is locked") without
+    waiting for the busy timeout.
     """
     today = brasilia_today()
     occurred_on = data.get("occurred_on") or today
@@ -165,7 +170,7 @@ def create_transaction(conn: sqlite3.Connection, data: dict[str, Any]) -> dict[s
             data["amount_cents"], split["mode"], split.get("percent"), split.get("share_cents")
         )
 
-    conn.execute("BEGIN")
+    conn.execute("BEGIN IMMEDIATE")
     try:
         category_id = data.get("category_id")
         if category_id is not None and not _exists(conn, CATEGORY_EXISTS_SQL, category_id):
