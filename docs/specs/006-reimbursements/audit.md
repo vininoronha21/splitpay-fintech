@@ -111,3 +111,18 @@ None.
 **PASS**
 
 All seven acceptance criteria, the Data Rules and the Out of Scope list hold under real requests. The evidence is 645 passing tests (each commit green), a live acceptance probe and live concurrency bursts: exactly one winner per share, no 5xx in 437 requests, and the balance moved only by the winning `pago`. T1/T2 are contract- and data-neutral. OpenAPI is byte-identical after `17f99e7`, the transaction list and detail are identical, and `/balance` is 706397 with an identical seeded adjustment history at 3200 simulated start times, including both sides of Brasília midnight. `checks.sql` returns zero rows on every fresh DB and after the writes. SQL is parameterized, the layers are clean, and money is integer cents. m1 and m2 are test gaps, not defects. Fix both before 006 merges into `dev`.
+
+## Follow-up
+
+Re-audit of `8ff5d1f` (m1, n5) and `27bbe2e` (m2, n2).
+
+- **Suite:** `.venv/bin/pytest -q` → **671 passed** (645 + 25 seed start times + 1 `open_count` test).
+- **m1 closed.** `test_seed_is_consistent_at_any_start_time` builds schema + seed in memory with `'now'` replaced by 25 fixed Brasília instants, then asserts `checks.sql` returns no rows and the balance is 706397. Mutation: I dropped the `min(..., datetime('now', '-3 hours'))` cap from the `split_share` insert. Result: **13 failed, 658 passed**, all of them `test_seed_is_consistent_at_any_start_time` (2026-03-01 at all 5 times, 2026-03-03 at 00:00/06:00/12:00, 2026-10-02 at all 5 times). Restored.
+- **m2 closed.** `test_summary_counts_shares_not_friends` opens two shares (5000 + 2000) for one friend. It asserts `open_count` rises by 2 and that the friend has one `by_person` entry of 7000. Mutation: `"open_count": len(rows)`. Result: **1 failed, 670 passed** (that test). Restored.
+- **n2 addressed.** `wait_until_not_near_midnight` runs before the adjustment in all three same-day tests in `test_balance.py` and in the API twin in `test_reimbursements.py`.
+- **n5 addressed.** The `seed.sql` diff in `8ff5d1f` changes comment lines only (each `+`/`-` line starts with `--`). No SQL changed.
+- `git diff` was empty after both mutations were restored. No product code changed in either commit.
+
+### Follow-up verdict
+
+**PASS.** Both minors are closed with tests that fail under the mutations they target. 006 can merge into `dev`.
