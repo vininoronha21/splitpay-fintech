@@ -75,6 +75,7 @@ FROM transactions t
 LEFT JOIN category c ON c.id = t.category_id
 LEFT JOIN split_share s ON s.transaction_id = t.id
 LEFT JOIN person p ON p.id = s.person_id
+WHERE ? IS NULL OR s.status = ?
 ORDER BY t.occurred_on DESC, t.id DESC
 """
 
@@ -99,7 +100,8 @@ SELECT
     p.name AS person_name,
     s.share_cents,
     s.status,
-    s.settled_on
+    -- The API exposes the settlement day; the column keeps the full time.
+    date(s.settled_at) AS settled_on
 FROM transactions t
 LEFT JOIN category c ON c.id = t.category_id
 LEFT JOIN split_share s ON s.transaction_id = t.id
@@ -118,9 +120,15 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 
-def list_transactions(conn: sqlite3.Connection) -> list[dict[str, Any]]:
-    """Every transaction, newest first (occurred_on, then id)."""
-    return [dict(row) for row in conn.execute(LIST_SQL)]
+def list_transactions(
+    conn: sqlite3.Connection, status: str | None = None
+) -> list[dict[str, Any]]:
+    """Every transaction, newest first (occurred_on, then id).
+
+    With `status`, only split expenses whose share has that status: a
+    transaction without a share has a NULL status and never matches.
+    """
+    return [dict(row) for row in conn.execute(LIST_SQL, (status, status))]
 
 
 def get_transaction(conn: sqlite3.Connection, transaction_id: int) -> dict[str, Any]:

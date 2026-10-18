@@ -1,11 +1,16 @@
 import sqlite3
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Query
 
 from app.db import get_db
 from app.schemas.common import MAX_ID, error_responses
-from app.schemas.transactions import TransactionCreate, TransactionDetail, TransactionSummary
+from app.schemas.transactions import (
+    SplitStatus,
+    TransactionCreate,
+    TransactionDetail,
+    TransactionSummary,
+)
 from app.services import transactions as transactions_service
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
@@ -26,9 +31,19 @@ def create_transaction(body: TransactionCreate, conn: Db) -> TransactionDetail:
     return TransactionDetail.model_validate(detail)
 
 
-@router.get("", response_model=list[TransactionSummary])
-def list_transactions(conn: Db) -> list[TransactionSummary]:
-    rows = transactions_service.list_transactions(conn)
+@router.get(
+    "",
+    response_model=list[TransactionSummary],
+    responses=error_responses({422: "validation_error"}),
+)
+def list_transactions(
+    conn: Db,
+    status: Annotated[
+        SplitStatus | None,
+        Query(description="Only split expenses whose share has this status."),
+    ] = None,
+) -> list[TransactionSummary]:
+    rows = transactions_service.list_transactions(conn, status)
     return [TransactionSummary.model_validate(row) for row in rows]
 
 

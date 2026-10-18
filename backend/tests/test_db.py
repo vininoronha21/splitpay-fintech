@@ -1,5 +1,6 @@
 import re
 import sqlite3
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.db import SQL_DIR, connect
 from app.main import create_app
 from app.services import brasilia_today
+from app.services.balance import get_balance
 
 # A valid split expense (id 100) and a valid income (id 101) that the
 # constraint cases below build on.
@@ -47,8 +49,8 @@ CONSTRAINT_CASES = {
         "'expense'", "'income'"
     ),
     "status_invalid": (
-        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_on)"
-        " VALUES (100, 1, 100, 'cancelado', date('now'))"
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'cancelado', datetime('now', '-3 hours'))"
     ),
     "installment_number_above_total": insert_tx(
         ", installment_number, installment_total", ", 4, 3"
@@ -83,9 +85,53 @@ CONSTRAINT_CASES = {
     "occurred_on_with_time": insert_tx("", "").replace("date('now')", "datetime('now')"),
     "created_at_text": insert_tx(", created_at", ", 'abc'"),
     "created_at_julian_number": insert_tx(", created_at", ", 2461000.5"),
-    "settled_on_text": (
-        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_on)"
+    "settled_at_text": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
         " VALUES (100, 1, 100, 'pago', 'abc')"
+    ),
+    "settled_at_date_only": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'pago', date('now', '-3 hours', '+1 day'))"
+    ),
+    "settled_at_iso_t_separator": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'pago', strftime('%Y-%m-%dT%H:%M:%S', 'now', '-3 hours', '+1 hour'))"
+    ),
+    "settled_at_julian_number": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'pago', julianday('now', '+1 hour'))"
+    ),
+    # settled_at is set if and only if the share left 'em_aberto'.
+    "settled_at_on_open_share": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'em_aberto', datetime('now', '-3 hours'))"
+    ),
+    "pago_without_settled_at": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status)"
+        " VALUES (100, 1, 100, 'pago')"
+    ),
+    "acertado_without_settled_at": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status)"
+        " VALUES (100, 1, 100, 'acertado')"
+    ),
+    "close_share_without_settled_at": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 100);"
+        "UPDATE split_share SET status = 'pago' WHERE transaction_id = 100"
+    ),
+    # Never settled before the expense was recorded (trigger, insert and update).
+    "settled_at_before_created_at": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'pago', datetime('now', '-3 hours', '-1 day'))"
+    ),
+    "update_settled_at_before_created_at": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents) VALUES (100, 1, 100);"
+        "UPDATE split_share SET status = 'pago', settled_at = datetime('now', '-3 hours', '-1 day')"
+        " WHERE transaction_id = 100"
+    ),
+    "update_created_at_after_settled_at": (
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'pago', datetime('now', '-3 hours'));"
+        "UPDATE transactions SET created_at = datetime('now', '-3 hours', '+1 day') WHERE id = 100"
     ),
     "adjustment_created_at_text": (
         "INSERT INTO balance_adjustment (delta_cents, reason, created_at)"
@@ -182,6 +228,55 @@ def test_valid_edits_and_integer_like_values_are_accepted(db):
         assert db.execute(sql).fetchall() == [], check_name
 
 
+def test_valid_settlements_are_accepted(db):
+    # Guards the settled_at cases: closing a share at the very moment its
+    # expense was recorded, or later, passes; reopening clears settled_at.
+    db.executescript(FIXTURE_ROWS)
+    created_at = db.execute("SELECT created_at FROM transactions WHERE id = 100").fetchone()[0]
+    db.execute(
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'acertado', ?)",
+        (created_at,),
+    )
+    db.execute(
+        "UPDATE split_share SET status = 'pago', settled_at = datetime('now', '-3 hours')"
+        " WHERE transaction_id = 100"
+    )
+    db.execute(
+        "UPDATE split_share SET status = 'em_aberto', settled_at = NULL WHERE transaction_id = 100"
+    )
+
+    for check_name, sql in CHECKS:
+        assert db.execute(sql).fetchall() == [], check_name
+
+
+def test_schema_accepts_future_settled_at_and_checks_flag_it(db):
+    # Not future-safe by design: "now" moves, so a CHECK or trigger cannot judge
+    # it once and for all. The API always writes now; checks.sql catches the rest.
+    db.executescript(FIXTURE_ROWS)
+    db.execute(
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'pago', datetime('now', '-3 hours', '+1 day'))"
+    )
+
+    flagged = {name for name, sql in CHECKS if db.execute(sql).fetchall()}
+    assert flagged == {"settled_at_not_in_future"}
+
+
+def test_check_flags_settled_at_before_created_at(db):
+    # The trigger blocks this; the check must still see it if the rule is
+    # bypassed (triggers dropped, rows loaded by another tool).
+    db.executescript(FIXTURE_ROWS)
+    db.execute("DROP TRIGGER split_share_validate_insert")
+    db.execute(
+        "INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)"
+        " VALUES (100, 1, 100, 'pago', datetime('now', '-3 hours', '-1 hour'))"
+    )
+
+    flagged = {name for name, sql in CHECKS if db.execute(sql).fetchall()}
+    assert "settled_at_not_before_created_at" in flagged
+
+
 def load_checks() -> list[tuple[str, str]]:
     text = (SQL_DIR / "checks.sql").read_text(encoding="utf-8")
     blocks = re.split(r"^-- check: (\S+)\n", text, flags=re.MULTILINE)[1:]
@@ -233,8 +328,8 @@ def test_seed_has_nothing_older_than_12_months_or_in_the_future(db):
     assert count(
         db,
         "SELECT count(*) FROM split_share"
-        " WHERE settled_on < date('now', '-3 hours', '-12 months')"
-        " OR settled_on > date('now', '-3 hours')",
+        " WHERE settled_at < datetime('now', '-3 hours', '-12 months')"
+        " OR settled_at > datetime('now', '-3 hours')",
     ) == 0
     assert count(
         db,
@@ -249,7 +344,7 @@ def test_seed_newest_dates_are_not_after_brasilia_today(db):
     # between 21:00 and 23:59 Brasília would be dated tomorrow.
     row = db.execute(
         "SELECT (SELECT max(occurred_on) FROM transactions),"
-        " (SELECT max(settled_on) FROM split_share),"
+        " (SELECT max(date(settled_at)) FROM split_share),"
         " date('now', '-3 hours')"
     ).fetchone()
     newest_occurred_on, newest_settled_on, today = row
@@ -272,6 +367,23 @@ def test_seed_transactions_were_recorded_on_their_day_during_the_day(db):
         "SELECT count(*) FROM transactions"
         " WHERE created_at < datetime('now', '-3 hours', 'start of day')"
         " AND time(created_at) NOT BETWEEN '08:00:00' AND '17:59:59'",
+    ) == 0
+
+
+def test_seed_shares_were_settled_after_their_expense_during_the_day(db):
+    # The adjustment history orders a settlement against an adjustment by
+    # settled_at, so a seeded one must not predate its expense's created_at and
+    # must look like a daytime payment (unless capped at a "now" before noon).
+    assert count(
+        db,
+        "SELECT count(*) FROM split_share s JOIN transactions t ON t.id = s.transaction_id"
+        " WHERE s.settled_at < t.created_at",
+    ) == 0
+    assert count(
+        db,
+        "SELECT count(*) FROM split_share"
+        " WHERE settled_at < datetime('now', '-3 hours', 'start of day')"
+        " AND time(settled_at) NOT BETWEEN '08:00:00' AND '17:59:59'",
     ) == 0
 
 
@@ -323,6 +435,8 @@ def test_seed_computed_balance_is_positive(db):
     )
 
     assert balance > 0
+    # The seeded total does not depend on the start date (audits 003/004).
+    assert balance == 706397
 
 
 def test_connect_enables_foreign_keys_and_named_columns(database_path):
@@ -378,3 +492,53 @@ def test_brasilia_today_matches_sql_brasilia_date(db):
     sql_today = db.execute("SELECT date('now', '-3 hours')").fetchone()[0]
 
     assert brasilia_today().isoformat() == sql_today
+
+
+# Brasília start times for the seed: mornings, noon, evenings and both sides of
+# midnight, on days next to month boundaries (the rent share is settled on day
+# 3 of the month) and on ordinary days. Audit 006 m1: a run at a fixed wall
+# clock cannot prove the seed never settles a share in the future.
+SIMULATED_BRASILIA_NOW = [
+    f"{day} {time}"
+    for day in ("2026-03-01", "2026-03-03", "2026-07-15", "2026-10-02", "2026-12-31")
+    for time in ("00:00:00", "06:00:00", "12:00:00", "20:00:00", "23:59:59")
+]
+
+
+def seed_at(brasilia_now: str) -> tuple[sqlite3.Connection, str]:
+    """Build schema + seed in memory as if SQLite's 'now' were `brasilia_now`
+    (Brasília time). Returns the connection and the UTC literal used for 'now'."""
+    utc_now = (datetime.fromisoformat(brasilia_now) + timedelta(hours=3)).isoformat(" ")
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    for name in ("schema.sql", "seed.sql"):
+        text = (SQL_DIR / name).read_text(encoding="utf-8")
+        conn.executescript(text.replace("'now'", f"'{utc_now}'"))
+    return conn, utc_now
+
+
+@pytest.mark.parametrize("brasilia_now", SIMULATED_BRASILIA_NOW)
+def test_seed_is_consistent_at_any_start_time(brasilia_now):
+    conn, utc_now = seed_at(brasilia_now)
+    try:
+        assert conn.execute("SELECT datetime(?, '-3 hours')", (utc_now,)).fetchone()[0] == (
+            brasilia_now
+        )
+        flagged = {
+            name: [tuple(row) for row in rows]
+            for name, sql in CHECKS
+            if (rows := conn.execute(sql.replace("'now'", f"'{utc_now}'")).fetchall())
+        }
+        assert flagged == {}
+        assert get_balance(conn)["balance_cents"] == 706397
+        # The seed comment's promise: no seeded 'pago' is settled after an
+        # adjustment of the same day, so the seeded history matches a date-only rule.
+        late_same_day_pago = conn.execute(
+            "SELECT count(*) FROM split_share s, balance_adjustment a"
+            " WHERE s.status = 'pago' AND date(s.settled_at) = date(a.created_at)"
+            " AND s.settled_at > a.created_at"
+        ).fetchone()[0]
+        assert late_same_day_pago == 0
+    finally:
+        conn.close()

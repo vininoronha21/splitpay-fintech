@@ -209,26 +209,43 @@ SET created_at = min(
     datetime('now', '-3 hours')
 );
 
--- Friend shares. settled_on is set iff status <> 'em_aberto', never before
--- occurred_on and never in the future (min() caps it at Brasília today).
-INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_on) VALUES
-    (2,  1, 9395,  'em_aberto', NULL),                                    -- equal 18790 / 2
-    (4,  2, 13712, 'em_aberto', NULL),                                    -- 40% of 34280
-    (6,  3, 4800,  'pago',     (SELECT min(date(occurred_on, '+1 day'), date('now', '-3 hours')) FROM transactions WHERE id = 6)),
-    (7,  4, 90000, 'pago',     (SELECT min(date(occurred_on, '+2 days'), date('now', '-3 hours')) FROM transactions WHERE id = 7)),
-    (8,  4, 10718, 'em_aberto', NULL),                                    -- 50% of 21437 (floor)
-    (11, 6, 4495,  'acertado', (SELECT min(date(occurred_on, '+3 days'), date('now', '-3 hours')) FROM transactions WHERE id = 11)),
-    (13, 8, 7000,  'pago',     (SELECT date(occurred_on) FROM transactions WHERE id = 13)),
-    (16, 4, 90000, 'pago',     (SELECT date(occurred_on, '+2 days') FROM transactions WHERE id = 16)),
-    (17, 5, 18369, 'pago',     (SELECT date(occurred_on, '+4 days') FROM transactions WHERE id = 17)), -- 30% of 61230
-    (19, 7, 22500, 'acertado', (SELECT date(occurred_on, '+6 days') FROM transactions WHERE id = 19)),
-    (21, 4, 90000, 'pago',     (SELECT date(occurred_on, '+1 day') FROM transactions WHERE id = 21)),
-    (22, 3, 3997,  'acertado', (SELECT date(occurred_on, '+5 days') FROM transactions WHERE id = 22)), -- 25% of 15990 (floor)
-    (23, 4, 90000, 'pago',     (SELECT date(occurred_on) FROM transactions WHERE id = 23)),       -- Pedro's first month: paid on rent day
-    (28, 1, 48000, 'pago',     (SELECT date(occurred_on, '+7 days') FROM transactions WHERE id = 28)),
-    (29, 1, 28000, 'acertado', (SELECT date(occurred_on, '+10 days') FROM transactions WHERE id = 29)),
-    (33, 5, 3920,  'em_aberto', NULL),                                    -- equal 7840 / 2
-    (35, 2, 12425, 'pago',     (SELECT date(occurred_on, '+2 days') FROM transactions WHERE id = 35)); -- 50% of 24850
+-- Friend shares. A closed share was settled days_after its expense, in the
+-- afternoon (12:00-17:59, varied by id). That is before the 18:00 adjustment,
+-- so a share settled on its day counts toward it, as it did with a date only.
+-- It is after the 10:00 adjustment, so one settled on that day would not
+-- count; no seeded 'pago' share lands on that day. max() keeps it
+-- at or after the expense's created_at (set by the UPDATE above, so this
+-- INSERT must come after it) and min() caps it at now, so it is never in the
+-- future. settled_at is NULL iff the share is still 'em_aberto'.
+WITH share (transaction_id, person_id, share_cents, status, days_after) AS (VALUES
+    (2,  1, 9395,  'em_aberto', NULL),  -- equal 18790 / 2
+    (4,  2, 13712, 'em_aberto', NULL),  -- 40% of 34280
+    (6,  3, 4800,  'pago',      1),
+    (7,  4, 90000, 'pago',      2),
+    (8,  4, 10718, 'em_aberto', NULL),  -- 50% of 21437 (floor)
+    (11, 6, 4495,  'acertado',  3),
+    (13, 8, 7000,  'pago',      0),
+    (16, 4, 90000, 'pago',      2),
+    (17, 5, 18369, 'pago',      4),     -- 30% of 61230
+    (19, 7, 22500, 'acertado',  6),
+    (21, 4, 90000, 'pago',      1),
+    (22, 3, 3997,  'acertado',  5),     -- 25% of 15990 (floor)
+    (23, 4, 90000, 'pago',      0),     -- Pedro's first month: paid on rent day
+    (28, 1, 48000, 'pago',      7),
+    (29, 1, 28000, 'acertado',  10),
+    (33, 5, 3920,  'em_aberto', NULL),  -- equal 7840 / 2
+    (35, 2, 12425, 'pago',      2)      -- 50% of 24850
+)
+INSERT INTO split_share (transaction_id, person_id, share_cents, status, settled_at)
+SELECT s.transaction_id, s.person_id, s.share_cents, s.status,
+       CASE WHEN s.status <> 'em_aberto' THEN min(
+           max(datetime(t.occurred_on, '+' || s.days_after || ' days',
+                        '+' || (12 + t.id % 6) || ' hours', '+' || (t.id * 11 % 60) || ' minutes'),
+               t.created_at),
+           datetime('now', '-3 hours')
+       ) END
+FROM share s
+JOIN transactions t ON t.id = s.transaction_id;
 
 INSERT INTO balance_adjustment (delta_cents, reason, created_at) VALUES
     (5000,   'Correção após conferir o extrato do banco', datetime('now', '-3 hours', 'start of month', '-3 months', '+25 days', '+10 hours')),

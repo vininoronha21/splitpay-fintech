@@ -9,7 +9,7 @@ Read with `goal.md`. This file records the current state, the stack, the decisio
 
 ## Current State of the Repository
 
-- Phase 1 (API) in progress. Done and merged: 001 restructure, 002 database, 003 balance, 004 split; 005 categories implemented. Next: 006 reimbursements, 007 dashboard.
+- Phase 1 (API) in progress. Done and merged: 001 restructure, 002 database, 003 balance, 004 split, 005 categories; 006 reimbursements implemented. Next: 007 dashboard.
 - `frontend/` is a Vite + React + TypeScript scaffold that calls `/health`; screens come in phase 2.
 - Agents are in `.claude/agents/`; reference material (`tela_*.png`, `USER-STORIES.pdf`) is in `docs/assets/`. The visual identity is a dark theme with a yellow accent.
 - The reference screens are **visual inspiration only**. They show group splits, an "Em Atraso" status and "Lembrar" buttons, all of which are out of scope (see Business Rules 1 and 6).
@@ -51,7 +51,7 @@ Browser ── Vercel (React + Vite + TypeScript SPA)
 - `person`: friends the user can split with.
 - `category` and `category_rule`: keyword → category.
 - `transaction`: description, total, category, date, type (expense/income), place, installment number and total (display only), payment method, notes, split mode.
-- `split_share`: transaction × person (strictly 1-to-1 for now), share amount, reimbursement status (`em_aberto` / `pago` / `acertado`).
+- `split_share`: transaction × person (strictly 1-to-1 for now), share amount, reimbursement status (`em_aberto` / `pago` / `acertado`) and `settled_at`, the Brasília timestamp of the settlement (null while open).
 - `balance_adjustment`: signed delta in cents, reason, timestamp. Previous and new balance are computed when listing the history, never stored.
 
 ## Security Baseline (audited in phase 1)
@@ -95,11 +95,10 @@ Each rule lists what was chosen, why, and the rejected alternative.
 | 17 | Shared demo data | Every visitor reads and writes the same data; restarting the API restores the seed. | The project is a public demonstration. | Per-visitor data: needs real accounts, out of scope. |
 | 18 | Time | Every date and timestamp is Brasília time, a fixed UTC−3 offset (`'now', '-3 hours'` in SQL). `created_at` uses `YYYY-MM-DD HH:MM:SS`; the API never sends it and relies on the column default (only the seed writes it explicitly). | Brazil has had no daylight saving time since 2019, and Render runs in UTC, so evening entries would otherwise land on the next day. | `'localtime'` (server is UTC); a timezone library for a fixed offset. |
 | 19 | Adjustment history ordering | An income or expense dated on an adjustment's day counts toward it only if it was created no later than the adjustment; back-dated entries shift history, which shows the balance as of that date. | A same-day entry made after the adjustment must not change the balance the user typed. | Ordering by date only: the typed value changed after any same-day expense. |
+| 20 | Settling a reimbursement | Marking a share `pago` or `acertado` records the moment of the request (`settled_at`); no date input, and closed states are final. A `pago` share counts toward an adjustment when settled no later than it. | The balance history stays explainable and a settlement can never be in the future or before its expense. | A settlement date field and reopening: each edit silently rewrites past balances. |
 
 ## Open Questions
 
 Carried from audits; each is resolved in the named feature's spec:
 
 - Week start for chart periods: Monday or Sunday (007).
-- Marking a share `pago` later on the same day as an adjustment still shifts that adjustment, because `settled_on` has no time; decide whether to add one (006).
-- A reimbursement's `settled_on` must not be in the future, or the newest adjustment's computed balance stops matching the current balance (006). Transaction dates are already checked (004).
