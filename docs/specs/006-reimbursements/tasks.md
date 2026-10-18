@@ -5,4 +5,4 @@
 - [x] T3 — Settle a share, list and summary | owner: backend-engineer | files: `backend/app/services/reimbursements.py`, `backend/app/routers/reimbursements.py`, `backend/app/schemas/reimbursements.py`, `backend/app/main.py`, `backend/tests/test_reimbursements.py` | verify: `pytest tests/test_reimbursements.py` passes
 - [x] T4 — Status filter on `GET /transactions` | owner: backend-engineer | files: `backend/app/services/transactions.py`, `backend/app/routers/transactions.py`, `backend/tests/test_transactions.py` | verify: `pytest tests/test_transactions.py` passes
 - [x] T5 — Docs sync | owner: main session | files: `docs/context.md`, `docs/development/repository-structure.md` | verify: Rule 20 added; 006 questions closed
-- [ ] T6 — Audit | owner: auditor | files: `docs/specs/006-reimbursements/audit.md` | verify: verdict PASS
+- [x] T6 — Audit | owner: auditor | files: `docs/specs/006-reimbursements/audit.md` | verify: verdict PASS
