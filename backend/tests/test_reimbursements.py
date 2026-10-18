@@ -4,7 +4,11 @@ from app.db import connect
 from app.services import brasilia_today
 from app.text import normalize_text
 from tests.conftest import parallel_requests
-from tests.test_balance import post_adjustment, wait_for_next_second
+from tests.test_balance import (
+    post_adjustment,
+    wait_for_next_second,
+    wait_until_not_near_midnight,
+)
 from tests.test_db import CHECKS
 
 VALIDATION_ERROR = {
@@ -213,6 +217,7 @@ def test_seed_income_and_unsplit_expense_ids_are_what_the_tests_assume(db):
 
 def test_pago_after_same_day_adjustment_keeps_its_balance(client, db):
     # AC5 through the API: the payment counts from now on, not in the past entry.
+    wait_until_not_near_midnight(db)
     adjustment = post_adjustment(client, 123456).json()
     wait_for_next_second(db, adjustment["created_at"])
 
@@ -414,6 +419,27 @@ def test_summary_orders_ties_by_name_ignoring_accents(client):
 
     assert [person["person_name"] for person in by_person[:2]] == ["Álvaro", "Zeca"]
     assert by_person[0]["open_cents"] == big // 2
+
+
+def test_summary_counts_shares_not_friends(client, db):
+    # Audit 006 m2: two open shares for one friend are two in open_count and
+    # one by_person entry holding both.
+    friend = client.post("/friends", json={"name": "Bruna"}).json()
+    before = client.get("/reimbursements/summary").json()
+    first = new_split_expense(client, amount_cents=10000, person_id=friend["id"])
+    second = new_split_expense(client, amount_cents=4001, person_id=friend["id"])
+    shares = [tx["split"]["friend_share_cents"] for tx in (first, second)]
+    assert shares == [5000, 2000]
+
+    after = client.get("/reimbursements/summary").json()
+
+    assert after == expected_summary(db)
+    assert after["open_count"] == before["open_count"] + 2
+    assert after["open_cents"] == before["open_cents"] + sum(shares)
+    entries = [p for p in after["by_person"] if p["person_id"] == friend["id"]]
+    assert entries == [
+        {"person_id": friend["id"], "person_name": "Bruna", "open_cents": sum(shares)}
+    ]
 
 
 def test_summary_orders_largest_first(client):

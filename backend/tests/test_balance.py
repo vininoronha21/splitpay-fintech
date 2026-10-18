@@ -331,9 +331,18 @@ def wait_for_next_second(db, timestamp: str) -> None:
         time.sleep(0.02)
 
 
+def wait_until_not_near_midnight(db) -> None:
+    """A same-day test posts an adjustment, waits a second, then writes again.
+    Started at Brasília 23:59:58 or later, the second write would land on the
+    next day. Wait until after midnight first so both stay on the same day."""
+    while db.execute("SELECT time('now', '-3 hours')").fetchone()[0] >= "23:59:58":
+        time.sleep(0.05)
+
+
 def test_same_day_expense_after_adjustment_keeps_typed_balance(client, db):
     # Business Rule 12: the history shows the balance the user typed, even
     # after an expense dated today is added later the same day.
+    wait_until_not_near_midnight(db)
     adjustment = post_adjustment(client, 123456).json()
     wait_for_next_second(db, adjustment["created_at"])
 
@@ -347,6 +356,7 @@ def test_same_day_expense_after_adjustment_keeps_typed_balance(client, db):
 
 
 def test_same_day_income_after_adjustment_keeps_typed_balance(client, db):
+    wait_until_not_near_midnight(db)
     adjustment = post_adjustment(client, 123456).json()
     wait_for_next_second(db, adjustment["created_at"])
 
@@ -362,6 +372,7 @@ def test_same_day_income_after_adjustment_keeps_typed_balance(client, db):
 def test_same_day_pago_after_adjustment_keeps_typed_balance(client, db):
     # AC5: a share marked 'pago' after an adjustment, the same day, moves the
     # current balance but not the balance the user typed in that adjustment.
+    wait_until_not_near_midnight(db)
     adjustment = post_adjustment(client, 123456).json()
     wait_for_next_second(db, adjustment["created_at"])
 
