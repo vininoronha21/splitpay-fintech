@@ -1,5 +1,6 @@
 import re
 import sqlite3
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.db import SQL_DIR, connect
 from app.main import create_app
 from app.services import brasilia_today
+from app.services.balance import get_balance
 
 # A valid split expense (id 100) and a valid income (id 101) that the
 # constraint cases below build on.
@@ -490,3 +492,53 @@ def test_brasilia_today_matches_sql_brasilia_date(db):
     sql_today = db.execute("SELECT date('now', '-3 hours')").fetchone()[0]
 
     assert brasilia_today().isoformat() == sql_today
+
+
+# Brasília start times for the seed: mornings, noon, evenings and both sides of
+# midnight, on days next to month boundaries (the rent share is settled on day
+# 3 of the month) and on ordinary days. Audit 006 m1: a run at a fixed wall
+# clock cannot prove the seed never settles a share in the future.
+SIMULATED_BRASILIA_NOW = [
+    f"{day} {time}"
+    for day in ("2026-03-01", "2026-03-03", "2026-07-15", "2026-10-02", "2026-12-31")
+    for time in ("00:00:00", "06:00:00", "12:00:00", "20:00:00", "23:59:59")
+]
+
+
+def seed_at(brasilia_now: str) -> tuple[sqlite3.Connection, str]:
+    """Build schema + seed in memory as if SQLite's 'now' were `brasilia_now`
+    (Brasília time). Returns the connection and the UTC literal used for 'now'."""
+    utc_now = (datetime.fromisoformat(brasilia_now) + timedelta(hours=3)).isoformat(" ")
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    for name in ("schema.sql", "seed.sql"):
+        text = (SQL_DIR / name).read_text(encoding="utf-8")
+        conn.executescript(text.replace("'now'", f"'{utc_now}'"))
+    return conn, utc_now
+
+
+@pytest.mark.parametrize("brasilia_now", SIMULATED_BRASILIA_NOW)
+def test_seed_is_consistent_at_any_start_time(brasilia_now):
+    conn, utc_now = seed_at(brasilia_now)
+    try:
+        assert conn.execute("SELECT datetime(?, '-3 hours')", (utc_now,)).fetchone()[0] == (
+            brasilia_now
+        )
+        flagged = {
+            name: [tuple(row) for row in rows]
+            for name, sql in CHECKS
+            if (rows := conn.execute(sql.replace("'now'", f"'{utc_now}'")).fetchall())
+        }
+        assert flagged == {}
+        assert get_balance(conn)["balance_cents"] == 706397
+        # The seed comment's promise: no seeded 'pago' is settled after an
+        # adjustment of the same day, so the seeded history matches a date-only rule.
+        late_same_day_pago = conn.execute(
+            "SELECT count(*) FROM split_share s, balance_adjustment a"
+            " WHERE s.status = 'pago' AND date(s.settled_at) = date(a.created_at)"
+            " AND s.settled_at > a.created_at"
+        ).fetchone()[0]
+        assert late_same_day_pago == 0
+    finally:
+        conn.close()

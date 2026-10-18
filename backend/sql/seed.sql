@@ -210,8 +210,10 @@ SET created_at = min(
 );
 
 -- Friend shares. A closed share was settled days_after its expense, in the
--- afternoon (12:00-17:59, varied by id; before the 18:00 adjustment, so it
--- counts toward that day's history as it did with a date only). max() keeps it
+-- afternoon (12:00-17:59, varied by id). That is before the 18:00 adjustment,
+-- so a share settled on its day counts toward it, as it did with a date only.
+-- It is after the 10:00 adjustment, so one settled on that day would not
+-- count; no seeded 'pago' share lands on that day. max() keeps it
 -- at or after the expense's created_at (set by the UPDATE above, so this
 -- INSERT must come after it) and min() caps it at now, so it is never in the
 -- future. settled_at is NULL iff the share is still 'em_aberto'.
