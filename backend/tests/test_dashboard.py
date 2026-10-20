@@ -1,7 +1,9 @@
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pytest
 
+import app.services
+import app.services.dashboard
 from app.services import brasilia_today
 from app.services.dashboard import period_bounds
 from app.text import normalize_text
@@ -236,14 +238,129 @@ def test_empty_period_returns_zero_and_empty_lists(client, db, same_day):
     assert empty["by_category"] == []
     assert empty["by_person"] == []
 
+    # Search only the months the seed covers, so an empty month here is a real
+    # gap inside the seeded range, not a month older than the seed.
+    first_expense = date.fromisoformat(
+        db.execute("SELECT min(occurred_on) FROM transactions WHERE type = 'expense'").fetchone()[0]
+    )
+    today = brasilia_today()
+    oldest_offset = (first_expense.year - today.year) * 12 + first_expense.month - today.month
+    assert charts(client, "month", oldest_offset)["total_cents"] > 0
     empty_months = [
         offset
-        for offset in range(0, -14, -1)
+        for offset in range(0, oldest_offset, -1)
         if charts(client, "month", offset)["total_cents"] == 0
     ]
     assert empty_months
     body = charts(client, "month", empty_months[0])
     assert (body["by_category"], body["by_person"]) == ([], [])
+
+
+def test_people_tie_sorted_ignoring_case_and_accents(client, same_day):
+    # AC6: equal totals -> name order ignoring case and accents. Created in
+    # the reverse of the expected order, so neither the raw name nor the id
+    # gives it.
+    ids = {}
+    for name in ("Zeca", "beto", "Álvaro"):
+        created = client.post("/friends", json={"name": name})
+        assert created.status_code == 201
+        ids[created.json()["id"]] = name
+        expense = client.post(
+            "/transactions",
+            json={
+                "type": "expense",
+                "description": f"Rateio com {name}",
+                "amount_cents": 2000,
+                "category_id": 8,
+                "split": {"person_id": created.json()["id"], "mode": "fixed", "share_cents": 777},
+            },
+        )
+        assert expense.status_code == 201
+    people = [p for p in charts(client, "week")["by_person"] if p["person_id"] in ids]
+    assert [p["person_name"] for p in people] == ["Álvaro", "beto", "Zeca"]
+    assert {p["total_cents"] for p in people} == {777}
+
+
+def test_categories_tie_sorted_ignoring_case_and_accents(client, db, same_day):
+    # AC4: equal totals -> name order ignoring case and accents. Inserted in
+    # the reverse of the expected order, so neither the raw name nor the id
+    # gives it.
+    db.executemany(
+        "INSERT INTO category (id, name) VALUES (?, ?)",
+        [(97, "chá"), (98, "Bebidas"), (99, "Álcool")],
+    )
+    db.commit()
+    for category_id in (97, 98, 99):
+        created = client.post(
+            "/transactions",
+            json={
+                "type": "expense",
+                "description": "Empate",
+                "amount_cents": 98765,
+                "category_id": category_id,
+            },
+        )
+        assert created.status_code == 201
+    categories = [
+        c for c in charts(client, "week")["by_category"] if c["category_id"] in (97, 98, 99)
+    ]
+    assert [c["category_name"] for c in categories] == ["Álcool", "Bebidas", "chá"]
+    assert {c["total_cents"] for c in categories} == {98765}
+
+
+def test_same_day_items_newest_id_first(client, db, same_day):
+    # AC5: items on the same day keep a stable order, newest id first.
+    db.execute("INSERT INTO category (id, name) VALUES (99, 'Mesmo dia')")
+    db.commit()
+    ids = []
+    for amount in (100, 200, 300):
+        created = client.post(
+            "/transactions",
+            json={"type": "expense", "description": "Mesmo dia", "amount_cents": amount,
+                  "category_id": 99},
+        )
+        assert created.status_code == 201
+        ids.append(created.json()["id"])
+    category = next(c for c in charts(client, "week")["by_category"] if c["category_id"] == 99)
+    assert [i["transaction_id"] for i in category["items"]] == ids[::-1]
+
+
+@pytest.mark.parametrize(
+    ("utc_instant", "week", "month", "year"),
+    [
+        # Sunday 1 Nov 2026 in UTC, still Saturday 31 Oct 22:30 in Brasília.
+        (datetime(2026, 11, 1, 1, 30), ("2026-10-26", "2026-11-01"), "2026-10", "2026"),
+        # Monday 26 Oct in UTC, still Sunday 25 Oct 22:30 in Brasília.
+        (datetime(2026, 10, 26, 1, 30), ("2026-10-19", "2026-10-25"), "2026-10", "2026"),
+        # 1 Jan 2027 in UTC, still 31 Dec 2026 22:30 in Brasília.
+        (datetime(2027, 1, 1, 1, 30), ("2026-12-28", "2027-01-03"), "2026-12", "2026"),
+    ],
+)
+def test_periods_follow_brasilia_date_not_server_clock(
+    client, monkeypatch, utc_instant, week, month, year
+):
+    # Business Rule 18: a server clock in UTC is already on the next day.
+    instant = utc_instant.replace(tzinfo=timezone.utc)
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return instant.astimezone(tz) if tz else instant.replace(tzinfo=None)
+
+    class ServerDate(date):
+        @classmethod
+        def today(cls):
+            return instant.date()
+
+    monkeypatch.setattr(app.services, "datetime", FrozenDateTime)
+    # The server's own date, should the service ever read it instead.
+    monkeypatch.setattr(app.services.dashboard, "date", ServerDate)
+
+    assert (charts(client, "week")["start"], charts(client, "week")["end"]) == week
+    month_body = charts(client, "month")
+    assert month_body["start"][:7] == month_body["end"][:7] == month
+    assert month_body["start"].endswith("-01")
+    assert charts(client, "year")["start"] == f"{year}-01-01"
 
 
 def test_current_month_matches_budget(client, same_day):
