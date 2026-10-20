@@ -81,9 +81,13 @@ CREATE TABLE split_share (
     share_cents    INTEGER NOT NULL CHECK (typeof(share_cents) = 'integer' AND share_cents >= 0),
     status         TEXT    NOT NULL DEFAULT 'em_aberto'
                    CHECK (status IN ('em_aberto', 'pago', 'acertado')),
-    settled_on     TEXT    CHECK (date(settled_on) IS settled_on),
-    -- settled_on is set if and only if the share left 'em_aberto'.
-    CHECK ((status = 'em_aberto') = (settled_on IS NULL))
+    -- When the share left 'em_aberto' (Brasília, 'YYYY-MM-DD HH:MM:SS'). A
+    -- timestamp, not a date, so a payment is ordered against an adjustment
+    -- made the same day. Never before the expense's created_at (trigger
+    -- below); "not in the future" depends on the clock, so checks.sql covers it.
+    settled_at     TEXT    CHECK (datetime(settled_at) IS settled_at),
+    -- settled_at is set if and only if the share left 'em_aberto'.
+    CHECK ((status = 'em_aberto') = (settled_at IS NULL))
 );
 
 -- Manual balance corrections: a signed delta and a reason. The previous and
@@ -100,7 +104,9 @@ CREATE INDEX idx_transactions_occurred_on ON transactions (occurred_on);
 CREATE INDEX idx_split_share_person ON split_share (person_id);
 
 -- Cross-table rules (CHECK cannot read another table), enforced by triggers.
--- A share must point to a split expense and never exceed its amount.
+-- A share must point to a split expense, never exceed its amount and never be
+-- settled before the expense was recorded. Both triggers fire on any column,
+-- so they also cover an UPDATE of settled_at.
 CREATE TRIGGER split_share_validate_insert
 BEFORE INSERT ON split_share
 BEGIN
@@ -110,6 +116,10 @@ BEGIN
     WHERE EXISTS (SELECT 1 FROM transactions WHERE id = NEW.transaction_id AND split_mode IS NULL);
     SELECT RAISE(ABORT, 'split_share: share_cents greater than amount_cents')
     WHERE NEW.share_cents > (SELECT amount_cents FROM transactions WHERE id = NEW.transaction_id);
+    -- Both are canonical 'YYYY-MM-DD HH:MM:SS' text, so text order is time order.
+    -- A NULL settled_at compares as NULL and passes.
+    SELECT RAISE(ABORT, 'split_share: settled_at before the transaction created_at')
+    WHERE NEW.settled_at < (SELECT created_at FROM transactions WHERE id = NEW.transaction_id);
 END;
 
 CREATE TRIGGER split_share_validate_update
@@ -121,11 +131,15 @@ BEGIN
     WHERE EXISTS (SELECT 1 FROM transactions WHERE id = NEW.transaction_id AND split_mode IS NULL);
     SELECT RAISE(ABORT, 'split_share: share_cents greater than amount_cents')
     WHERE NEW.share_cents > (SELECT amount_cents FROM transactions WHERE id = NEW.transaction_id);
+    -- Both are canonical 'YYYY-MM-DD HH:MM:SS' text, so text order is time order.
+    -- A NULL settled_at compares as NULL and passes.
+    SELECT RAISE(ABORT, 'split_share: settled_at before the transaction created_at')
+    WHERE NEW.settled_at < (SELECT created_at FROM transactions WHERE id = NEW.transaction_id);
 END;
 
 -- Editing a transaction must not invalidate its existing share.
 CREATE TRIGGER transactions_validate_share_update
-BEFORE UPDATE OF type, amount_cents, split_mode ON transactions
+BEFORE UPDATE OF type, amount_cents, split_mode, created_at ON transactions
 WHEN EXISTS (SELECT 1 FROM split_share WHERE transaction_id = NEW.id)
 BEGIN
     SELECT RAISE(ABORT, 'transactions: split transaction cannot become an income')
@@ -134,4 +148,6 @@ BEGIN
     WHERE NEW.split_mode IS NULL;
     SELECT RAISE(ABORT, 'transactions: amount_cents lower than the existing share')
     WHERE NEW.amount_cents < (SELECT share_cents FROM split_share WHERE transaction_id = NEW.id);
+    SELECT RAISE(ABORT, 'transactions: created_at later than the share settled_at')
+    WHERE NEW.created_at > (SELECT settled_at FROM split_share WHERE transaction_id = NEW.id);
 END;

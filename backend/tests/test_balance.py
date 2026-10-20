@@ -23,8 +23,8 @@ def expected_parts(db, until: str | None = None) -> dict[str, int]:
     """Balance parts summed in Python from raw rows, independent of the service SQL.
 
     With `until` (an adjustment's created_at), only movements up to that
-    adjustment count (pago shares by date only), and adjustments are left out
-    (the caller adds the running total).
+    adjustment count (pago shares settled no later than it), and adjustments
+    are left out (the caller adds the running total).
     """
     incomes = expenses = reimbursements = 0
     for row in db.execute(
@@ -36,10 +36,10 @@ def expected_parts(db, until: str | None = None) -> dict[str, int]:
             incomes += row["amount_cents"]
         else:
             expenses += row["amount_cents"]
-    for row in db.execute("SELECT share_cents, status, settled_on FROM split_share"):
+    for row in db.execute("SELECT share_cents, status, settled_at FROM split_share"):
         if row["status"] != "pago":
             continue
-        if until is not None and row["settled_on"] > until[:10]:
+        if until is not None and row["settled_at"] > until:
             continue
         reimbursements += row["share_cents"]
     adjustments = sum(
@@ -92,8 +92,9 @@ def test_balance_parts_add_up_to_balance(client):
 def test_balance_counts_only_pago_shares_as_reimbursements(client, db):
     before = client.get("/balance").json()
     # Settling an open share as 'acertado' closes the debt without moving money.
+    # "Now" is never before the expense's created_at (the seed caps it at now).
     db.execute(
-        "UPDATE split_share SET status = 'acertado', settled_on = date('now', '-3 hours')"
+        "UPDATE split_share SET status = 'acertado', settled_at = datetime('now', '-3 hours')"
         " WHERE transaction_id = 2"
     )
     db.commit()
@@ -330,9 +331,18 @@ def wait_for_next_second(db, timestamp: str) -> None:
         time.sleep(0.02)
 
 
+def wait_until_not_near_midnight(db) -> None:
+    """A same-day test posts an adjustment, waits a second, then writes again.
+    Started at Brasília 23:59:58 or later, the second write would land on the
+    next day. Wait until after midnight first so both stay on the same day."""
+    while db.execute("SELECT time('now', '-3 hours')").fetchone()[0] >= "23:59:58":
+        time.sleep(0.05)
+
+
 def test_same_day_expense_after_adjustment_keeps_typed_balance(client, db):
     # Business Rule 12: the history shows the balance the user typed, even
     # after an expense dated today is added later the same day.
+    wait_until_not_near_midnight(db)
     adjustment = post_adjustment(client, 123456).json()
     wait_for_next_second(db, adjustment["created_at"])
 
@@ -346,6 +356,7 @@ def test_same_day_expense_after_adjustment_keeps_typed_balance(client, db):
 
 
 def test_same_day_income_after_adjustment_keeps_typed_balance(client, db):
+    wait_until_not_near_midnight(db)
     adjustment = post_adjustment(client, 123456).json()
     wait_for_next_second(db, adjustment["created_at"])
 
@@ -356,6 +367,33 @@ def test_same_day_income_after_adjustment_keeps_typed_balance(client, db):
 
     assert client.get("/balance/adjustments").json()[0] == adjustment
     assert current_balance(client) == 124156
+
+
+def test_same_day_pago_after_adjustment_keeps_typed_balance(client, db):
+    # AC5: a share marked 'pago' after an adjustment, the same day, moves the
+    # current balance but not the balance the user typed in that adjustment.
+    wait_until_not_near_midnight(db)
+    adjustment = post_adjustment(client, 123456).json()
+    wait_for_next_second(db, adjustment["created_at"])
+
+    db.execute(
+        "UPDATE split_share SET status = 'pago', settled_at = datetime('now', '-3 hours')"
+        " WHERE transaction_id = 2"
+    )
+    db.commit()
+    settled_at, created_at = db.execute(
+        "SELECT s.settled_at, a.created_at FROM split_share s, balance_adjustment a"
+        " WHERE s.transaction_id = 2 AND a.id = ?",
+        (adjustment["id"],),
+    ).fetchone()
+    assert settled_at > created_at
+    assert settled_at[:10] == created_at[:10]
+
+    entry = client.get("/balance/adjustments").json()[0]
+    assert entry["id"] == adjustment["id"]
+    assert entry["previous_balance_cents"] == adjustment["previous_balance_cents"]
+    assert entry["new_balance_cents"] == 123456
+    assert current_balance(client) == 123456 + 9395
 
 
 def test_back_dated_expense_shifts_adjustment_entry(client):

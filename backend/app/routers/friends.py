@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.db import get_db
-from app.schemas import Friend, FriendCreate, error_responses
+from app.schemas.common import error_responses
+from app.schemas.friends import Friend, FriendCreate
 from app.services import friends as friends_service
 
 router = APIRouter(prefix="/friends", tags=["friends"])

@@ -1,5 +1,7 @@
 import sqlite3
+import threading
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -33,3 +35,27 @@ def db(database_path: str, request: pytest.FixtureRequest) -> Iterator[sqlite3.C
     conn = connect(database_path)
     yield conn
     conn.close()
+
+
+def send_in_parallel(client: TestClient, requests: list[tuple]) -> list[int]:
+    """Send every (method, path, body) through one client at the same moment,
+    one thread each. Returns the status codes in request order."""
+    barrier = threading.Barrier(len(requests))
+
+    def send(request):
+        method, path, body = request
+        barrier.wait()
+        return client.request(method, path, json=body).status_code
+
+    with ThreadPoolExecutor(max_workers=len(requests)) as pool:
+        return list(pool.map(send, requests))
+
+
+def parallel_requests(database_path: str, requests: list[tuple]) -> list[int]:
+    """Send the requests in parallel to a fresh app on a real database file.
+
+    raise_server_exceptions=False turns a server error into the 500 a visitor
+    would get, instead of an exception inside the worker thread.
+    """
+    with TestClient(create_app(database_path), raise_server_exceptions=False) as client:
+        return send_in_parallel(client, requests)

@@ -46,8 +46,9 @@ WHERE p.id = 1
 # adjustment's day, or dated that same day and recorded (created_at) no later
 # than the adjustment. So an expense added later the same day does not change
 # the balance the user typed; a back-dated one still does, because the history
-# shows the balance as of that date. A 'pago' share has only a date
-# (settled_on), so it counts when settled on or before the adjustment's day.
+# shows the balance as of that date. A 'pago' share counts when it was settled
+# (settled_at) no later than the adjustment, so marking a share 'pago' after
+# an adjustment, even the same day, does not change the balance the user typed.
 COUNTS_FOR_ADJUSTMENT = """
     (t.occurred_on < date(r.created_at)
      OR (t.occurred_on = date(r.created_at) AND t.created_at <= r.created_at))
@@ -73,7 +74,7 @@ history AS (
         + (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
            WHERE t.type = 'income' AND """ + COUNTS_FOR_ADJUSTMENT + """)
         + (SELECT coalesce(sum(share_cents), 0) FROM split_share
-           WHERE status = 'pago' AND settled_on <= date(r.created_at))
+           WHERE status = 'pago' AND settled_at <= r.created_at)
         - (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
            WHERE t.type = 'expense' AND """ + COUNTS_FOR_ADJUSTMENT + """)
         + r.adjustments_to_date AS new_balance_cents
