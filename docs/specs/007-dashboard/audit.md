@@ -89,3 +89,14 @@ None.
 **PASS**
 
 All nine acceptance criteria, the Data Rules and the Out of Scope list hold under real requests. The evidence is 737 passing tests (each commit green, the old suite unchanged and green), `period_bounds` identical to an independent implementation on 8.5 million day × offset × period cases, Brasília dates under three server timezones and late-evening instants, totals, categories, items and people equal to independent sums for 79 periods and 1220 seed start times, and month offset 0 equal to `/budget`. The empty period stays reachable at every start time, and `checks.sql` returns zero rows. SQL is parameterized, the layers are clean, and money is integer cents. m1 is a one-sentence spec gap, and m2 and m3 are test gaps, not defects. Fix all three before 007 merges into `dev`.
+
+## Follow-up (fix verification)
+
+- **m1: Closed** (`e8b0c76`, docs only). Spec AC4 now says "on a tie in total, 'Sem categoria' comes after the named categories", and the plan's Sorting line says the same. This matches `_category_key` in `services/dashboard.py`.
+- **m2: Closed** (`92e71f5`). Mutating the category key to the raw name fails `test_categories_tie_sorted_ignoring_case_and_accents`. Mutating the person key to the raw name fails `test_people_tie_sorted_ignoring_case_and_accents`.
+- **m3: Closed** (`92e71f5`). Replacing `brasilia_today()` with `date.today()` fails all 3 cases of `test_periods_follow_brasilia_date_not_server_clock` (month end, Sunday night, year end at 22:30 Brasília, already the next day in UTC).
+- **n1: Closed** (`92e71f5`). Changing the items' `t.id DESC` to `ASC` fails `test_same_day_items_newest_id_first`.
+- **n4: Closed** (`92e71f5`). The empty-month search now runs only from offset 0 to the oldest seeded expense month, and it asserts that this month has spending. Only a real gap inside the seeded range satisfies it.
+- **Evidence.** `92e71f5` touches only `backend/tests/test_dashboard.py`. `.venv/bin/pytest -q` gives 743 passed. Each mutation was applied on its own, failed only the new test(s) listed above and was reverted, and `git diff` was empty afterwards.
+
+**Final verdict: PASS.** No findings remain open. n2 and n3 need no API action. 007 is ready to merge into `dev`.
