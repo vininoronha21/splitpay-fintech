@@ -12,6 +12,7 @@ from app.db import init_db
 from app.routers import (
     balance,
     categories,
+    dashboard,
     friends,
     health,
     profile,
@@ -93,6 +94,7 @@ def create_app(database_path: str | None = None) -> FastAPI:
     app.include_router(transactions.router)
     app.include_router(categories.router)
     app.include_router(reimbursements.router)
+    app.include_router(dashboard.router)
     return app
 
 

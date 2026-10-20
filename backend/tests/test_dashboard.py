@@ -2,7 +2,10 @@ from datetime import date
 
 import pytest
 
+from app.services import brasilia_today
 from app.services.dashboard import period_bounds
+from app.text import normalize_text
+from tests.test_balance import wait_until_not_near_midnight
 
 # --- Period bounds (pure) ----------------------------------------------------
 
@@ -65,3 +68,259 @@ def test_month_offsets(today, offset, expected):
 )
 def test_year_offsets(today, offset, expected):
     assert period_bounds("year", offset, today) == expected
+
+
+# --- API ---------------------------------------------------------------------
+
+VALIDATION_ERROR = {
+    "error": {"code": "validation_error", "message": "Dados inválidos na requisição."}
+}
+PERIODS = ("week", "month", "year")
+ANA = 1
+
+
+def charts(client, period, offset=0) -> dict:
+    response = client.get("/dashboard/charts", params={"period": period, "offset": offset})
+    assert response.status_code == 200
+    return response.json()
+
+
+def expected_own_spending(db, start: str, end: str) -> int:
+    """Independent of the service: loop over every expense in Python."""
+    total = 0
+    for amount, occurred_on, share in db.execute(
+        "SELECT t.amount_cents, t.occurred_on, s.share_cents FROM transactions t"
+        " LEFT JOIN split_share s ON s.transaction_id = t.id WHERE t.type = 'expense'"
+    ):
+        if start <= occurred_on <= end:
+            total += amount - (share or 0)
+    return total
+
+
+@pytest.fixture
+def same_day(db):
+    """Tests below compare a few calls; keep them on one Brasília day."""
+    wait_until_not_near_midnight(db)
+
+
+@pytest.mark.parametrize("period", PERIODS)
+@pytest.mark.parametrize("offset", [0, -1, -2, -5])
+def test_total_is_own_share_of_expenses_in_period(client, db, same_day, period, offset):
+    # AC1, AC3: bounds from Brasília today; incomes and friend shares excluded.
+    body = charts(client, period, offset)
+    assert body["period"] == period
+    start, end = period_bounds(period, offset, brasilia_today())
+    assert (body["start"], body["end"]) == (start.isoformat(), end.isoformat())
+    assert body["total_cents"] == expected_own_spending(db, body["start"], body["end"])
+
+
+def test_offset_defaults_to_current_period(client, same_day):
+    response = client.get("/dashboard/charts", params={"period": "month"})
+    assert response.status_code == 200
+    assert response.json() == charts(client, "month", 0)
+
+
+def test_seed_has_spending_in_current_periods(client, same_day):
+    for period in PERIODS:
+        assert charts(client, period)["total_cents"] > 0
+
+
+@pytest.mark.parametrize("period", PERIODS)
+@pytest.mark.parametrize("offset", [0, -1, -3])
+def test_category_and_item_sums(client, same_day, period, offset):
+    # AC4, AC5: categories sum to the total, items to their category.
+    body = charts(client, period, offset)
+    assert sum(c["total_cents"] for c in body["by_category"]) == body["total_cents"]
+    for category in body["by_category"]:
+        assert category["items"]
+        assert sum(i["own_share_cents"] for i in category["items"]) == category["total_cents"]
+        order = [(i["occurred_on"], i["transaction_id"]) for i in category["items"]]
+        assert order == sorted(order, reverse=True)
+        for item in category["items"]:
+            assert body["start"] <= item["occurred_on"] <= body["end"]
+
+
+def test_categories_sorted_by_total_then_name(client, same_day):
+    for period in PERIODS:
+        categories = charts(client, period)["by_category"]
+        keys = [(-c["total_cents"], normalize_text(c["category_name"])) for c in categories]
+        assert keys == sorted(keys)
+        assert len({c["category_id"] for c in categories}) == len(categories)
+
+
+def test_items_match_database_rows(client, db, same_day):
+    body = charts(client, "year")
+    items = {i["transaction_id"]: i for c in body["by_category"] for i in c["items"]}
+    rows = db.execute(
+        "SELECT t.id, t.description, t.occurred_on, t.category_id,"
+        " t.amount_cents - coalesce(s.share_cents, 0) FROM transactions t"
+        " LEFT JOIN split_share s ON s.transaction_id = t.id"
+        " WHERE t.type = 'expense' AND t.occurred_on BETWEEN ? AND ?",
+        (body["start"], body["end"]),
+    ).fetchall()
+    assert set(items) == {row[0] for row in rows}
+    for transaction_id, description, occurred_on, _, own in rows:
+        assert items[transaction_id] == {
+            "transaction_id": transaction_id,
+            "description": description,
+            "occurred_on": occurred_on,
+            "own_share_cents": own,
+        }
+    # Incomes never appear.
+    income_ids = {row[0] for row in db.execute("SELECT id FROM transactions WHERE type = 'income'")}
+    assert not income_ids & set(items)
+
+
+def test_uncategorized_expense_grouped_as_sem_categoria(client, same_day):
+    # AC4: no category -> category_id null, "Sem categoria".
+    before = charts(client, "week")
+    created = client.post(
+        "/transactions",
+        json={"type": "expense", "description": "Xyzzy", "amount_cents": 1234},
+    )
+    assert created.status_code == 201
+    assert created.json()["category_id"] is None
+
+    after = charts(client, "week")
+    assert after["total_cents"] == before["total_cents"] + 1234
+    bucket = [c for c in after["by_category"] if c["category_id"] is None]
+    assert len(bucket) == 1
+    assert bucket[0]["category_name"] == "Sem categoria"
+    assert bucket[0]["items"][0]["transaction_id"] == created.json()["id"]
+    assert bucket[0]["items"][0]["own_share_cents"] == 1234
+
+
+def test_uncategorized_goes_last_among_equal_totals(client, db, same_day):
+    # Make the "Sem categoria" bucket tie with a new category of the same total
+    # whose name sorts after it, in an otherwise empty past year.
+    db.execute("INSERT INTO category (id, name) VALUES (99, 'Zzz')")
+    old = period_bounds("year", -3, brasilia_today())[0].isoformat()
+    db.executemany(
+        "INSERT INTO transactions (type, description, amount_cents, category_id, occurred_on)"
+        " VALUES ('expense', ?, 500, ?, ?)",
+        [("Sem", None, old), ("Com", 99, old)],
+    )
+    db.commit()
+    names = [c["category_name"] for c in charts(client, "year", -3)["by_category"]]
+    assert names == ["Zzz", "Sem categoria"]
+
+
+def test_by_person_sums_friend_shares_any_status(client, db, same_day):
+    # AC6: every status counts; sorted by total, then by name.
+    for period in PERIODS:
+        body = charts(client, period)
+        expected: dict[int, int] = {}
+        for person_id, share in db.execute(
+            "SELECT s.person_id, s.share_cents FROM split_share s"
+            " JOIN transactions t ON t.id = s.transaction_id"
+            " WHERE t.occurred_on BETWEEN ? AND ?",
+            (body["start"], body["end"]),
+        ):
+            expected[person_id] = expected.get(person_id, 0) + share
+        assert {p["person_id"]: p["total_cents"] for p in body["by_person"]} == expected
+        keys = [(-p["total_cents"], normalize_text(p["person_name"])) for p in body["by_person"]]
+        assert keys == sorted(keys)
+
+
+def test_by_person_counts_closed_shares(client, same_day):
+    before = charts(client, "year")["by_person"]
+    response = client.patch("/reimbursements/2", json={"status": "acertado"})
+    assert response.status_code == 200
+    assert charts(client, "year")["by_person"] == before
+
+
+def test_empty_period_returns_zero_and_empty_lists(client, db, same_day):
+    # AC7: the seed has a navigable period with no expenses.
+    empty = charts(client, "year", -2)
+    assert empty["total_cents"] == 0
+    assert empty["by_category"] == []
+    assert empty["by_person"] == []
+
+    empty_months = [
+        offset
+        for offset in range(0, -14, -1)
+        if charts(client, "month", offset)["total_cents"] == 0
+    ]
+    assert empty_months
+    body = charts(client, "month", empty_months[0])
+    assert (body["by_category"], body["by_person"]) == ([], [])
+
+
+def test_current_month_matches_budget(client, same_day):
+    # AC8: the same number the budget counts.
+    assert charts(client, "month")["total_cents"] == client.get("/budget").json()["spent_cents"]
+
+
+def test_new_split_expense_moves_category_and_person(client, same_day):
+    before = charts(client, "week")
+    created = client.post(
+        "/transactions",
+        json={
+            "type": "expense",
+            "description": "Janta com a Ana",
+            "amount_cents": 10001,
+            "category_id": 1,
+            "split": {"person_id": ANA, "mode": "equal"},
+        },
+    )
+    assert created.status_code == 201
+    friend_share = 5000  # floor(10001 / 2)
+    own_share = 10001 - friend_share
+    after = charts(client, "week")
+
+    def category_total(body):
+        return next((c["total_cents"] for c in body["by_category"] if c["category_id"] == 1), 0)
+
+    def person_total(body):
+        return next((p["total_cents"] for p in body["by_person"] if p["person_id"] == ANA), 0)
+
+    assert after["total_cents"] == before["total_cents"] + own_share
+    assert category_total(after) == category_total(before) + own_share
+    assert person_total(after) == person_total(before) + friend_share
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {},
+        {"offset": 0},
+        {"period": "day"},
+        {"period": "WEEK"},
+        {"period": ""},
+        {"period": "month", "offset": 1},
+        {"period": "month", "offset": -521},
+        {"period": "month", "offset": "1.5"},
+        {"period": "month", "offset": "abc"},
+        {"period": "month", "offset": ""},
+    ],
+)
+def test_invalid_query_is_validation_error(client, params):
+    response = client.get("/dashboard/charts", params=params)
+    assert response.status_code == 422
+    assert response.json() == VALIDATION_ERROR
+
+
+@pytest.mark.parametrize("period", PERIODS)
+def test_oldest_offset_is_accepted(client, period):
+    body = charts(client, period, -520)
+    assert body["total_cents"] == 0
+
+
+def test_openapi_documents_dashboard_endpoint(client):
+    # AC9: every error response uses ErrorResponse.
+    spec = client.get("/openapi.json").json()
+    operation = spec["paths"]["/dashboard/charts"]
+    assert set(operation) == {"get"}
+    responses = operation["get"]["responses"]
+    assert responses["200"]["content"]["application/json"]["schema"]["$ref"].endswith("/Charts")
+    assert "validation_error" in responses["422"]["description"]
+    for status, response in responses.items():
+        if status.startswith("4"):
+            assert response["content"]["application/json"]["schema"]["$ref"].endswith(
+                "/ErrorResponse"
+            )
+    params = {p["name"]: p for p in operation["get"]["parameters"]}
+    assert params["period"]["required"] is True
+    assert params["period"]["schema"]["enum"] == ["week", "month", "year"]
+    assert params["offset"]["schema"]["minimum"] == -520
+    assert params["offset"]["schema"]["maximum"] == 0
