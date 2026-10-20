@@ -1,6 +1,6 @@
 # 007 Dashboard — Plan
 
-Status: draft
+Status: approved
 
 ## Files to Create/Modify
 

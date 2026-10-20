@@ -1,6 +1,6 @@
 # 007 Dashboard — Spec
 
-Stories: US04 | Status: draft
+Stories: US04 | Status: approved
 
 ## Problem
 
