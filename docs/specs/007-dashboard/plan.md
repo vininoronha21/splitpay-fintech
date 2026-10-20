@@ -15,7 +15,7 @@ Status: approved
 
 - **Period math in Python:** `period_bounds` uses `date` arithmetic only: week = `today - timedelta(days=today.weekday())` shifted by `7 × offset`; month = shift the (year, month) pair by `offset` with `divmod`; year = `today.year + offset`. Pure and tested without a database. Rejected: SQLite date modifiers, harder to test at month and year edges.
 - **One query:** expenses with `occurred_on BETWEEN ? AND ?`, own share computed in SQL (`amount_cents - coalesce(s.share_cents, 0)`), joined to category and person; Python groups the rows into categories and people. The seed is small, so grouping in Python keeps the sort rules (accent-insensitive names) in one place.
-- **Sorting:** totals descending, then `normalize_text(name)`, then id, so ties never reorder between calls.
+- **Sorting:** totals descending, then `normalize_text(name)`, then id, so ties never reorder between calls. "Sem categoria" sorts after named categories with the same total.
 - **Frontend TS Interfaces:** none yet (phase 2 mirrors `schemas/dashboard.py`).
 - **Database Schema:** no change.
 
