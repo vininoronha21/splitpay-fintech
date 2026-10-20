@@ -39,19 +39,21 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │   │   ├── friends.py
 │   │   │   ├── transactions.py
 │   │   │   ├── categories.py
-│   │   │   └── reimbursements.py
+│   │   │   ├── reimbursements.py
+│   │   │   └── dashboard.py
 │   │   ├── services/             # Business rules and SQL, one module per domain
 │   │   │   ├── __init__.py       # DomainError (mapped to 4xx by main.py) and brasilia_today()
 │   │   │   ├── balance.py        # Balance, adjustments, budget usage and the profile (initial balance)
 │   │   │   ├── friends.py        # Friends list and add (accent/case-insensitive duplicates)
 │   │   │   ├── transactions.py   # Includes strictly 1-to-1 split calculation
 │   │   │   ├── reimbursements.py # Settle a share (pago/acertado), list and "a receber" summary
-│   │   │   └── categories.py     # Category list, keyword suggestion, user rules
+│   │   │   ├── categories.py     # Category list, keyword suggestion, user rules
+│   │   │   └── dashboard.py      # Chart periods (Monday weeks) and totals by category and person
 │   │   └── routers/              # HTTP only: parse, call service, return schema
 │   │       ├── health.py
 │   │       ├── profile.py
 │   │       ├── friends.py
-│   │       ├── dashboard.py
+│   │       ├── dashboard.py      # /dashboard/charts
 │   │       ├── transactions.py
 │   │       ├── reimbursements.py
 │   │       ├── categories.py
