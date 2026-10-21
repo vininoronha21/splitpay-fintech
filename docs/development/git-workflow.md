@@ -18,8 +18,11 @@ feature/mvp-plan ──(feature passes audit)──▶ dev ──(tests & TS bui
 | 1. Foundation | `001-restructure`, `002-database` | `commit v2.1` |
 | 2. Money core | `003-balance` (US05), `004-split` (US01) | `commit v2.2` |
 | 3. Organization and insight | `005-categories` (US02), `006-reimbursements` (US03), `007-dashboard` (US04) | `commit v3.0` (phase 1 done) |
+| 4. App shell | `008-app-shell` (themes, brand, fake login, navigation, typed client) | `commit v3.1` |
+| 5. Core screens | `009-home` (US05 cards, US04 charts), `010-new-expense` (US01, US02), `011-statement` (US03) | `commit v3.2` |
+| 6. Settings and showcase | `012-settings-friends`, `013-landing` (GSAP), `014-pwa` | `commit v4.0` (phase 2 done) |
 
-Phase 2 and phase 3 sprints are added here when their specs exist.
+Phase 3 sprints are added here when their specs exist. Sprint 4 was released on its own at the user's request (2026-10-21).
 
 ## Branches
 

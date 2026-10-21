@@ -21,8 +21,8 @@ This spec builds the parts every screen shares. The screen contents stay in 009�
 
 | Sprint | Mini sprints | Release on `main` |
 | --- | --- | --- |
-| 4. App shell and home | `008-app-shell`, `009-home` (US05 cards, US04 charts, "Gastos do mês" screen) | `commit v3.1` |
-| 5. Money flows | `010-new-expense` (US01, US02), `011-statement` (US03) | `commit v3.2` |
+| 4. App shell | `008-app-shell` | `commit v3.1` (released on its own at Vinicius's request) |
+| 5. Core screens | `009-home` (US05 cards, US04 charts, "Gastos do mês" screen), `010-new-expense` (US01, US02), `011-statement` (US03) | `commit v3.2` |
 | 6. Settings and showcase | `012-settings-friends` (US05 adjustments, friends, category rules), `013-landing` (GSAP), `014-pwa` | `commit v4.0` (phase 2 done) |
 
 Phase 3 (deploy and presentation) follows. Each later spec uses its prototype screen as the visual reference.

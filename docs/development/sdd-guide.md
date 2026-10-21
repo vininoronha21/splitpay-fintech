@@ -83,4 +83,4 @@ Follows the backlog priority in `goal.md`. All splits are strictly 1-to-1:
 6. `006-reimbursements` (US03).
 7. `007-dashboard` (US04 data endpoints).
 
-Phase 2 (frontend React+TS, UI/UX with GSAP) and Phase 3 (deploy, presentation) get their own numbered specs when phase 1 passes its audit.
+Phase 2 (frontend React+TS, UI/UX with GSAP) runs specs 008–014 in the order of the sprint table in `git-workflow.md`; each screen spec uses its approved prototype capture in `docs/assets/prototype-*.png` as the visual reference. Phase 3 (deploy, presentation) gets its own numbered specs after phase 2.

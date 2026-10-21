@@ -51,7 +51,7 @@ Budget bars always carry the numbers as text (`62% do orçamento`, `R$ 2.300,00 
 // Secondary
 "inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-5 text-sm font-medium text-text"
 
-// Ghost (small action inside rows, e.g. Lembrar / Pago)
+// Ghost (small action inside rows, e.g. Marcar como pago)
 "inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-muted hover:text-text"
 ```
 
@@ -64,11 +64,11 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
 "inline-flex items-center gap-1 rounded-full border border-border bg-surface py-1.5 pl-3 pr-4 text-xs font-medium uppercase tracking-wide text-text"
 
 // Status pill: tinted fill, colored text, icon, label
-// Pendente -> danger, Em atraso -> warning, Pago -> success
-"inline-flex items-center gap-1 rounded-full border border-danger/30 bg-danger/15 px-2.5 py-0.5 text-xs font-semibold text-danger"
+// Aguardando reembolso -> accent-soft, Pago -> success-soft, Acertado -> neutral-soft (spec 008)
+"inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent-soft-text"
 
 // Category chip (single select; selected state uses accent)
-"h-10 rounded-xl border border-border bg-surface px-4 text-sm font-medium text-muted aria-pressed:border-accent aria-pressed:bg-accent/10 aria-pressed:text-accent"
+"h-10 rounded-xl border border-border bg-surface px-4 text-sm font-medium text-muted aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-soft-text"
 
 // Count badge inside tabs
 "ml-1.5 rounded-full bg-border px-1.5 text-[11px] tabular-nums"
