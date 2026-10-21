@@ -1,8 +1,8 @@
 # 008 App Shell — Tasks
 
-- [ ] T1 — Dependencies, font and money helpers | owner: frontend-engineer | files: `frontend/package.json`, `package-lock.json`, `src/main.tsx`, `src/styles/theme.css`, `src/lib/money.ts`, `src/lib/storage.ts` | verify: `npm run build`; money self-check passes
+- [ ] T1 — Dependencies, font, theme tokens and helpers | owner: frontend-engineer | files: `frontend/package.json`, `package-lock.json`, `index.html`, `public/favicon.svg`, `src/main.tsx`, `src/styles/theme.css`, `src/lib/money.ts`, `src/lib/storage.ts`, `src/lib/preferences.ts` | verify: `npm run build`; money self-check passes; no theme flash
 - [ ] T2 — Typed API client for every endpoint | owner: frontend-engineer | files: `src/types/api.ts`, `src/services/api.ts` | verify: `npm run build`
-- [ ] T3 — UI primitives and states | owner: ui-ux-designer | files: `src/app/components/ui/` | verify: build; contrast and focus per the skill
-- [ ] T4 — Shell, routes, fake login | owner: frontend-engineer | files: `src/app/routes.tsx`, `App.tsx`, `src/app/components/*` | verify: build; screenshots at 360/768/1280
-- [ ] T5 — Docs sync | owner: main session | files: `docs/development/repository-structure.md`, `git-workflow.md`, `sdd-guide.md` | verify: Phase 2 table recorded
+- [ ] T3 — UI primitives, brand and states | owner: ui-ux-designer | files: `src/app/components/ui/`, `BrandMark`, `Money`, `HideValuesButton`, `ThemeControl` | verify: build; contrast and focus in both themes
+- [ ] T4 — Shell, routes, entry page | owner: frontend-engineer | files: `src/app/routes.tsx`, `App.tsx`, `src/app/components/*` | verify: build; layout scan clean; screenshots at 360/390/768/1280, light and dark
+- [ ] T5 — Docs and skill sync | owner: main session | files: `.claude/skills/splitpay-design-language/SKILL.md`, `docs/development/repository-structure.md`, `git-workflow.md`, `sdd-guide.md` | verify: Phase 2 table and light theme recorded
 - [ ] T6 — Audit | owner: auditor | files: `docs/specs/008-app-shell/audit.md` | verify: verdict PASS
