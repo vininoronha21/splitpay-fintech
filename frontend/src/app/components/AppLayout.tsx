@@ -1,7 +1,7 @@
 import { FileText, House, Plus, Settings, Users, type LucideIcon } from "lucide-react";
 import { Link, Navigate, NavLink, Outlet, useOutletContext } from "react-router";
 import { BrandMark } from "./BrandMark.tsx";
-import { Avatar, cx, focusRing } from "./ui/index.ts";
+import { Avatar, buttonClasses, cx, focusRing } from "./ui/index.ts";
 import { readUserName } from "../../lib/userName.ts";
 
 interface NavItem {
@@ -129,15 +129,7 @@ function TopNav({ userName }: { userName: string }) {
           </ul>
         </nav>
         {/* A link styled like Button primary: it navigates, it does not submit. */}
-        <Link
-          to="/novo-gasto"
-          className={cx(
-            "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-accent px-4 text-[15px] font-semibold whitespace-nowrap text-on-accent",
-            "shadow-[0_3px_13px_rgba(251,191,36,.18)] transition hover:bg-accent-strong",
-            "active:scale-[.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-            focusRing,
-          )}
-        >
+        <Link to="/novo-gasto" className={cx(buttonClasses({ size: "sm" }), "shrink-0")}>
           <Plus size={18} aria-hidden="true" />
           Novo gasto
         </Link>

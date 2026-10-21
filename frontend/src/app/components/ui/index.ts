@@ -1,5 +1,12 @@
 export { Avatar, initials, type AvatarProps, type AvatarSize, type AvatarTone } from "./Avatar.tsx";
-export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from "./Button.tsx";
+export {
+  Button,
+  buttonClasses,
+  type ButtonClassOptions,
+  type ButtonProps,
+  type ButtonSize,
+  type ButtonVariant,
+} from "./Button.tsx";
 export { Card, type CardProps } from "./Card.tsx";
 export { Chip, type ChipProps } from "./Chip.tsx";
 export { EmptyState, type EmptyStateProps } from "./EmptyState.tsx";

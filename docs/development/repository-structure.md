@@ -90,7 +90,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
         ├── services/
         │   └── api.ts            # The only module that calls fetch()
         ├── types/                # Shared TypeScript interfaces (API contracts)
-        ├── lib/                  # Small shared helpers: money.ts (formatBRL, parseBRL), storage.ts, preferences.ts (theme, hide values), userName.ts (fake-login name)
+        ├── lib/                  # Small shared helpers: money.ts (formatBRL, parseBRL), storage.ts, preferences.ts (theme, hide values), userName.ts (fake-login name), text.ts (invisible-character trim, graphemes)
         └── styles/               # Theme tokens (light default, dark override) and Tailwind config
 ```
 

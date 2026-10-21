@@ -79,9 +79,10 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         aria-describedby={describedBy}
         className={cx(
           "mt-2 h-12 w-full min-w-0 rounded-xl border bg-surface px-4 text-base text-text placeholder:text-muted",
-          "transition-colors focus:border-accent motion-reduce:transition-none",
+          "transition-colors motion-reduce:transition-none",
           "disabled:cursor-not-allowed disabled:opacity-60",
-          error ? "border-danger" : "border-border",
+          // In error the border stays red while focused; focus moves here after an error.
+          error ? "border-danger" : "border-border focus:border-accent",
           focusRing,
         )}
         {...rest}

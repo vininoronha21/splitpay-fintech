@@ -21,11 +21,11 @@ export function HideValuesButton({ tone = "surface", className }: HideValuesButt
   return (
     <button
       type="button"
-      aria-pressed={hidden}
+      // The label says what a click does; aria-pressed would contradict it.
       aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
       onClick={() => setHidden(!hidden)}
       className={cx(
-        "grid size-11 shrink-0 place-items-center rounded-full transition-colors",
+        "grid size-11 shrink-0 place-items-center rounded-full transition-colors motion-reduce:transition-none",
         TONE_CLASS[tone],
         className,
       )}

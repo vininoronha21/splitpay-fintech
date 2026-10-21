@@ -26,24 +26,34 @@ const SIZE_CLASS: Record<ButtonSize, string> = {
   md: "min-h-12 rounded-xl px-5 text-base",
 };
 
+export interface ButtonClassOptions {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  fullWidth?: boolean;
+}
+
+/** Button styling as a class string, so a router `Link` can look like a Button. */
+export function buttonClasses({ variant = "primary", size = "md", fullWidth = false }: ButtonClassOptions = {}): string {
+  return cx(
+    "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition",
+    "active:scale-[.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+    "disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100",
+    VARIANT_CLASS[variant],
+    SIZE_CLASS[size],
+    fullWidth && "w-full",
+    focusRing,
+  );
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = "primary", size = "md", fullWidth = false, icon: Icon, type = "button", className, children, ...rest },
+  { variant, size = "md", fullWidth, icon: Icon, type = "button", className, children, ...rest },
   ref,
 ) {
   return (
     <button
       ref={ref}
       type={type}
-      className={cx(
-        "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition",
-        "active:scale-[.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-        "disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100",
-        VARIANT_CLASS[variant],
-        SIZE_CLASS[size],
-        fullWidth && "w-full",
-        focusRing,
-        className,
-      )}
+      className={cx(buttonClasses({ variant, size, fullWidth }), className)}
       {...rest}
     >
       {Icon ? <Icon size={size === "sm" ? 16 : 18} aria-hidden="true" /> : null}
