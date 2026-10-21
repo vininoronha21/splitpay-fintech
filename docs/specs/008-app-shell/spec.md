@@ -1,6 +1,6 @@
 # 008 App Shell — Spec
 
-Stories: foundation for US01–US05 screens (fake login, navigation, themes, money display) | Status: draft
+Stories: foundation for US01–US05 screens (fake login, navigation, themes, money display) | Status: approved
 
 ## Problem
 

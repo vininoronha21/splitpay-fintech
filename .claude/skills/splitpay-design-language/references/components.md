@@ -46,7 +46,7 @@ Budget bars always carry the numbers as text (`62% do orçamento`, `R$ 2.300,00 
 
 ```tsx
 // Primary (matches the existing "Novo Gasto")
-"inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-on-accent shadow-[0_3px_13px_rgba(251,191,36,.18)] transition active:scale-[.98] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+"inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-on-accent shadow-[0_3px_13px_rgba(251,191,36,.18)] transition active:scale-[.98] disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text"
 
 // Secondary
 "inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-5 text-sm font-medium text-text"
@@ -78,7 +78,7 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
 
 ```tsx
 <label className="block text-xs font-semibold uppercase tracking-wider text-muted" htmlFor="desc">Descrição do gasto</label>
-<input id="desc" className="mt-2 h-12 w-full rounded-xl border border-border bg-bg px-4 text-base text-text placeholder:text-muted/70 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40" />
+<input id="desc" className="mt-2 h-12 w-full rounded-xl border border-border bg-bg px-4 text-base text-text placeholder:text-muted focus:border-accent-text focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text" />
 ```
 
 - Money field: large number in `accent` (`text-3xl font-bold tabular-nums`), `inputMode="decimal"`, `R$` prefix as a separate non-editable element. The component parses to integer cents before leaving the form.

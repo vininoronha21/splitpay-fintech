@@ -1,6 +1,6 @@
 # 008 App Shell — Plan
 
-Status: draft
+Status: approved
 
 ## Files to Create/Modify
 
@@ -11,15 +11,16 @@ Status: draft
 - `frontend/src/styles/theme.css`: light tokens as the defaults in `@theme`, dark overrides under `:root[data-theme="dark"]`; new tokens from the spec's Data Rules; `--font-sans` starts with "Inter Variable"; `color-scheme` per theme; shared `.num` (tabular, nowrap) utility.
 - `frontend/src/lib/money.ts` (new): `formatBRL`, `parseBRL`.
 - `frontend/src/lib/storage.ts` (new): safe get/set/remove with in-memory fallback.
+- `frontend/src/lib/userName.ts` (new, added during T4): read, save, clear and validate the fake-login name.
 - `frontend/src/lib/preferences.ts` (new): theme (`claro | escuro | automatico`) and hide-values state, a small `useSyncExternalStore` hook so every screen updates together.
 - `frontend/src/types/api.ts`: every request and response type.
 - `frontend/src/services/api.ts`: one function per endpoint, JSON body helper for POST/PATCH.
 - `frontend/src/app/routes.tsx`, `App.tsx`: routes, auth guard (redirect without a name), not-found.
 - `frontend/src/app/components/` (new files):
   - `AppLayout`, with `TabBar` and `TopNav`;
-  - `LoginScreen`, `ScreenPlaceholder`, `NotFound`;
+  - `LoginScreen`, `ScreenPlaceholder`, `SettingsScreen` (Aparência and Sair until 012), `NotFound`;
   - `BrandMark` (logo SVG), `Money`, `HideValuesButton`, `ThemeControl` (Aparência);
-  - `ui/` primitives: `Button`, `TextField`, `MoneyField`, `Card`, `Segmented`, `Chip`, `StatusPill`, `Avatar`, `Skeleton`, `ErrorState`, `EmptyState`.
+  - `ui/` primitives: `Button`, `TextField`, `MoneyField`, `Card`, `Segmented`, `Chip`, `StatusPill`, `Avatar`, `Skeleton`, `ErrorState`, `EmptyState`, plus `focus.ts` (focus ring classes) and `index.ts` (re-exports).
 
   Remove `HealthStatus`: the login screen now proves the API connection.
 - `.claude/skills/splitpay-design-language/SKILL.md`: add the light theme, new tokens, logo, hide-values pattern, chart palette and copy rules. Mark `docs/assets/prototype-*.png` as the approved identity, replacing `tela_*.png`.

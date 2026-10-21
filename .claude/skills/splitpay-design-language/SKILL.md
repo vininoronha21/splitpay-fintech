@@ -61,7 +61,7 @@ Light is the default; dark is selectable in Configurações (Claro, Escuro, Auto
 
 ## Foundations
 
-**Type.** Keep `font-sans` (Inter stack from `theme.css`). It is declared but, at the time of writing, not loaded by `frontend/index.html`: loading it, or switching to Poppins as the Figma landing does, is a dependency decision for the feature's `plan.md`, not a styling detail. The scale and weights come from the Figma style guide:
+**Type.** Keep `font-sans` (Inter stack from `theme.css`). Inter is self-hosted through `@fontsource-variable/inter`, imported in `src/main.tsx` (spec 008). The scale and weights come from the Figma style guide:
 
 | Role | px | Weight | Where |
 | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ Recipes with Tailwind classes, anatomy and states are in `references/components.
 - **Chart card** (donut by category, bars by period), from the Figma "Saving Month" chart: muted bars, active bar accent plus floating value chip, 1 px grid, caption ticks.
 - **Transaction row**: initials avatar, title, meta line, signed amount.
 - **Status pill** (Aguardando reembolso, Pago, Acertado) with icon and tinted fill. No "Em atraso" (out of scope).
-- **Form field** with uppercase label, focus ring in `accent`, large money input.
+- **Form field** with uppercase label, focus ring in `accent-text`, large money input (`ui/TextField`, `ui/MoneyField`).
 - **Category chip** group (single select).
 - **Timeline** for adjustment history.
 - **Bottom tab bar** with safe-area padding.
@@ -124,7 +124,7 @@ Rules that follow:
 - Informational text uses `text` or `muted`. Dimmer grays only for decoration or disabled controls. The helper text on `tela_configs_financeiras` looks dimmer than `muted`: do not copy it.
 - Status pills use a tinted background (`color/15`) with colored text and an icon, never white text on a solid red or blue fill.
 - Never encode status by color alone: pair it with an icon and a label (the Extrato pills already do).
-- Visible focus ring on every interactive element: `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`.
+- Visible focus ring on every interactive element: `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text` (exported as `focusRing` from `ui/focus.ts`). Plain `accent` is 1.7:1 on white and fails the 3:1 focus requirement.
 - Touch targets at least 44 x 44 px. Inputs 48 px high.
 - Honor `prefers-reduced-motion` (see `references/motion.md`).
 - Bottom bar and sticky footers respect `env(safe-area-inset-bottom)`. PWA `theme_color` and `background_color` follow the active theme `bg` (`#f4f4f5` light, `#0b0b0c` dark).
