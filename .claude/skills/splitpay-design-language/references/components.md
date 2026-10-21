@@ -52,7 +52,7 @@ Budget bars always carry the numbers as text (`62% do orçamento`, `R$ 2.300,00 
 "inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-5 text-sm font-medium text-text"
 
 // Ghost (small action inside rows, e.g. Marcar como pago)
-"inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-muted hover:text-text"
+"inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium text-muted hover:text-text"
 ```
 
 Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` followed by a 52 px circular button (`rounded-full bg-text text-bg`) holding an arrow rotated -30 deg, overlapping the first by 20 px (`-ml-5`). Disabled buttons keep their label readable and use `aria-disabled` plus a reason nearby when the cause is not obvious (for example the adjustment needing a 10 character justification).
@@ -68,10 +68,10 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
 "inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent-soft-text"
 
 // Category chip (single select; selected state uses accent)
-"h-10 rounded-xl border border-border bg-surface px-4 text-sm font-medium text-muted aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-soft-text"
+"min-h-11 rounded-xl border border-border bg-surface px-4 text-sm font-medium text-muted aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-soft-text"
 
 // Count badge inside tabs
-"ml-1.5 rounded-full bg-border px-1.5 text-[11px] tabular-nums"
+"ml-1.5 rounded-full bg-border px-1.5 text-xs tabular-nums"
 ```
 
 ## 4. Forms
@@ -81,7 +81,7 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
 <input id="desc" className="mt-2 h-12 w-full rounded-xl border border-border bg-bg px-4 text-base text-text placeholder:text-muted focus:border-accent-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text" />
 ```
 
-- Money field: large number in `accent` (`text-3xl font-bold tabular-nums`), `inputMode="decimal"`, `R$` prefix as a separate non-editable element. The component parses to integer cents before leaving the form.
+- Money field: large number in `text` (`text-3xl font-bold tabular-nums`), `inputMode="decimal"`, `R$` prefix as a separate non-editable element. The component parses to integer cents before leaving the form.
 - Errors: message under the field in `danger` with an icon, linked through `aria-describedby`, field border `danger`. Inputs are 16 px minimum to avoid iOS zoom.
 - Textarea with a minimum length (adjustment reason): show a live counter (`0 / 10 mín.`) and turn it `success` when met.
 - Friend picker rows: avatar with initials, name, checkbox; the whole row is the target (min 56 px). Avatar colors are decorative, but the initials carry the identity.
@@ -94,7 +94,7 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
   <span className="grid size-10 place-items-center rounded-full bg-accent-soft text-xs font-bold text-accent-soft-text">AL</span>
   <div className="min-w-0 flex-1">
     <p className="truncate text-sm font-medium">Jantar no restaurante</p>
-    <p className="text-xs text-muted">24 Abr · 3 pessoas</p>
+    <p className="text-xs text-muted">24 out, com Ana</p>
   </div>
   <p className="text-sm font-semibold tabular-nums">−R$ 210,00</p>
 </li>
