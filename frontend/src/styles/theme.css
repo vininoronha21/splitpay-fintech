@@ -44,6 +44,9 @@
   --color-neutral-soft: #f4f4f5;
   /* Text on neutral-soft. */
   --color-neutral-soft-text: #52525b;
+  /* Selected option of a segmented control (white in light, amber in dark). */
+  --color-segment-selected: #ffffff;
+  --color-segment-selected-text: #18181b;
   /* Categorical chart palette, colorblind-checked; fixed order per category. */
   --color-chart-1: #eda100;
   --color-chart-2: #6250d6;
@@ -78,6 +81,8 @@
   --color-danger-soft: rgba(239, 68, 68, 0.14);
   --color-neutral-soft: #27272a;
   --color-neutral-soft-text: #d4d4d8;
+  --color-segment-selected: #fbbf24;
+  --color-segment-selected-text: #111111;
   --color-chart-1: #c98500;
   --color-chart-2: #9085e9;
   --color-chart-3: #199e70;
@@ -106,6 +111,8 @@
     --color-danger-soft: rgba(239, 68, 68, 0.14);
     --color-neutral-soft: #27272a;
     --color-neutral-soft-text: #d4d4d8;
+    --color-segment-selected: #fbbf24;
+    --color-segment-selected-text: #111111;
     --color-chart-1: #c98500;
     --color-chart-2: #9085e9;
     --color-chart-3: #199e70;
