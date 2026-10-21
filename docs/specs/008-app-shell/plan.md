@@ -12,6 +12,7 @@ Status: approved
 - `frontend/src/lib/money.ts` (new): `formatBRL`, `parseBRL`.
 - `frontend/src/lib/storage.ts` (new): safe get/set/remove with in-memory fallback.
 - `frontend/src/lib/userName.ts` (new, added during T4): read, save, clear and validate the fake-login name.
+- `frontend/src/lib/text.ts` (new, added after the audit): invisible-character trim mirroring `backend/app/text.py`, and grapheme splitting.
 - `frontend/src/lib/preferences.ts` (new): theme (`claro | escuro | automatico`) and hide-values state, a small `useSyncExternalStore` hook so every screen updates together.
 - `frontend/src/types/api.ts`: every request and response type.
 - `frontend/src/services/api.ts`: one function per endpoint, JSON body helper for POST/PATCH.

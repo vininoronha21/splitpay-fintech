@@ -35,7 +35,7 @@ Tailwind 4 classes built only from tokens in `frontend/src/styles/theme.css` (`b
     <span>Gasto total</span>
     <span className="grid size-8 place-items-center rounded-lg bg-danger/15 text-danger" aria-hidden>{icon}</span>
   </header>
-  <p className="mt-2 text-2xl font-bold tabular-nums text-accent">R$ 3.700,00</p>
+  <p className="mt-2 text-2xl font-bold tabular-nums text-accent-text">R$ 3.700,00</p>
   <p className="mt-1 text-xs text-muted">12% vs. mês anterior</p>
 </article>
 ```
@@ -78,7 +78,7 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
 
 ```tsx
 <label className="block text-xs font-semibold uppercase tracking-wider text-muted" htmlFor="desc">Descrição do gasto</label>
-<input id="desc" className="mt-2 h-12 w-full rounded-xl border border-border bg-bg px-4 text-base text-text placeholder:text-muted focus:border-accent-text focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text" />
+<input id="desc" className="mt-2 h-12 w-full rounded-xl border border-border bg-bg px-4 text-base text-text placeholder:text-muted focus:border-accent-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-text" />
 ```
 
 - Money field: large number in `accent` (`text-3xl font-bold tabular-nums`), `inputMode="decimal"`, `R$` prefix as a separate non-editable element. The component parses to integer cents before leaving the form.
@@ -91,7 +91,7 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
 ```tsx
 // Transaction row
 <li className="flex items-center gap-3 px-4 py-3">
-  <span className="grid size-10 place-items-center rounded-full bg-accent/15 text-xs font-bold text-accent">AL</span>
+  <span className="grid size-10 place-items-center rounded-full bg-accent-soft text-xs font-bold text-accent-soft-text">AL</span>
   <div className="min-w-0 flex-1">
     <p className="truncate text-sm font-medium">Jantar no restaurante</p>
     <p className="text-xs text-muted">24 Abr · 3 pessoas</p>
@@ -102,16 +102,16 @@ Landing hero CTA (Figma pattern, landing only): primary button `rounded-[44px]` 
 
 Rows are separated by `divide-y divide-border`. Reimbursement rows add the status pill under the amount on mobile.
 
-Timeline (adjustment history): a 2 px `border` rail on the left, a 32 px circular node (`accent` fill for the latest, outlined for older), cards `rounded-2xl border border-border bg-surface p-4`, latest card `border-accent/40 bg-accent/5` with a "Mais recente" pill. Show `R$ old → R$ new` with the old value struck through.
+Timeline (adjustment history): a 2 px `border` rail on the left, a 32 px circular node (`accent` fill for the latest, outlined for older), cards `rounded-2xl border border-border bg-surface p-4`, latest card `border-accent/40 bg-accent/5` with a "Mais recente" pill. Show the old value struck through next to the new one (no arrow characters).
 
 ## 6. Charts
 
 Derived from the Figma "Saving Month" card. SplitPay charts always sit in a card with a title, a period segmented control and the numbers as text.
 
-- Segmented control: container `rounded-xl bg-bg p-1`, buttons `h-8 rounded-lg px-3 text-xs`, selected `bg-accent text-on-accent` with `aria-pressed`.
+- Segmented control: use `ui/Segmented` (a `radiogroup` with 44 px options, selected `segment-selected` tokens: white in light, amber in dark).
 - Bars: inactive `bg-border` (or `bg-muted/30`), active `bg-accent`, radius 6 at the top, gap 12 px. Ticks `text-xs text-muted`, 1 px `border` grid lines, three Y ticks at most on mobile.
 - Value chip over the active bar: `rounded-lg bg-accent px-2 py-1 text-xs font-semibold text-on-accent`, with a small pointer.
-- Donut by category: inner label shows the total (`tabular-nums`). Use `accent` plus lighter and darker amber steps, and separate slices with a 2 px `surface` gap. Because adjacent amber steps are hard to tell apart, the legend lists name, share and amount next to a swatch and each row is a button that expands the items (US04).
+- Donut by category: inner label shows the total (`tabular-nums`). Use the `chart-1` to `chart-6` tokens in fixed category order (spec 008), and separate slices with a 2 px `surface` gap. The legend lists name, share and amount next to a swatch and each row is a button that expands the items (US04).
 - Empty period: a centered message `Nenhum dado encontrado` with a muted icon, same card height to avoid layout shift.
 - Provide the data as text rows (the legend doubles as a table). Charts are never the only source of a number.
 
@@ -122,20 +122,20 @@ Derived from the Figma "Saving Month" card. SplitPay charts always sit in a card
 <nav aria-label="Principal" className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur">
   <ul className="mx-auto grid max-w-md grid-cols-4">
     <li><a aria-current={active ? "page" : undefined}
-           className="flex h-16 flex-col items-center justify-center gap-1 text-[11px] text-muted aria-[current=page]:text-accent">
+           className="flex h-16 flex-col items-center justify-center gap-1 text-xs text-muted aria-[current=page]:text-accent-text">
       {icon}<span>Início</span></a></li>
   </ul>
 </nav>
 ```
 
-From `md` up, swap to the top nav seen in the reference screens (logo, four links, primary "Novo Gasto"). The active item uses `accent` text plus a `surface` pill. Add `pb-24` to page content so the bar never covers it. The primary action ("Novo Gasto") is a floating or header button on mobile, not a fifth tab.
+From `md` up, swap to the top nav seen in the reference screens (logo, four links, primary "Novo Gasto"). The active item uses `accent-text` on an `accent-soft` pill (see `AppLayout.tsx`). Add `pb-24` to page content so the bar never covers it. The primary action ("Novo Gasto") is a floating or header button on mobile, not a fifth tab.
 
 ## 8. Landing page blocks
 
 Dark only, to match the app. Replace Figma's teal and lime with `bg`, `surface` and `accent`.
 
 - **Hero background**: `bg` with a faint grid and an amber glow. Grid with CSS only: `background-image: linear-gradient(to right, rgb(255 255 255 / .06) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .06) 1px, transparent 1px); background-size: 96px 96px;` masked with `mask-image: radial-gradient(ellipse at 70% 30%, #000, transparent 70%)`. Glow: absolutely positioned blurred circle `bg-accent/10 blur-3xl`.
-- **Hero copy**: pill eyebrow, title Display scale on `lg` (36 to 40 px on mobile) with the last word in `text-accent`, lead 16 to 18 px `text-muted`, CTA pair. App preview on the right (stacked below on mobile) using real screenshots of the running app, never the Figma mockups.
+- **Hero copy**: pill eyebrow, title Display scale on `lg` (36 to 40 px on mobile) with the last word in `text-accent` (on the dark hero only; use `text-accent-text` on light surfaces), lead 16 to 18 px `text-muted`, CTA pair. App preview on the right (stacked below on mobile) using real screenshots of the running app, never the Figma mockups.
 - **Trust strip** (Figma partner band): only with real, truthful content. Do not invent partners. A simple strip of the stack or "Projeto FIAP" is acceptable.
 - **Bento features**: grid `gap-3 md:gap-6`, cards `rounded-[20px]`, a mix of `surface` and one `accent` card (dark text) for the highlight. Icon chip 42 px `rounded-full bg-accent text-on-accent` over each title.
 - **Step list**: vertical 11 px rail, filled segment `bg-accent`, active card `bg-accent/10 border-accent/40`, inactive `border-border`. Good for "como funciona" (registrar gasto, dividir, acompanhar reembolso).
