@@ -10,7 +10,8 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 ├── README.md                     # Human entry point: what it is, how to run, live URLs
 ├── .gitignore
 ├── .claude/
-│   └── agents/                   # One file per agent role, with name/description frontmatter (see CLAUDE.md)
+│   ├── agents/                   # One file per agent role, with name/description frontmatter (see CLAUDE.md)
+│   └── skills/                   # One folder per skill: SKILL.md plus optional references/ (e.g. splitpay-design-language)
 ├── docs/
 │   ├── goal.md                   # Purpose, user stories (1-to-1 splits), success criteria, out-of-scope items
 │   ├── context.md                # Current state, stack (TS, GSAP, SQLite ephemeral), decisions
