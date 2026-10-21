@@ -9,9 +9,9 @@ Read with `goal.md`. This file records the current state, the stack, the decisio
 
 ## Current State of the Repository
 
-- Phase 1 (API) complete: 001 restructure, 002 database, 003 balance, 004 split, 005 categories, 006 reimbursements, 007 dashboard. Next: Phase 2 (frontend screens).
-- `frontend/` is a Vite + React + TypeScript scaffold that calls `/health`; screens come in phase 2.
-- Agents are in `.claude/agents/`; reference material (`tela_*.png`, `USER-STORIES.pdf`) is in `docs/assets/`. The visual identity is a dark theme with a yellow accent.
+- Phase 1 (API) complete: 001 restructure, 002 database, 003 balance, 004 split, 005 categories, 006 reimbursements, 007 dashboard. Phase 2 (frontend) in progress.
+- Phase 2 started: 008 app shell delivered the fake login at `/entrar`, the tab bar and top nav, light and dark themes, hide values, the typed API client and shared UI primitives. Screen contents come in 009-012.
+- Agents are in `.claude/agents/`; reference material (`tela_*.png`, `USER-STORIES.pdf`) is in `docs/assets/`. The visual identity is light by default with an amber accent and an optional dark theme, approved in the prototype (`docs/assets/prototype-*.png`).
 - The reference screens are **visual inspiration only**. They show group splits, an "Em Atraso" status and "Lembrar" buttons, all of which are out of scope (see Business Rules 1 and 6).
 - No linting and no CI.
 

@@ -10,7 +10,8 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 ├── README.md                     # Human entry point: what it is, how to run, live URLs
 ├── .gitignore
 ├── .claude/
-│   └── agents/                   # One file per agent role, with name/description frontmatter (see CLAUDE.md)
+│   ├── agents/                   # One file per agent role, with name/description frontmatter (see CLAUDE.md)
+│   └── skills/                   # One folder per skill: SKILL.md plus optional references/ (e.g. splitpay-design-language)
 ├── docs/
 │   ├── goal.md                   # Purpose, user stories (1-to-1 splits), success criteria, out-of-scope items
 │   ├── context.md                # Current state, stack (TS, GSAP, SQLite ephemeral), decisions
@@ -26,7 +27,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │       ├── tasks.md          # Ordered, verifiable tasks with owners
 │   │       └── audit.md          # Auditor report(s) and final verdict
 │   ├── presentation/             # Phase 3: talking points, diagrams, demo script
-│   └── assets/                   # Reference material (Figma screenshots, UI ideas)
+│   └── assets/                   # Reference material (Figma screenshots, UI ideas, approved prototype-*.png captures)
 ├── backend/
 │   ├── app/
 │   │   ├── main.py               # App factory: CORS, routers, error handlers, startup DB init
@@ -76,18 +77,21 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
     ├── tsconfig.node.json
     ├── vite.config.ts            # React + Tailwind 4 (@tailwindcss/vite plugin, no PostCSS config)
     ├── .env.example              # VITE_API_URL
+    ├── public/
+    │   └── favicon.svg           # The logo (Vite serves public/ as-is at the site root)
     └── src/
         ├── main.tsx
         ├── vite-env.d.ts         # Types for import.meta.env (VITE_API_URL)
         ├── app/
         │   ├── App.tsx
         │   ├── routes.tsx
-        │   └── components/       # Screens and their sub-components (Dashboard, LandingPage, etc.)
+        │   └── components/       # Screens, the app shell and shared pieces (BrandMark, Money, ...)
+        │       └── ui/           # Reusable primitives: Button, TextField, MoneyField, Card, states
         ├── services/
         │   └── api.ts            # The only module that calls fetch()
         ├── types/                # Shared TypeScript interfaces (API contracts)
-        ├── lib/                  # Small shared helpers (e.g. formatBRL, cents↔reais)
-        └── styles/               # Theme tokens and Tailwind config
+        ├── lib/                  # Small shared helpers: money.ts (formatBRL, parseBRL), storage.ts, preferences.ts (theme, hide values), userName.ts (fake-login name), text.ts (invisible-character trim, graphemes)
+        └── styles/               # Theme tokens (light default, dark override) and Tailwind config
 ```
 
 ## Layer Rules
@@ -97,7 +101,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 - Split math is written as pure functions, testable without a database, and strictly respects the 1-to-1 logic.
 - **Frontend:** screens never call `fetch` directly; they go through `services/api.ts`.
 - **TypeScript:** Frontend must define and use strict interfaces (in `src/types/`) that mirror the backend's Pydantic schemas. No `any` types for API payloads.
-- No global state library. Local state plus a small fetch hook is enough.
+- No global state library. Local state plus a small fetch hook is enough; app-wide preferences (theme, hide values) live in `lib/preferences.ts` on `useSyncExternalStore`.
 - `docs/specs/` is the only home for specs, plans, tasks and audits.
 
 ## Change Rules
