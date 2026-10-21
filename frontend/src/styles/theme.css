@@ -1,23 +1,124 @@
 @import "tailwindcss";
 
-/* SplitPay theme tokens: near-black surfaces with a yellow accent. */
-@theme {
+/*
+ * SplitPay theme tokens. Light is the default; dark overrides the same
+ * variables when <html data-theme="dark">, or data-theme="auto" with a dark OS.
+ * `static` emits every token, so charts can read them through var() as well.
+ */
+@theme static {
+  /* Page background behind cards. */
+  --color-bg: #f4f4f5;
+  /* Cards, sheets, inputs and nav bars. */
+  --color-surface: #ffffff;
+  /* 1 px hairlines around cards and inputs. */
+  --color-border: #e4e4e7;
+  /* Empty part of progress bars and meters. */
+  --color-track: #e4e4e7;
+  /* Primary text. */
+  --color-text: #18181b;
+  /* Secondary text (meta lines, labels); passes AA on bg and surface. */
+  --color-muted: #52525b;
+  /* Amber fill for the brand, primary buttons and the balance card. */
+  --color-accent: #fbbf24;
+  /* Hover or pressed state of accent fills. */
+  --color-accent-strong: #f59e0b;
+  /* Text and icons placed on an accent fill. */
+  --color-on-accent: #111111;
+  /* Amber used as text or links; darker step so it passes AA on light. */
+  --color-accent-text: #b45309;
+  /* Tinted amber background (open reimbursement pill, avatars, selected chip). */
+  --color-accent-soft: #fef3c7;
+  /* Text on accent-soft. */
+  --color-accent-soft-text: #92400e;
+  /* Money received and positive states, as text or icon. */
+  --color-success: #15803d;
+  /* Tinted green background (paid pill). */
+  --color-success-soft: #dcfce7;
+  /* Text on success-soft. */
+  --color-success-soft-text: #166534;
+  /* Errors and money out, as text or icon. */
+  --color-danger: #b91c1c;
+  /* Tinted red background (error card). */
+  --color-danger-soft: #fee2e2;
+  /* Tinted gray background (settled pill, segmented control track). */
+  --color-neutral-soft: #f4f4f5;
+  /* Text on neutral-soft. */
+  --color-neutral-soft-text: #52525b;
+  /* Categorical chart palette, colorblind-checked; fixed order per category. */
+  --color-chart-1: #eda100;
+  --color-chart-2: #6250d6;
+  --color-chart-3: #1baf7a;
+  --color-chart-4: #eb6834;
+  --color-chart-5: #2a78d6;
+  --color-chart-6: #e87ba4;
+
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+/* Dark values, chosen explicitly ("Escuro"). Keep in sync with the auto block below. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --color-bg: #0b0b0c;
   --color-surface: #18181b;
   --color-border: #27272a;
+  --color-track: #27272a;
   --color-text: #fafafa;
   --color-muted: #a1a1aa;
-  --color-accent: #fbbf24;
-  --color-accent-strong: #f59e0b;
-  --color-on-accent: #111111;
+  --color-accent-text: #fbbf24;
+  --color-accent-soft: rgba(251, 191, 36, 0.14);
+  --color-accent-soft-text: #fbbf24;
   --color-success: #22c55e;
-  --color-danger: #ef4444;
-
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-success-soft: rgba(34, 197, 94, 0.14);
+  --color-success-soft-text: #4ade80;
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(239, 68, 68, 0.14);
+  --color-neutral-soft: #27272a;
+  --color-neutral-soft-text: #d4d4d8;
+  --color-chart-1: #c98500;
+  --color-chart-2: #9085e9;
+  --color-chart-3: #199e70;
+  --color-chart-4: #d95926;
+  --color-chart-5: #3987e5;
+  --color-chart-6: #d55181;
 }
 
-html {
-  color-scheme: dark;
+/* Dark values when "Automático" is selected and the OS prefers dark. Same as above. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] {
+    color-scheme: dark;
+    --color-bg: #0b0b0c;
+    --color-surface: #18181b;
+    --color-border: #27272a;
+    --color-track: #27272a;
+    --color-text: #fafafa;
+    --color-muted: #a1a1aa;
+    --color-accent-text: #fbbf24;
+    --color-accent-soft: rgba(251, 191, 36, 0.14);
+    --color-accent-soft-text: #fbbf24;
+    --color-success: #22c55e;
+    --color-success-soft: rgba(34, 197, 94, 0.14);
+    --color-success-soft-text: #4ade80;
+    --color-danger: #f87171;
+    --color-danger-soft: rgba(239, 68, 68, 0.14);
+    --color-neutral-soft: #27272a;
+    --color-neutral-soft-text: #d4d4d8;
+    --color-chart-1: #c98500;
+    --color-chart-2: #9085e9;
+    --color-chart-3: #199e70;
+    --color-chart-4: #d95926;
+    --color-chart-5: #3987e5;
+    --color-chart-6: #d55181;
+  }
+}
+
+/* Amounts and other numbers: aligned digits and never broken across lines. */
+@utility num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 body {
