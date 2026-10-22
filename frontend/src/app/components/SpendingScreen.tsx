@@ -109,7 +109,7 @@ interface SpendingCardsProps {
 function SpendingCards({ charts, offset, keyPrefix }: SpendingCardsProps) {
   if (charts.status === "loading") {
     return (
-      <div className="grid items-start gap-3 md:gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-3 md:gap-4 lg:grid-cols-2">
         <CategoryBreakdownSkeleton />
         <FriendSharesSkeleton />
       </div>
@@ -129,8 +129,9 @@ function SpendingCards({ charts, offset, keyPrefix }: SpendingCardsProps) {
       </Card>
     );
   }
+  // `grid-cols-1` is minmax(0, 1fr): a long open item truncates instead of widening the card past the screen.
   return (
-    <div className="grid items-start gap-3 md:gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 items-start gap-3 md:gap-4 lg:grid-cols-2">
       <CategoryBreakdown key={keyPrefix} charts={charts.data} />
       <FriendShares charts={charts.data} offset={offset} />
     </div>

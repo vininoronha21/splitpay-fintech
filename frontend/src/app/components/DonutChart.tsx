@@ -77,15 +77,36 @@ interface DonutTotalProps {
 }
 
 /**
- * Long amounts step down a size so they stay inside the hole (measured: 124 px
- * hole for `md`, 142 px for `lg`). The smaller `md` hole drops to 12 px sooner.
+ * Font step for the amount by its formatted length: `[longest length, class]`,
+ * first match wins. Measured so every corner of the text box stays at least
+ * 6 px inside the hole (124 px for `md`, 142 px for `lg`) up to
+ * R$ 90.071.992.547.409,91 (24 characters, the largest safe integer of cents).
+ * Amounts up to 16 characters keep their earlier size.
  */
+const AMOUNT_STEPS: Record<"md" | "lg", readonly (readonly [number, string])[]> = {
+  md: [
+    [12, "text-base"],
+    [14, "text-sm"],
+    [16, "text-xs"],
+    [17, "text-[11px]"],
+    [19, "text-[10px]"],
+    [21, "text-[9px]"],
+    [Infinity, "text-[8px]"],
+  ],
+  lg: [
+    [12, "text-lg"],
+    [16, "text-sm"],
+    [19, "text-xs"],
+    [20, "text-[11px]"],
+    [22, "text-[10px]"],
+    [Infinity, "text-[9px]"],
+  ],
+};
+
 function amountClass(cents: number, size: "md" | "lg"): string {
   const length = formatBRL(cents).length;
-  if (length > 16) return "text-xs";
-  if (size === "md" && length > 14) return "text-xs";
-  if (length > 12) return "text-sm";
-  return size === "lg" ? "text-lg" : "text-base";
+  const step = AMOUNT_STEPS[size].find(([longest]) => length <= longest);
+  return step ? step[1] : "text-[8px]";
 }
 
 /** "Total" over the amount, for the center of a donut. */

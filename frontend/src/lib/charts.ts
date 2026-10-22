@@ -8,6 +8,10 @@
  * each entry gets floor(total * 100 / sum), and the points left over go to the
  * largest remainders, ties by list order. The result sums to 100 when any
  * total is above 0, and is all zeros when every total is 0.
+ *
+ * The products and the sum run in BigInt: `total * 100` passes
+ * Number.MAX_SAFE_INTEGER at about R$ 900 bilhões, which the shared demo can
+ * reach. Every percent is 0..100, so it converts back to a number exactly.
  */
 export function sharePercents(totals: readonly number[]): number[] {
   for (const total of totals) {
@@ -15,20 +19,18 @@ export function sharePercents(totals: readonly number[]): number[] {
       throw new RangeError(`sharePercents expects non-negative integer cents, received ${String(total)}`);
     }
   }
-  const sum = totals.reduce((acc, total) => acc + total, 0);
-  if (sum === 0) {
+  const scaled = totals.map((total) => BigInt(total) * 100n);
+  const sum = totals.reduce((acc, total) => acc + BigInt(total), 0n);
+  if (sum === 0n) {
     return totals.map(() => 0);
   }
-  if (!Number.isSafeInteger(sum * 100)) {
-    throw new RangeError("sharePercents: totals too large for exact integer math");
-  }
 
-  const percents = totals.map((total) => Math.floor((total * 100) / sum));
-  const remainders = totals.map((total) => (total * 100) % sum);
+  const percents = scaled.map((value) => Number(value / sum));
+  const remainders = scaled.map((value) => value % sum);
   let leftover = 100 - percents.reduce((acc, percent) => acc + percent, 0);
 
   // Indices by remainder, largest first; the stable sort keeps list order on ties.
-  const order = totals.map((_, index) => index).sort((a, b) => (remainders[b] ?? 0) - (remainders[a] ?? 0));
+  const order = totals.map((_, index) => index).sort((a, b) => compareBigInt(remainders[b] ?? 0n, remainders[a] ?? 0n));
   for (const index of order) {
     if (leftover === 0) {
       break;
@@ -37,6 +39,11 @@ export function sharePercents(totals: readonly number[]): number[] {
     leftover -= 1;
   }
   return percents;
+}
+
+/** Sort comparator for BigInt: subtracting would give a BigInt, which `sort` cannot use. */
+function compareBigInt(a: bigint, b: bigint): number {
+  return a > b ? 1 : a < b ? -1 : 0;
 }
 
 /** "42%", or "<1%" for a non-zero total that rounded down to 0 points. */

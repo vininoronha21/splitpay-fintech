@@ -12,7 +12,7 @@ import { RecentTransactionsCard } from "./RecentTransactionsCard.tsx";
  */
 export function HomeScreen() {
   return (
-    <div className="grid items-start gap-3 md:gap-4 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-5">
+    <div className="grid grid-cols-1 items-start gap-3 md:gap-4 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-5">
       <h1 className="sr-only">Início</h1>
       <div className="flex min-w-0 flex-col gap-3 md:gap-4">
         {/* Full width below md (AppLayout drops its gutter on Início); the rest keeps a 16 px gutter. */}
