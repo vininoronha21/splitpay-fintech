@@ -53,7 +53,7 @@ After 008 the user logs in and lands on an empty "Início". The API already retu
    - a period navigator with previous and next buttons and a label;
      - labels: "Outubro de 2026", "19 a 25 de out" (or "29 de set a 5 de out" across months, with the year added when the week crosses a year) and "2026";
      - next is disabled at the current period, previous at offset −520;
-   - period and offset live in the URL (`?periodo=semanal|mensal|anual&offset=-1`), so reload and back keep them; invalid values fall back to the current month.
+   - period and offset live in the URL (`?periodo=semanal|mensal|anual&offset=-1`), so reload and back keep them; an invalid period falls back to Mensal and an invalid offset to the current period of the chosen type.
 9. **Por categoria** (US04):
    - a donut of the user's own share by category, with the total in the center;
    - the note "Considera só a sua parte de cada despesa.";
