@@ -22,6 +22,15 @@ interface ShellContext {
   userName: string;
 }
 
+/**
+ * Tab that owns the current screen when it is not the tab's own route:
+ * Gastos do mês opens from Início, so Início stays highlighted there.
+ * Styling only; `aria-current="page"` stays on real route matches.
+ */
+function useSectionTab(): string | null {
+  return useMatch("/gastos-do-mes") !== null ? "/inicio" : null;
+}
+
 /** Name saved at /entrar; only valid inside the routes guarded by AppLayout. */
 export function useUserName(): string {
   return useOutletContext<ShellContext>().userName;
@@ -70,6 +79,7 @@ export function AppLayout() {
 }
 
 function TabBar() {
+  const sectionTab = useSectionTab();
   return (
     <nav
       aria-label="Principal"
@@ -84,7 +94,7 @@ function TabBar() {
                 cx(
                   // No side padding: "Configurações" needs 86 of the 90 px a tab gets at 360 px.
                   "flex min-h-15 flex-col items-center justify-center gap-1 text-xs",
-                  isActive ? "font-semibold text-accent-text" : "font-medium text-muted hover:text-text",
+                  isActive || to === sectionTab ? "font-semibold text-accent-text" : "font-medium text-muted hover:text-text",
                   focusRing,
                   "focus-visible:-outline-offset-2",
                 )
@@ -101,6 +111,7 @@ function TabBar() {
 }
 
 function TopNav({ userName }: { userName: string }) {
+  const sectionTab = useSectionTab();
   return (
     <header className="hidden border-b border-border bg-nav md:block">
       <div className="mx-auto flex h-18 max-w-[1140px] items-center gap-4 px-8 lg:gap-6">
@@ -120,7 +131,7 @@ function TopNav({ userName }: { userName: string }) {
                   className={({ isActive }) =>
                     cx(
                       "flex h-11 items-center rounded-full px-3 text-[15px] whitespace-nowrap transition-colors motion-reduce:transition-none lg:px-3.5",
-                      isActive
+                      isActive || to === sectionTab
                         ? "bg-accent-soft font-semibold text-accent-soft-text"
                         : "font-medium text-muted hover:text-text",
                       focusRing,

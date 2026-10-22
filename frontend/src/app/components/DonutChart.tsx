@@ -76,10 +76,14 @@ interface DonutTotalProps {
   size?: "md" | "lg";
 }
 
-/** Long amounts step down a size so they stay inside the hole. */
+/**
+ * Long amounts step down a size so they stay inside the hole (measured: 124 px
+ * hole for `md`, 142 px for `lg`). The smaller `md` hole drops to 12 px sooner.
+ */
 function amountClass(cents: number, size: "md" | "lg"): string {
   const length = formatBRL(cents).length;
   if (length > 16) return "text-xs";
+  if (size === "md" && length > 14) return "text-xs";
   if (length > 12) return "text-sm";
   return size === "lg" ? "text-lg" : "text-base";
 }

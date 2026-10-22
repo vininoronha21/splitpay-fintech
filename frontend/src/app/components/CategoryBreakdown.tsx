@@ -26,13 +26,14 @@ export function CategoryBreakdown({ charts }: { charts: Charts }) {
   }
 
   return (
-    <Card aria-labelledby="por-categoria-titulo">
+    <Card aria-labelledby="por-categoria-titulo" className="md:p-6">
       <CardHeader
         title="Por categoria"
         titleId="por-categoria-titulo"
         note="Considera só a sua parte de cada despesa."
       />
-      <div className="mt-4 grid place-items-center">
+      {/* Spacing follows prototype-monthly-spending; the ring stays 196 px so totals up to R$ 10 bilhões fit the hole. */}
+      <div className="mt-6 grid place-items-center">
         <DonutChart
           size={196}
           strokeWidth={27}
@@ -41,7 +42,7 @@ export function CategoryBreakdown({ charts }: { charts: Charts }) {
           <DonutTotal cents={charts.total_cents} size="lg" />
         </DonutChart>
       </div>
-      <ul className="mt-3">
+      <ul className="mt-5">
         {rows.map((row) => (
           <CategoryItem key={row.key} row={row} expanded={expanded.has(row.key)} onToggle={() => toggle(row.key)} />
         ))}
@@ -72,10 +73,14 @@ function CategoryItem({ row, expanded, onToggle }: CategoryItemProps) {
         <span className={cx("min-w-0 flex-1 truncate", expanded && "font-semibold")}>{category.category_name}</span>
         <span className="num text-xs text-muted">{row.percent}</span>
         <Money cents={category.total_cents} className="min-w-[92px] text-right font-semibold" />
+        {/* One down chevron that turns to point up when open; both states are declared so it never rests sideways. */}
         <ChevronDown
           size={16}
           aria-hidden="true"
-          className={cx("shrink-0 text-muted transition-transform motion-reduce:transition-none", expanded && "rotate-180")}
+          className={cx(
+            "shrink-0 text-muted transition-transform duration-200 motion-reduce:transition-none",
+            expanded ? "rotate-180" : "rotate-0",
+          )}
         />
       </button>
       {/* Kept in the DOM while collapsed, so aria-controls always points at it. */}
@@ -96,13 +101,13 @@ function CategoryItem({ row, expanded, onToggle }: CategoryItemProps) {
 /** Same shape as the loaded card: title, note, ring and legend rows. */
 export function CategoryBreakdownSkeleton() {
   return (
-    <Card aria-busy="true" aria-label="Carregando gastos por categoria">
+    <Card aria-busy="true" aria-label="Carregando gastos por categoria" className="md:p-6">
       <Skeleton className="h-5 w-32" />
       <Skeleton className="mt-1.5 h-3.5 w-60" />
-      <div className="mt-4 grid place-items-center">
+      <div className="mt-6 grid place-items-center">
         <Skeleton className="size-[196px] rounded-full!" />
       </div>
-      <div className="mt-3">
+      <div className="mt-5">
         {[0, 1, 2, 3, 4, 5].map((index) => (
           <div key={index} className="flex min-h-11 items-center gap-3 py-2">
             <Skeleton className="h-5 flex-1" />

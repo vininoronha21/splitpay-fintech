@@ -29,7 +29,7 @@ export function FriendShares({ charts, offset }: FriendSharesProps) {
   const largest = friends.reduce((max, person) => Math.max(max, person.total_cents), 0);
 
   return (
-    <Card aria-labelledby="amigos-titulo">
+    <Card aria-labelledby="amigos-titulo" className="md:p-6">
       <CardHeader
         title="Parte dos amigos"
         titleId="amigos-titulo"
@@ -62,7 +62,7 @@ export function FriendShares({ charts, offset }: FriendSharesProps) {
 
 export function FriendSharesSkeleton() {
   return (
-    <Card aria-busy="true" aria-label="Carregando parte dos amigos">
+    <Card aria-busy="true" aria-label="Carregando parte dos amigos" className="md:p-6">
       <Skeleton className="h-5 w-36" />
       <Skeleton className="mt-1.5 h-3.5 w-64" />
       <div className="mt-4 space-y-3.5">

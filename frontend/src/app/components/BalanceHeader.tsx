@@ -30,7 +30,7 @@ export function BalanceHeader() {
     <section
       aria-labelledby="saldo-titulo"
       className={cx(
-        "rounded-b-[24px] bg-accent px-4 pt-[calc(16px+env(safe-area-inset-top))] pb-6 text-on-accent",
+        "rounded-b-[24px] bg-accent px-4 pt-[calc(16px+env(safe-area-inset-top))] pb-5 text-on-accent",
         "md:rounded-[20px] md:p-6",
       )}
     >
@@ -46,7 +46,7 @@ export function BalanceHeader() {
           {hello}, {userName}
         </p>
       </div>
-      <h2 id="saldo-titulo" className="mt-5 text-[13px] font-medium text-on-accent/72">
+      <h2 id="saldo-titulo" className="mt-5 text-[13px] font-medium text-on-accent/72 md:mt-4">
         Saldo disponível
       </h2>
       <div className="mt-0.5 flex min-h-11 items-center gap-2 md:gap-2.5">
