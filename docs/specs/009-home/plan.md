@@ -21,7 +21,7 @@ Status: approved
   - `SpendingScreen.tsx`, `PeriodNavigator.tsx`, `DonutChart.tsx`, `CategoryBreakdown.tsx`, `FriendShares.tsx`;
   - `CardHeader.tsx` (added in T2): the shared card title, note and 44 px text link, so every card header looks and behaves the same.
 - `frontend/src/app/components/AppLayout.tsx` (added in T2 and T4): below `md`, `/inicio` drops the main padding so the amber header runs to the screen edges; the Início tab and link stay highlighted on `/gastos-do-mes`, which belongs to Início (`aria-current` still marks only the real route).
-- `frontend/src/app/routes.tsx`: `/inicio` → `HomeScreen`, `/gastos-do-mes` → `SpendingScreen`.
+- `frontend/src/app/routes.tsx`: `/inicio` → `HomeScreen`, `/gastos-do-mes` → `SpendingScreen`; a pathless root route with `errorElement: <RouteError />` (new `RouteError.tsx`, added after the audit) so a render crash shows a pt-BR page instead of the router's English default.
 - `.claude/skills/splitpay-design-language/SKILL.md`: the category color map and the `chart-7`/`chart-other` tokens.
 - `docs/development/repository-structure.md`: the new `lib/` files.
 

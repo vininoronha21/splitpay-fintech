@@ -87,8 +87,10 @@ function CategoryItem({ row, expanded, onToggle }: CategoryItemProps) {
       <ul id={listId} hidden={!expanded} className="space-y-1.5 pr-7 pb-3 pl-[22px]">
         {category.items.map((item) => (
           <li key={item.transaction_id} className="flex items-center gap-3 text-[13px] text-muted">
-            <span className="min-w-0 flex-1 truncate">
-              {item.description}, {formatShortDate(item.occurred_on)}
+            {/* Only the description shrinks, so a long one never hides the date. */}
+            <span className="flex min-w-0 flex-1">
+              <span className="min-w-0 truncate">{item.description}</span>
+              <span className="shrink-0">, {formatShortDate(item.occurred_on)}</span>
             </span>
             <Money cents={item.own_share_cents} />
           </li>

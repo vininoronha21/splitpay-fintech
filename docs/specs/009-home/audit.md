@@ -125,3 +125,57 @@ Most of the feature holds up under my own runs:
 - No dependency was added, the backend is untouched (743 passed), and nothing out of scope was found.
 
 The failure is AC14: on phones, expanding a category on Gastos do mês, which is the core US04 interaction and the prototype's own state, widens the card past the screen and scrolls the page sideways (M1). The fix is one class on two grids, already proven by injection. Fix M1, m1 and m2, then re-audit. The re-audit needs the 360/390 scan with rows expanded and a check of the Início donut at R$ 1 bilhão or more.
+
+## Re-audit (fix verification)
+
+Auditor: `auditor` agent | Date: 2026-10-22 | Commits checked: `36ecfa1` (docs: m2, n3, n4; it also put this file under version control) and `7c62645` (code: M1, m1, and `sharePercents` in BigInt). I checked each fix at `HEAD` (`7c62645`) with my own runs, not from the commit messages. Same scratch directory; new scripts and captures are in `$A/re/`, and the new full scan is in `$A/scan2/`.
+
+### Evidence
+
+| # | Check | Result |
+| --- | --- | --- |
+| R1 | Build, greps, copy scan | `npm run build` **passes** (1963 modules). Still no `any`, `@ts-*`, `toFixed`, `parseFloat` or `Math.round`, and the only cast is the 008 API boundary one. `rg "[—–·→…]" frontend/src` is **empty**. Diff since `81a28eb`: 4 frontend files and 6 docs files. No new file, no dependency change, backend diff empty. |
+| R2 | M1: every expanded row at phone widths (`$A/re/expand.cjs`) | 360 and 390 px × light and dark. Periods: year 0 and −1, months 0 to −11 (except the empty −9), weeks 0 to −29. Each category is opened alone, then all at once: **512 states, 0 problems.** Every state has `scrollWidth` equal to the viewport, `scrollX` 0, the card at 16 px from each edge and every item inside it. 82 item labels are truncated with an ellipsis instead. Captures: `$A/re/spend-360-claro-anual-all-open.png` and the dark and 390 versions. `HomeScreen.tsx:15` got the same `grid-cols-1`, and every Início check still passes (R6). |
+| R3 | m1: donut center from R$ 2.556,42 to `MAX_SAFE_INTEGER` cents (`$A/re/donut.cjs`) | 13 totals × Gastos at 360/390/768/1280 and Início at 768/1280: **78 renders, 0 overflows.** I measured the distance from the center to every corner of the amount box and of the "Total" label. The smallest margin inside the hole is **6.5 px**, and nothing wraps or scrolls. Início: "R$ 1.000.000.000,00" 104 px at 10 px in a 124 px hole; "R$ 90.071.992.547.409,91" 106 px at 8 px. Gastos: 119 px at 9 px in a 142 px hole. Captures: `$A/re/donut-*-10bi.png` and `-max.png`, readable on screen. |
+| R4 | `sharePercents` (BigInt) (`$A/re/bigpct-check.ts`) | **Small lists:** identical to the previous implementation (`git show 81a28eb:…/charts.ts`) on **300,000 random lists** and on the tie cases. **Huge totals:** 200,000 lists mixing 0, small values, `MAX_SAFE_INTEGER`, 2⁵², 9×10¹³ to 10¹⁵ and random safe integers. Each result is identical to my own BigInt reference, which picks the leftover points by explicit selection instead of a sort. 3 × MAX gives `[34,33,33]`; MAX with 1 gives `[100,0]`; 1,000 × MAX (sum about 9×10¹⁸) gives 100 ones then zeros. Unsafe or non-integer inputs still throw. **500,015 assertions, 0 failures.** The original helper suite (E3), with its overflow case changed to "exact", still passes 202,905 per TZ in 4 TZs. |
+| R5 | Full layout scan (`$A/scan2.cjs`) | Same method and same 14 states × 4 widths × 2 themes as E13. That includes Gastos with all rows open in year, week −3, long values and hidden values. **112 screenshots, 0 issues:** no horizontal scroll, clipped text, overlap, content under the tab bar or donut overflow. |
+| R6 | Regression of E5 to E16 | `home` 33, `states` 128, `spending` 269, `hide` 18, `fresh` 9, `a11y` 33, all passing. The only diffs left are the known test-expectation ones: avatar initials in the row text, and bar widths serialized to 6 digits. Contrast: 1,048 text nodes per theme, **0 below AA**, lowest pairs unchanged. |
+| R7 | Docs (`36ecfa1`) | The plan lists `CardHeader.tsx` and the `AppLayout.tsx` change with their reasons. T2 names both. `context.md:13` records what 009 delivered. Spec AC8 now says "an invalid period falls back to Mensal and an invalid offset to the current period of the chosen type", which matches E9. `SKILL.md:43` names Moradia/`chart-1` as the single amber-like category. |
+| R8 | Backend, tracked files, servers | `pytest`: **743 passed**. No `.env`, `*.db`, `node_modules` or `dist` tracked. uvicorn and `vite preview` stopped; ports 8000 and 4173 do not answer. `git status` was clean before this section was appended. |
+
+### Status of each finding
+
+- **M1: Closed** (R2, R5).
+- **m1: Closed** (R3).
+- **m2: Closed** (R7).
+- **n3, n4: Closed** (R7).
+- **n1, n2, n5, n6:** unchanged and accepted as informational.
+- **Missed in the first audit:** my E3 treated the `sharePercents` throw on a sum above about 9×10¹³ cents as correct. In the app that throw is fatal (see n8). About 90 entries of R$ 10 bilhões reach it on the shared demo. The BigInt change fixes it, and R4 confirms the result is exact.
+
+### New findings
+
+- **m3. An expanded item's date disappears when the description is long.** Minor.
+  - `frontend/src/app/components/CategoryBreakdown.tsx:90-92` puts the description and the date in one truncated span. Since M1's fix the row truncates instead of widening the page, so the ellipsis eats the date first.
+  - Seeded data, current month, with every row open: at 360 px 3 of 13 items lose their date ("Janta no restaurante japo…", "Mercado da semana, 20 …"); at 390 px 1 of 13. The year view loses 9 of 49 at 360. At 768 px none are cut (R2).
+  - AC9 asks for "description, short date and own share" on each item, and `prototype-monthly-spending.png` shows "Janta no restaurante japonês, 20 out" whole at 390.
+  - **Fix:** split the span so only the description shrinks: `<span className="min-w-0 truncate">{item.description}</span><span className="shrink-0">, {formatShortDate(item.occurred_on)}</span>`, inside a `min-w-0 flex-1 flex` wrapper. Optionally drop `pr-7` to 0 on these rows. The chevron column has no content in item rows, and the prototype aligns item amounts with the category amounts.
+- **n7. The donut amount goes below the 12 px type floor for extreme totals.** `DonutChart.tsx:86-104`:
+  - Início, md and up: 11 px from R$ 100 milhões, 10 px from R$ 1 bilhão, down to 8 px.
+  - Gastos, also on phones: 11 px from R$ 10 bilhões, down to 9 px.
+  - `SKILL.md:77` says "never go below 12 px" on mobile. On phones this only happens at R$ 10 bilhões or more, and the alternative is overflow, so I accept it.
+  - The Início steps are stricter than needed: at 12 px, "R$ 999.999.999,99" measured 114 px in the 124 px hole. If wanted, keep 12 px through 17 characters.
+- **n8. A total above `MAX_SAFE_INTEGER` cents (R$ 90 trilhões) still crashes the screen.**
+  - The JSON number arrives inexact. `sharePercents` (`charts.ts:18`), and `formatBRL` (`money.ts:19`) for any amount, throw during render. React Router then replaces the whole layout with its default English page "Unexpected Application Error!".
+  - Verified on Início and Gastos at 390 and 1280 with a mocked `total_cents: 9007199254740993`.
+  - Reaching it needs about 9,008 entries of R$ 10 bilhões in one period, so it takes deliberate scripted abuse, and the DB resets on restart. The same class of crash applies to `balance_cents` from 008. Out of 009's scope.
+  - **Suggested for 010+:** add an `errorElement` with a pt-BR message on the layout route, or a per-card error boundary that reuses `ErrorState`. A backend cap on period or balance totals would also close it.
+
+### Re-audit verdict
+
+**PASS, with 1 minor open (m3).** All 15 acceptance criteria and the Data Rules hold at `HEAD` (`7c62645`):
+- the phone layout no longer scrolls sideways in any of 512 expanded states or the 112-screenshot scan;
+- the donut total fits both rings up to `MAX_SAFE_INTEGER` cents;
+- percentages are exact for any safe totals and identical to the previous code on ordinary lists;
+- build, contrast, focus, targets, reduced motion, copy, tracked files and the 743 backend tests are all clean.
+
+m3 hides part of the AC9 content (the item date) at phone widths. It is a one-span change. Fix it before 009 merges into `dev`, then run a closing check: the R2 script plus a count of items whose date is cut. Per the coordinator's rule (PASS with no open minors), **T6 stays unchecked** until m3 is closed. n7 and n8 are informational.
