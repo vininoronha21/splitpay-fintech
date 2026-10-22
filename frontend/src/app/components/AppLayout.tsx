@@ -1,5 +1,5 @@
 import { FileText, House, Plus, Settings, Users, type LucideIcon } from "lucide-react";
-import { Link, Navigate, NavLink, Outlet, useOutletContext } from "react-router";
+import { Link, Navigate, NavLink, Outlet, useMatch, useOutletContext } from "react-router";
 import { BrandMark } from "./BrandMark.tsx";
 import { Avatar, buttonClasses, cx, focusRing } from "./ui/index.ts";
 import { readUserName } from "../../lib/userName.ts";
@@ -22,6 +22,15 @@ interface ShellContext {
   userName: string;
 }
 
+/**
+ * Tab that owns the current screen when it is not the tab's own route:
+ * Gastos do mês opens from Início, so Início stays highlighted there.
+ * Styling only; `aria-current="page"` stays on real route matches.
+ */
+function useSectionTab(): string | null {
+  return useMatch("/gastos-do-mes") !== null ? "/inicio" : null;
+}
+
 /** Name saved at /entrar; only valid inside the routes guarded by AppLayout. */
 export function useUserName(): string {
   return useOutletContext<ShellContext>().userName;
@@ -33,6 +42,8 @@ export function useUserName(): string {
  */
 export function AppLayout() {
   const userName = readUserName();
+  // Início's amber header runs to the screen edges below md, so that screen sets its own gutter there.
+  const fullBleed = useMatch("/inicio") !== null;
   if (!userName) {
     return <Navigate to="/entrar" replace />;
   }
@@ -55,7 +66,10 @@ export function AppLayout() {
       <main
         id="conteudo"
         tabIndex={-1}
-        className="mx-auto w-full max-w-[1140px] px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom))] outline-none md:px-8 md:pt-8 md:pb-12"
+        className={cx(
+          "mx-auto w-full max-w-[1140px] pb-[calc(88px+env(safe-area-inset-bottom))] outline-none md:px-8 md:pt-8 md:pb-12",
+          !fullBleed && "px-4 pt-4",
+        )}
       >
         <Outlet context={context} />
       </main>
@@ -65,6 +79,7 @@ export function AppLayout() {
 }
 
 function TabBar() {
+  const sectionTab = useSectionTab();
   return (
     <nav
       aria-label="Principal"
@@ -79,7 +94,7 @@ function TabBar() {
                 cx(
                   // No side padding: "Configurações" needs 86 of the 90 px a tab gets at 360 px.
                   "flex min-h-15 flex-col items-center justify-center gap-1 text-xs",
-                  isActive ? "font-semibold text-accent-text" : "font-medium text-muted hover:text-text",
+                  isActive || to === sectionTab ? "font-semibold text-accent-text" : "font-medium text-muted hover:text-text",
                   focusRing,
                   "focus-visible:-outline-offset-2",
                 )
@@ -96,6 +111,7 @@ function TabBar() {
 }
 
 function TopNav({ userName }: { userName: string }) {
+  const sectionTab = useSectionTab();
   return (
     <header className="hidden border-b border-border bg-nav md:block">
       <div className="mx-auto flex h-18 max-w-[1140px] items-center gap-4 px-8 lg:gap-6">
@@ -115,7 +131,7 @@ function TopNav({ userName }: { userName: string }) {
                   className={({ isActive }) =>
                     cx(
                       "flex h-11 items-center rounded-full px-3 text-[15px] whitespace-nowrap transition-colors motion-reduce:transition-none lg:px-3.5",
-                      isActive
+                      isActive || to === sectionTab
                         ? "bg-accent-soft font-semibold text-accent-soft-text"
                         : "font-medium text-muted hover:text-text",
                       focusRing,

@@ -56,6 +56,10 @@
   --color-chart-4: #eb6834;
   --color-chart-5: #2a78d6;
   --color-chart-6: #e87ba4;
+  /* Plum, validated with the six above as a ring (light and dark); not a status hue. */
+  --color-chart-7: #85078b;
+  /* Neutral for the catch-all buckets ("Outros", no category); >= 3:1 on surface. */
+  --color-chart-other: #8b8b94;
 
   /* Entry page hero: dark in both themes, so never overridden below. */
   --color-hero: #0b0b0c;
@@ -97,6 +101,8 @@
   --color-chart-4: #d95926;
   --color-chart-5: #3987e5;
   --color-chart-6: #d55181;
+  --color-chart-7: #af16b6;
+  --color-chart-other: #71717a;
 }
 
 /* Dark values when "Automático" is selected and the OS prefers dark. Same as above. */
@@ -128,6 +134,8 @@
     --color-chart-4: #d95926;
     --color-chart-5: #3987e5;
     --color-chart-6: #d55181;
+    --color-chart-7: #af16b6;
+    --color-chart-other: #71717a;
   }
 }
 
