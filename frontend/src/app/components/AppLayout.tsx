@@ -1,5 +1,5 @@
 import { FileText, House, Plus, Settings, Users, type LucideIcon } from "lucide-react";
-import { Link, Navigate, NavLink, Outlet, useOutletContext } from "react-router";
+import { Link, Navigate, NavLink, Outlet, useMatch, useOutletContext } from "react-router";
 import { BrandMark } from "./BrandMark.tsx";
 import { Avatar, buttonClasses, cx, focusRing } from "./ui/index.ts";
 import { readUserName } from "../../lib/userName.ts";
@@ -33,6 +33,8 @@ export function useUserName(): string {
  */
 export function AppLayout() {
   const userName = readUserName();
+  // Início's amber header runs to the screen edges below md, so that screen sets its own gutter there.
+  const fullBleed = useMatch("/inicio") !== null;
   if (!userName) {
     return <Navigate to="/entrar" replace />;
   }
@@ -55,7 +57,10 @@ export function AppLayout() {
       <main
         id="conteudo"
         tabIndex={-1}
-        className="mx-auto w-full max-w-[1140px] px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom))] outline-none md:px-8 md:pt-8 md:pb-12"
+        className={cx(
+          "mx-auto w-full max-w-[1140px] pb-[calc(88px+env(safe-area-inset-bottom))] outline-none md:px-8 md:pt-8 md:pb-12",
+          !fullBleed && "px-4 pt-4",
+        )}
       >
         <Outlet context={context} />
       </main>
