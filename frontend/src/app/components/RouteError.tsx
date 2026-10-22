@@ -13,7 +13,7 @@ export function RouteError() {
       <BrandMark size={56} className="rounded-full ring-1 ring-hero-text/12" />
       <h1 className="mt-6 text-[22px] leading-tight font-bold md:text-[28px]">Algo deu errado</h1>
       <p className="mt-2 max-w-xs text-balance text-muted">
-        Não foi possível mostrar esta tela. Tente de novo ou volte ao início.
+        Não foi possível mostrar esta tela. Tente de novo ou volte para o Início.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         {/* A full reload fetches every request again and clears the router's error state. */}

@@ -179,3 +179,26 @@ Auditor: `auditor` agent | Date: 2026-10-22 | Commits checked: `36ecfa1` (docs: 
 - build, contrast, focus, targets, reduced motion, copy, tracked files and the 743 backend tests are all clean.
 
 m3 hides part of the AC9 content (the item date) at phone widths. It is a one-span change. Fix it before 009 merges into `dev`, then run a closing check: the R2 script plus a count of items whose date is cut. Per the coordinator's rule (PASS with no open minors), **T6 stays unchecked** until m3 is closed. n7 and n8 are informational.
+
+### Closing check (`ae523df`)
+
+Scope: `CategoryBreakdown.tsx` (m3), the new `RouteError.tsx` and the `routes.tsx` restructure (n8), and the `plan.md` line for `RouteError.tsx`. `HEAD` is `ae523df`. The `audit.md` committed there is identical to what I wrote.
+
+| # | Check | Result |
+| --- | --- | --- |
+| C1 | Build and greps | `npm run build` passes (1964 modules). No `any`, no new cast, no `toFixed` or `parseFloat`. `rg "[—–·→…]" frontend/src` is empty. No dependency or backend change; `pytest` 743 passed; no `.env`, `*.db`, `node_modules` or `dist` tracked. |
+| C2 | m3: every expanded item at phone widths (`$A/re/expand2.cjs`) | The R2 sweep again (360/390 × light/dark × years 0 and −1, months 0 to −11, weeks 0 to −29, each category alone and then all open: **512 states**). It also checks every item's date span: it must match `, D mmm`, sit fully inside its wrapper, not be clipped itself, end before the amount, and not overlap the description. **0 items with a lost date, 0 overlaps, 0 horizontal scroll.** 82 long descriptions end in an ellipsis before the date (`$A/re/close-spend-360-claro-anual-all-open.png`). |
+| C3 | Full layout scan (`$A/scan2.cjs`) | 112 screenshots, same states and method as E13: **0 issues**. |
+| C4 | n8: `RouteError` (`$A/re/routeerror.cjs`), triggered by `total_cents: 9007199254740993` on `/inicio` and `/gastos-do-mes` | **94 checks, 0 failures** at 360/390/768/1280 in both themes. It renders "Algo deu errado" (one `h1`) and "Não foi possível mostrar esta tela. Tente de novo ou volte ao início." Nothing from the router's English page appears, and there is no horizontal scroll. Focus order is "Tentar novamente" then "Voltar para o Início". Both are 48 px high (206 and 212 px wide) with a 2 px solid ring. With the data fixed, "Tentar novamente" (full reload) brings the screen back, and "Voltar para o Início" opens a working Início. Contrast: lowest 7.03 (light) and 7.68 (dark) for the body text; buttons 11.31 and up. Reduced motion leaves no transitions; `lang="pt-BR"`. Captures: `$A/re/routeerror-claro-390.png` and `routeerror-escuro-1280.png`, which match the app's look in both themes. |
+| C5 | Routes moved under the pathless root | `/` → Início, `/configuracoes`, `/extrato`, `/rota-que-nao-existe` and `/inicio/x` → "Página não encontrada". The guard still sends `/inicio` to `/entrar` with no saved name. `RouteError.tsx` is in `app/components/` and listed in `plan.md:24`. |
+| C6 | Servers and repo | uvicorn and `vite preview` stopped; ports 8000 and 4173 do not answer. `git status` was clean before this section was appended. |
+
+**Status**
+- **m3: Closed** (C2).
+- **n8: Closed:** a render crash now shows a pt-BR page with working recovery (C4). The backend can still return totals above `MAX_SAFE_INTEGER`, but now that a pt-BR error page catches the crash, that is acceptable for the demo.
+- **n9 (new, informational):** the error page's sentence says "volte ao início" in lowercase, while the button and the rest of the app name the screen "Início". "Tente de novo ou volte para o Início." would match. A wording nit only; no action required.
+- n1, n2, n5, n6 and n7 stay informational and are accepted as is.
+
+### Final verdict
+
+**PASS, with no open blocker, major or minor findings.** M1, m1, m2, m3, n3, n4 and n8 are closed and verified at `HEAD` (`ae523df`). All 15 acceptance criteria and the Data Rules hold. T6 can be marked done.
