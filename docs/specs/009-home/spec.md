@@ -1,6 +1,6 @@
 # 009 Home — Spec
 
-Stories: US05 (balance and budget on screen), US04 (charts) | Status: draft
+Stories: US05 (balance and budget on screen), US04 (charts) | Status: approved
 
 ## Problem
 
