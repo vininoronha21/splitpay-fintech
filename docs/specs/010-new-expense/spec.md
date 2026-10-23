@@ -1,6 +1,6 @@
 # 010 New Expense — Spec
 
-Stories: US01 (1-to-1 split), US02 (category suggestion), US05 (incomes as inflows) | Status: draft
+Stories: US01 (1-to-1 split), US02 (category suggestion), US05 (incomes as inflows) | Status: approved
 
 ## Problem
 
