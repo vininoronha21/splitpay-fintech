@@ -84,7 +84,7 @@ The API can record expenses, incomes and 1-to-1 splits, and it suggests a catego
   - `occurred_on` is the `YYYY-MM-DD` from the date input.
   - `split` is `{ person_id, mode, percent? | share_cents? }` exactly as the `SplitCreate` union.
   - Incomes never carry `category_id`, `split` or installments.
-- **Visible characters:** counted with `lib/text.ts` (`trimInvisible` plus graphemes), the same definition as the API.
+- **Visible characters:** emptiness uses `trimInvisible` from `lib/text.ts`; maximum lengths count code points after that trim, exactly as the API's `max_length` does (Python `len`), so the form never lets a 422 through. Plain pt-BR text counts the same either way; only emoji and decomposed accents count more.
 - **Today in Brasília:** computed from the device clock at UTC−3 (Business Rule 18). If the device date is ahead, the API is still the final check.
 
 ## API Contract
