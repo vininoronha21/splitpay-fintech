@@ -112,15 +112,17 @@ export function SettleActions({
   const visible = showControls || phase.kind === "done" || phase.kind === "conflict";
   const first = firstName(friendName);
 
+  // A share already closed when it loaded has nothing to show or announce. An open share
+  // keeps its status region mounted from the start, so the success line is announced.
+  if (!visible) return null;
+
   return (
-    // Nothing to show (a closed share): the wrapper keeps the status region mounted, out of the layout.
     <div
       className={cx(
-        !visible && "sr-only",
-        visible && "w-full",
-        visible && layout === "row" && "pl-13",
-        visible && layout === "block" && "mt-1 mb-3",
-        visible && layout === "row" && phase.kind === "idle" && "md:w-auto md:pl-0",
+        "w-full",
+        layout === "row" && "pl-13",
+        layout === "block" && "mt-1 mb-3",
+        layout === "row" && phase.kind === "idle" && "md:w-auto md:pl-0",
       )}
     >
       {showControls && phase.kind === "idle" ? (

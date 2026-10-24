@@ -150,10 +150,12 @@ interface FieldProps {
   children: ReactNode;
   /** Label above the value, for long text such as Observações. */
   stacked?: boolean;
+  /** The value is an amount, which never wraps: the label gives way to it instead. */
+  amount?: boolean;
 }
 
 /** One `dt`/`dd` pair; an empty optional value reads "Não informado" in muted. */
-function Field({ label, children, stacked = false }: FieldProps) {
+function Field({ label, children, stacked = false, amount = false }: FieldProps) {
   const empty = children === null || children === undefined;
   return (
     <div
@@ -162,10 +164,13 @@ function Field({ label, children, stacked = false }: FieldProps) {
         stacked ? "flex flex-col gap-1" : "flex items-center justify-between gap-4",
       )}
     >
-      <dt className="max-w-[50%] shrink-0 text-sm break-words text-muted">{label}</dt>
+      <dt className={cx("text-sm break-words text-muted", amount ? "min-w-0 shrink" : "max-w-[50%] shrink-0")}>
+        {label}
+      </dt>
       <dd
         className={cx(
-          "min-w-0 text-sm break-words",
+          "text-sm break-words",
+          amount ? "shrink-0" : "min-w-0",
           stacked ? "whitespace-pre-line" : "text-right",
           empty ? "text-muted" : "font-medium",
         )}
@@ -218,10 +223,10 @@ function SplitCard({ transactionId, split, onSettled, onConflict }: SplitCardPro
           </span>
         </Field>
         <Field label="Como dividiu">{splitModeLabel(split)}</Field>
-        <Field label={`Parte de ${firstName(split.person_name)}`}>
+        <Field label={`Parte de ${firstName(split.person_name)}`} amount>
           <Money cents={split.friend_share_cents} />
         </Field>
-        <Field label="Sua parte">
+        <Field label="Sua parte" amount>
           <Money cents={split.user_share_cents} />
         </Field>
         <Field label="Status">

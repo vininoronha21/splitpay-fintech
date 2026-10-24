@@ -1,6 +1,7 @@
 import { Money } from "./Money.tsx";
 import { Card, cx, Skeleton } from "./ui/index.ts";
-import { formatBRL } from "../../lib/money.ts";
+import { formatBRL, HIDDEN_BRL } from "../../lib/money.ts";
+import { useHideValues } from "../../lib/preferences.ts";
 import { openCountLabel, type StatementTotals } from "../../lib/statement.ts";
 
 /** Longest amount that fits half of a 360 px screen at 20 px ("R$ 99.999,99" is 12). */
@@ -17,6 +18,7 @@ interface StatementSummaryProps {
  * shrinking the type until it is unreadable.
  */
 export function StatementSummary({ totals }: StatementSummaryProps) {
+  const [hidden] = useHideValues();
   if (totals === null) {
     return (
       <Card aria-busy="true" aria-label="Carregando resumo" padded={false} className="grid grid-cols-2 divide-x divide-border">
@@ -31,7 +33,9 @@ export function StatementSummary({ totals }: StatementSummaryProps) {
     );
   }
 
-  const long = Math.max(formatBRL(totals.openCents).length, formatBRL(totals.receivedCents).length) > HALF_WIDTH_CHARS;
+  // Measured on the text on screen: while values are hidden the layout must not reveal their size.
+  const shown = (cents: number) => (hidden ? HIDDEN_BRL : formatBRL(cents));
+  const long = Math.max(shown(totals.openCents).length, shown(totals.receivedCents).length) > HALF_WIDTH_CHARS;
   const amountClass = cx("mt-0.5 leading-snug font-bold", long ? "text-lg" : "text-xl");
 
   return (

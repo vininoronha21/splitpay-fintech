@@ -156,14 +156,22 @@
 }
 
 /*
- * Below md the new transaction form has a fixed save bar above the tab bar (61 px).
- * Keyboard focus then scrolls each control clear of both bars, plus 12 px (WCAG 2.4.11).
+ * Below md every screen has the fixed tab bar (61 px, AppLayout), so keyboard focus
+ * scrolls each control clear of it, plus 12 px (WCAG 2.4.11).
+ * The new transaction form adds a fixed save bar above the tab bar and clears both.
  * The form sets --save-bar-height from the bar's measured height, which grows with the
  * API error banner; 73 px (button only) is the fallback before the first measurement.
  */
 @media (width < 48rem) {
+  html {
+    --tab-bar-height: 61px;
+    scroll-padding-bottom: calc(var(--tab-bar-height) + 12px + env(safe-area-inset-bottom));
+  }
+
   html:has([data-save-bar]) {
-    scroll-padding-bottom: calc(var(--save-bar-height, 73px) + 73px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(
+      var(--save-bar-height, 73px) + var(--tab-bar-height) + 12px + env(safe-area-inset-bottom)
+    );
   }
 }
 
