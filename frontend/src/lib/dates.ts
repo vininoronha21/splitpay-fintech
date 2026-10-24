@@ -80,6 +80,12 @@ export function formatShortDate(isoDate: IsoDate): string {
   return `${day} ${shortMonth(month)}`;
 }
 
+/** "2026-10-20" -> "20 de outubro de 2026" */
+export function formatLongDate(isoDate: IsoDate): string {
+  const { year, month, day } = parseIsoDate(isoDate);
+  return `${day} de ${MONTH_NAMES[month - 1] ?? ""} de ${year}`;
+}
+
 /** "2026-10" (the `month` field of `GET /budget`) -> "outubro" */
 export function monthName(isoMonth: string): string {
   const match = ISO_MONTH_PATTERN.exec(isoMonth);
