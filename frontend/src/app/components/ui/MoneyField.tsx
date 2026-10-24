@@ -18,6 +18,17 @@ function sanitize(text: string): string {
   return text.replace(/[^\d.,]/g, "");
 }
 
+/**
+ * Steps the font down for long amounts so the whole value stays visible in the
+ * 226 px input at 360 px: up to 15 characters at 26 px, "10.000.000.000,00"
+ * (17, the largest valid amount) at 22 px, anything longer at 18 px.
+ */
+function amountFontClass(value: string): string {
+  if (value.length <= 15) return "text-[26px]";
+  if (value.length <= 18) return "text-[22px]";
+  return "text-lg";
+}
+
 /** Large amount input with a fixed "R$" prefix, as in the Novo gasto prototype. */
 export const MoneyField = forwardRef<HTMLInputElement, MoneyFieldProps>(function MoneyField(
   { label, value, onChange, hint, error, id, className, placeholder = "0,00", ...rest },
@@ -57,7 +68,10 @@ export const MoneyField = forwardRef<HTMLInputElement, MoneyFieldProps>(function
           placeholder={placeholder}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className="num h-full w-full min-w-0 flex-1 bg-transparent text-[26px] font-bold text-text outline-none placeholder:text-muted"
+          className={cx(
+            "num h-full w-full min-w-0 flex-1 bg-transparent font-bold text-text outline-none placeholder:text-muted",
+            amountFontClass(value),
+          )}
           {...rest}
         />
       </div>

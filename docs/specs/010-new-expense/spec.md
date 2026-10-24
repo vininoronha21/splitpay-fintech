@@ -31,7 +31,9 @@ The API can record expenses, incomes and 1-to-1 splits, and it suggests a catego
 6. **Data:**
    - a native date input, defaulting to today in Brasília;
    - `max` is today, so no future dates (API rule);
-   - error: "A data não pode ser no futuro.".
+   - `min` is 2000-01-01, so a typo year is caught;
+   - errors: "A data não pode ser no futuro." and "Informe uma data a partir de 2000.";
+   - an empty date saves as today.
 7. **"Dividir com um amigo" (US01, expenses only):**
    - a switch, off by default;
    - when on, it shows a horizontal friend picker from `GET /friends`: avatar with initials and first name, single select, `role="radiogroup"`;

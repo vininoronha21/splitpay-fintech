@@ -23,6 +23,11 @@ export const MAX_AMOUNT_CENTS = 10 ** 12;
 export const DESCRIPTION_MAX = 120;
 export const PLACE_MAX = 120;
 export const NOTES_MAX = 500;
+/**
+ * Earliest date the form accepts, so a typo year ("0261") is caught. Not an
+ * API rule: it guards the native date input, which takes years from 0001.
+ */
+export const MIN_DATE: IsoDate = "2000-01-01";
 /** Display-only installments (Business Rule 2). */
 export const MAX_INSTALLMENTS = 360;
 
@@ -96,6 +101,7 @@ const MESSAGES = {
   amountTooLarge: "Use um valor até R$ 10.000.000.000,00.",
   descriptionRequired: "Informe uma descrição.",
   futureDate: "A data não pode ser no futuro.",
+  dateTooOld: "Informe uma data a partir de 2000.",
   friendRequired: "Escolha um amigo.",
   percent: "Use um número inteiro de 0 a 100.",
   share: "A parte do amigo deve ser maior que zero e até o valor total.",
@@ -209,8 +215,9 @@ export function validate(values: FormValues, today: IsoDate): FormErrors {
   else if (storedLength(description) > DESCRIPTION_MAX) errors.description = tooLong(DESCRIPTION_MAX);
 
   // A cleared date is omitted and the API uses today; ISO days compare as strings.
-  if (ISO_DATE_PATTERN.test(values.occurredOn) && values.occurredOn > today) {
-    errors.occurredOn = MESSAGES.futureDate;
+  if (ISO_DATE_PATTERN.test(values.occurredOn)) {
+    if (values.occurredOn > today) errors.occurredOn = MESSAGES.futureDate;
+    else if (values.occurredOn < MIN_DATE) errors.occurredOn = MESSAGES.dateTooOld;
   }
 
   if (isExpense && values.split.enabled) {

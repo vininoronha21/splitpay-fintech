@@ -12,6 +12,7 @@ import { brasiliaToday } from "../../lib/dates.ts";
 import {
   FIELD_ORDER,
   initialValues,
+  MIN_DATE,
   parseAmount,
   toPayload,
   validate,
@@ -58,7 +59,8 @@ function useFriendList(requested: boolean): [FriendList, (friend: Friend) => voi
 
   let list: FriendList;
   if (friends.status === "error") {
-    list = { status: "error", message: friends.error.message, retry: friends.retry };
+    // Friends added inline while the list failed are still drawn, selected and focusable.
+    list = { status: "error", message: friends.error.message, retry: friends.retry, friends: added };
   } else if (friends.status === "loading" || friends.data === null) {
     list = { status: "loading" };
   } else {
@@ -111,6 +113,15 @@ function NewTransactionForm({ initialType }: NewTransactionFormProps) {
   const categoryPickedByUser = useRef(false);
   const fields = useRef<Partial<Record<FieldName, HTMLElement | null>>>({});
   const [saveBar, saveBarHeight] = useElementHeight<HTMLDivElement>();
+
+  // The theme.css scroll-padding rule reads this, so focus clears the bar even when the error banner grows it.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--save-bar-height", `${saveBarHeight}px`);
+    return () => {
+      root.style.removeProperty("--save-bar-height");
+    };
+  }, [saveBarHeight]);
 
   const isExpense = values.type === "expense";
   const categories = useResource((signal) => listCategories(signal), []);
@@ -261,6 +272,7 @@ function NewTransactionForm({ initialType }: NewTransactionFormProps) {
             ref={(element) => registerField("occurredOn", element)}
             label="Data"
             type="date"
+            min={MIN_DATE}
             max={today}
             value={values.occurredOn}
             onChange={(event) => {

@@ -11,7 +11,7 @@ const FRIEND_NAME_MAX = 60;
 /** The friends shown in the picker: loading, failed, or the list (API order plus friends added here). */
 export type FriendList =
   | { status: "loading" }
-  | { status: "error"; message: string; retry: () => void }
+  | { status: "error"; message: string; retry: () => void; friends: Friend[] }
   | { status: "ready"; friends: Friend[] };
 
 /** "Ana Lima" -> "Ana". */
@@ -56,7 +56,8 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
   const [focusFriendId, setFocusFriendId] = useState<number | null>(null);
   const errorId = `${labelledBy}-erro`;
 
-  const friends = list.status === "ready" ? list.friends : [];
+  // On error the list holds only the friends added here, so a new friend is still drawn and selected.
+  const friends = list.status === "loading" ? [] : list.friends;
   const tabStopId = friends.some((friend) => friend.id === selectedId) ? selectedId : (friends[0]?.id ?? null);
 
   useEffect(() => {
@@ -182,7 +183,7 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
           </Button>
         </div>
       ) : list.status === "ready" && friends.length === 0 && !adding ? (
-        <p className="mt-1 text-xs text-muted">Nenhum amigo ainda. Toque em Novo para adicionar.</p>
+        <p className="mt-1 text-xs text-muted">Nenhum amigo ainda. Use Novo para adicionar.</p>
       ) : null}
 
       {error ? (

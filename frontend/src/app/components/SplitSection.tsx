@@ -56,7 +56,7 @@ export function SplitSection({
 }: SplitSectionProps) {
   const preview = split.enabled ? splitPreview(totalCents, split.mode, split) : null;
   const friend =
-    friendList.status === "ready" ? friendList.friends.find((item) => item.id === split.personId) : undefined;
+    friendList.status !== "loading" ? friendList.friends.find((item) => item.id === split.personId) : undefined;
   const friendLabel = friend ? `Parte de ${firstName(friend.name)}` : "Parte do amigo";
 
   return (
@@ -67,7 +67,7 @@ export function SplitSection({
             Dividir com um amigo
           </h2>
           <p id="dividir-nota" className="mt-0.5 text-xs text-muted">
-            A parte dele fica registrada como a receber.
+            A parte do amigo fica registrada como a receber.
           </p>
         </div>
         <Switch
