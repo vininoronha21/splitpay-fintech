@@ -107,3 +107,31 @@ All 13 acceptance criteria and the Data Rules hold under my own runs:
 - no dependency or backend change (743 passed), and no regression on 008/009 (009 scan 112/0).
 
 m1 and m2 are small, local fixes. Following the rule used for 009 (PASS with no open minors), T5 should stay unchecked until m1 and m2 are fixed and checked again: the keyboard sweep with the banner at 360/390, and an inline friend added while `GET /friends` fails. The informational notes are optional.
+
+## Closing check (`694abb8`)
+
+Scope: `694abb8` ("fix(web): apply 010 audit findings"): `NewTransactionScreen.tsx`, `FriendPicker.tsx`, `SplitSection.tsx`, `ui/MoneyField.tsx`, `lib/transactionForm.ts` and `theme.css`, plus spec AC6. That commit also brought this file under version control, identical to what I wrote. I checked each fix on the running app with the same setup as the first pass: API on a fresh scratch DB and `vite preview` after a new build. Same scratch directory; the new script is `$A/close.cjs`.
+
+| # | Check | Result |
+| --- | --- | --- |
+| C1 | Build, greps, copy scan | `npm run build` **passes** (1972 modules). No `any`, `@ts-*`, `toFixed` or `parseFloat` (the only "any" matches are English words in comments), and no new cast. `rg "[—–·→…]" frontend/src` is **empty**. No backend or dependency change since `2a4f39d`. |
+| C2 | `transactionForm.ts` self-checks (`$A/form-check.ts`), 4 TZs | Added cases: `MIN_DATE` is `2000-01-01`; 2000-01-01 passes; 1999-12-31, `0261-10-23` and an income dated 1999 get "Informe uma data a partir de 2000."; a future date still gets the future message first. **106,142 assertions, 0 failures in each TZ.** The 30,000 previews were regenerated and compared again, and 1,097 new payloads were sent to the API: **1,097 × 201**, every split equal to `friend_share`. |
+| C3 | m1: keyboard sweep (`$A/a11y.cjs`) | 360/390/768/1280 × light/dark × with and without the API banner, **544 focus stops**. **0 focused controls under the save bar or tab bar**, including the 4 that failed before. Also 0 missing rings, 0 targets under 44 px, and inputs still 48 px at 16 px. With the banner the bar measures 145 px and `scroll-padding-bottom` is **218 px** (145 + 61 + 12), computed from `--save-bar-height` (`NewTransactionScreen.tsx:117-124`, `theme.css:166`). The variable is removed on unmount, and Início reads `auto` (C7). |
+| C4 | m2: inline friend while `GET /friends` fails (`$A/close.cjs`) | 360/390 × both themes. The new friend is drawn as a radio, **`aria-checked="true"` and focused**. The preview reads "Parte de Bia R$ 40,00 / Sua parte R$ 40,00". The error and "Tentar novamente" stay visible, with no horizontal scroll (`$A/close-m2-escuro-360.png`). After retry the API list holds the friend **once**, still selected. The saved split has `person_name` equal to the new friend. |
+| C5 | n1: Valor with R$ 10.000.000.000,00 | Rendered at 22 px: `scrollWidth` 226 = `clientWidth` 226 at 360 px, and 256 = 256 at 390, both themes. The whole value is visible (`$A/close-n1-claro-360.png`). R$ 1 bilhão and below also fit; values of 15 characters or fewer keep 26 px. |
+| C6 | n2: date range | `min="2000-01-01"` and `max` = today. 1999-12-31 gets "Informe uma data a partir de 2000." and 2000-01-01 passes. Typing the year "20261" leaves `0261-10-23`: on save the message shows, focus moves to Data and **no POST is sent**. The same rule applies on Receita. A cleared date still saves as today, now stated in spec AC6 ("an empty date saves as today"). |
+| C7 | n5 and regressions | The note now reads "A parte do amigo fica registrada como a receber." (wraps to two lines at 360 px, no clipping), and the empty list reads "Nenhum amigo ainda. Use Novo para adicionar.". The full first-pass runtime suite (`$A/flow.cjs`) gives **175 checks, 0 failures**. |
+| C8 | Layout scan (`$A/scan.cjs`) | The same 13 states × 360/390/768/1280 × light/dark: **104 screenshots, 0 issues** (no horizontal scroll, overlap, clipped text or content under the bars). |
+| C9 | Servers and repo | uvicorn and `vite preview` stopped; ports 8000 and 4173 do not answer. Before this section was appended, `git status` showed only an untracked `docs/specs/011-statement/`, which this audit did not create. |
+
+**Status**
+- **m1: Closed** (C3).
+- **m2: Closed** (C4).
+- **n1: Closed** (C5).
+- **n2: Closed** (C6). AC6 in the spec now matches the code.
+- **n5: Closed** (C7).
+- n3, n4, n6, n7 and n8 stay informational and are accepted as is. They were not part of this fix.
+
+### Final verdict
+
+**PASS with nothing open.** No blocker, major or minor findings remain. All 13 acceptance criteria and the Data Rules hold at `HEAD` (`694abb8`). T5 can be marked done.
