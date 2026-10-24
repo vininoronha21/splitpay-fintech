@@ -49,6 +49,14 @@
   /* Selected option of a segmented control (white in light, amber in dark). */
   --color-segment-selected: #ffffff;
   --color-segment-selected-text: #18181b;
+  /* Outline of a selected chip or avatar: 3.2:1 on white, where plain accent is 1.7:1. */
+  --color-accent-edge: #d97706;
+  /* Switch knob: white in both themes, as in the approved prototype. */
+  --color-switch-thumb: #ffffff;
+  /* Switch track when off: 3.4:1 on the light surface, 5.3:1 on the dark one; the knob is 3.4:1 on it. */
+  --color-switch-off: #8b8b94;
+  /* 1 px rim on the knob over the amber track (4.3:1), so the on position passes 3:1 in both themes. */
+  --color-switch-thumb-edge: #92400e;
   /* Categorical chart palette, colorblind-checked; fixed order per category. */
   --color-chart-1: #eda100;
   --color-chart-2: #6250d6;
@@ -95,6 +103,7 @@
   --color-nav: #0b0b0c;
   --color-segment-selected: #fbbf24;
   --color-segment-selected-text: #111111;
+  --color-accent-edge: #fbbf24;
   --color-chart-1: #c98500;
   --color-chart-2: #9085e9;
   --color-chart-3: #199e70;
@@ -128,6 +137,7 @@
     --color-nav: #0b0b0c;
     --color-segment-selected: #fbbf24;
     --color-segment-selected-text: #111111;
+    --color-accent-edge: #fbbf24;
     --color-chart-1: #c98500;
     --color-chart-2: #9085e9;
     --color-chart-3: #199e70;
@@ -143,6 +153,18 @@
 @utility num {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/*
+ * Below md the new transaction form has a fixed save bar above the tab bar (61 px).
+ * Keyboard focus then scrolls each control clear of both bars, plus 12 px (WCAG 2.4.11).
+ * The form sets --save-bar-height from the bar's measured height, which grows with the
+ * API error banner; 73 px (button only) is the fallback before the first measurement.
+ */
+@media (width < 48rem) {
+  html:has([data-save-bar]) {
+    scroll-padding-bottom: calc(var(--save-bar-height, 73px) + 73px + env(safe-area-inset-bottom));
+  }
 }
 
 body {

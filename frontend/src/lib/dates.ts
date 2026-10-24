@@ -139,6 +139,21 @@ export function brasiliaHour(now: Date): number {
   return (now.getUTCHours() + BRASILIA_UTC_OFFSET_HOURS + 24) % 24;
 }
 
+/**
+ * Today's calendar day in Brasília (Business Rule 18), read from UTC fields
+ * only: 2026-10-23T02:59Z is still "2026-10-22", 03:00Z is "2026-10-23".
+ */
+export function brasiliaToday(now: Date): IsoDate {
+  if (Number.isNaN(now.getTime())) {
+    throw new RangeError("brasiliaToday received an invalid Date");
+  }
+  const shifted = new Date(now.getTime() + BRASILIA_UTC_OFFSET_HOURS * 60 * 60 * 1000);
+  const year = String(shifted.getUTCFullYear()).padStart(4, "0");
+  const month = String(shifted.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(shifted.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 /** Greeting for a Brasília hour: 5..11 "Bom dia", 12..17 "Boa tarde", otherwise "Boa noite". */
 export function greeting(hour: number): string {
   if (!Number.isInteger(hour) || hour < 0 || hour > 23) {

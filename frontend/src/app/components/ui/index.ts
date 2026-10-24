@@ -16,4 +16,5 @@ export { MoneyField, type MoneyFieldProps } from "./MoneyField.tsx";
 export { Segmented, type SegmentedOption, type SegmentedProps } from "./Segmented.tsx";
 export { Skeleton, type SkeletonProps } from "./Skeleton.tsx";
 export { StatusPill, type StatusPillProps } from "./StatusPill.tsx";
+export { Switch, type SwitchProps } from "./Switch.tsx";
 export { TextField, type TextFieldProps } from "./TextField.tsx";

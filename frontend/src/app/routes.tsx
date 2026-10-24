@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { HomeScreen } from "./components/HomeScreen.tsx";
 import { LoginScreen } from "./components/LoginScreen.tsx";
+import { NewTransactionScreen } from "./components/NewTransactionScreen.tsx";
 import { NotFound } from "./components/NotFound.tsx";
 import { RouteError } from "./components/RouteError.tsx";
 import { ScreenPlaceholder } from "./components/ScreenPlaceholder.tsx";
@@ -31,7 +32,7 @@ export const router = createBrowserRouter([
           { path: "/extrato", element: <ScreenPlaceholder title="Extrato" /> },
           { path: "/amigos", element: <ScreenPlaceholder title="Amigos" /> },
           { path: "/configuracoes", element: <SettingsScreen /> },
-          { path: "/novo-gasto", element: <ScreenPlaceholder title="Novo gasto" /> },
+          { path: "/novo-gasto", element: <NewTransactionScreen /> },
         ],
       },
       { path: "*", element: <NotFound /> },
