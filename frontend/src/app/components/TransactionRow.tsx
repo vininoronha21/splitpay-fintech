@@ -79,18 +79,21 @@ export function TransactionRow({
   const content = (
     <>
       <RowIcon transaction={transaction} />
-      <div className="min-w-0 flex-1">
-        <p className={cx("truncate text-sm font-medium", href && "group-hover:underline")}>{transaction.description}</p>
-        <p className="truncate text-xs text-muted">{metaLine(transaction)}</p>
+      {/* The amount wraps under the text, right aligned, when keeping it beside would leave the text under 8rem. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-0.5">
+        <div className="min-w-0 flex-[1_1_8rem]">
+          <p className={cx("truncate text-sm font-medium", href && "group-hover:underline")}>{transaction.description}</p>
+          <p className="truncate text-xs text-muted">{metaLine(transaction)}</p>
+        </div>
+        {status && showStatus ? (
+          <StatusPill status={status} className={showStatus === "md" ? "max-md:hidden" : undefined} />
+        ) : null}
+        <Money
+          cents={cents}
+          signed={income}
+          className={cx("shrink-0 text-right text-sm font-semibold md:min-w-[110px]", income && "text-success")}
+        />
       </div>
-      {status && showStatus ? (
-        <StatusPill status={status} className={showStatus === "md" ? "max-md:hidden" : undefined} />
-      ) : null}
-      <Money
-        cents={cents}
-        signed={income}
-        className={cx("shrink-0 text-right text-sm font-semibold md:min-w-[110px]", income && "text-success")}
-      />
     </>
   );
 

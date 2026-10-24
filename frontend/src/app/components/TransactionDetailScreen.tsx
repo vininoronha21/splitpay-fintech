@@ -213,7 +213,8 @@ function SplitCard({ transactionId, split, onSettled, onConflict }: SplitCardPro
         <Field label="Amigo">
           <span className="flex min-w-0 items-center justify-end gap-2">
             <Avatar name={split.person_name} size="sm" tone="accent" />
-            <span className="min-w-0 truncate">{split.person_name}</span>
+            {/* The detail shows the full name: it wraps instead of truncating. */}
+            <span className="min-w-0 break-words">{split.person_name}</span>
           </span>
         </Field>
         <Field label="Como dividiu">{splitModeLabel(split)}</Field>
