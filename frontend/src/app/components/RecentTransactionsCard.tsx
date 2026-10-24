@@ -70,6 +70,7 @@ export function RecentTransactionsCard() {
             <TransactionRow
               key={transaction.id}
               transaction={transaction}
+              href={`/extrato/${transaction.id}`}
               showStatus="md"
               // The fourth row appears from md; below it the third row is the last one.
               className={index === ROWS - 1 ? "max-md:hidden" : index === ROWS - 2 ? "max-md:border-b-0" : undefined}

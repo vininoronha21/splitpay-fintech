@@ -9,7 +9,7 @@ interface QuickAction {
   primary?: boolean;
 }
 
-// 010 and 011 read `tipo` and `status`; until then the links open placeholders.
+// Novo gasto reads `tipo` (010) and Extrato reads `status` (011); Amigos opens a placeholder until 012.
 const ACTIONS: QuickAction[] = [
   { to: "/novo-gasto", label: "Novo gasto", icon: Plus, primary: true },
   { to: "/novo-gasto?tipo=receita", label: "Receita", icon: ArrowDownToLine },
