@@ -30,6 +30,11 @@ Status: approved
 - **SettleActions** owns a small state machine: `idle → confirming(pago|acertado) → saving → done | error`. A ref guards against a double submit. On success it calls `onSettled(split: SplitDetail)`.
 - **Frontend TS Interfaces:** reuse `TransactionSummary`, `TransactionDetail`, `Reimbursement`, `SplitDetail`, `SplitStatus`, `ClosedStatus` and `PaymentMethod`. New local types: `StatementEntry`, `StatementTotals`.
 - **Database Schema:** no change.
+- **Changes during T2:**
+  - A 409 reloads both lists in the background instead of calling `retry`, because `retry` shows skeletons and would remove the row and its "Este reembolso já foi encerrado." message.
+  - A share settled under a status chip stays listed with its new pill until the chip changes, so the row updates in place instead of vanishing.
+  - `TransactionRow` takes two slots, `extra` (the split line) and `actions` (the buttons), so the buttons sit right of the text from `md` and wrap below it otherwise.
+  - `ui/Button.tsx` gains a `success` variant for "Recebi".
 
 ## Test Strategy
 
