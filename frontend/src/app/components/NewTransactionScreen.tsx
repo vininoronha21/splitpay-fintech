@@ -301,6 +301,7 @@ function NewTransactionForm({ initialType }: NewTransactionFormProps) {
 
         <div
           ref={saveBar}
+          data-save-bar=""
           className={cx(
             "fixed inset-x-0 bottom-[calc(61px+env(safe-area-inset-bottom))] z-30 border-t border-border bg-nav px-4 py-3",
             "md:static md:z-auto md:mt-2 md:border-0 md:bg-transparent md:p-0",

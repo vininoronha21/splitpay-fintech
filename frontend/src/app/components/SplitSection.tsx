@@ -161,7 +161,7 @@ interface ShareCardProps {
 function ShareCard({ label, cents, tone }: ShareCardProps) {
   const friend = tone === "friend";
   return (
-    <div className={cx("min-w-0 rounded-[14px] p-3", friend ? "bg-accent-soft text-accent-soft-text" : "bg-neutral-soft")}>
+    <div className={cx("min-w-0 rounded-2xl p-3", friend ? "bg-accent-soft text-accent-soft-text" : "bg-neutral-soft")}>
       <p className={cx("truncate text-xs", friend ? "text-accent-soft-text" : "text-muted")}>{label}</p>
       {/* Until the inputs are valid the card shows R$ 0,00 in muted, so its height never jumps. */}
       <p className="mt-1 overflow-hidden text-lg leading-snug font-bold text-ellipsis">

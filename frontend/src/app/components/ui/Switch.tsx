@@ -34,15 +34,16 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(function Switch
       <span
         aria-hidden="true"
         className={cx(
-          "flex h-7 w-12 items-center rounded-full p-[3px] transition-colors motion-reduce:transition-none",
-          checked ? "bg-accent" : "bg-track",
+          "flex h-7 w-12 items-center rounded-full p-[3px] transition-colors motion-reduce:transition-none motion-reduce:duration-0",
+          // On: amber with an inset rim (3.2:1 on white; the same amber in dark). Off: a gray track at 3:1 or more.
+          checked ? "bg-accent ring-1 ring-accent-edge ring-inset" : "bg-switch-off",
         )}
       >
-        {/* Off: a gray thumb on the left, visible on the track in both themes. On: a surface thumb on amber. */}
+        {/* White knob in both themes, as in the prototype; on amber a 1 px rim keeps its position at 3:1. */}
         <span
           className={cx(
-            "size-[22px] rounded-full shadow-sm transition-transform motion-reduce:transition-none",
-            checked ? "translate-x-5 bg-surface" : "translate-x-0 bg-muted",
+            "size-[22px] rounded-full bg-switch-thumb shadow-sm transition-transform motion-reduce:transition-none motion-reduce:duration-0",
+            checked ? "translate-x-5 ring-1 ring-switch-thumb-edge" : "translate-x-0",
           )}
         />
       </span>

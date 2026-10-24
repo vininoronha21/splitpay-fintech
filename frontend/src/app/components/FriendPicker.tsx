@@ -141,7 +141,7 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
                     aria-hidden="true"
                     className={cx(
                       "grid size-13 place-items-center rounded-full bg-accent-soft text-sm font-bold text-accent-soft-text select-none",
-                      checked && "ring-2 ring-accent ring-offset-2 ring-offset-surface",
+                      checked && "ring-2 ring-accent-edge ring-offset-2 ring-offset-surface",
                     )}
                   >
                     {initials(friend.name)}

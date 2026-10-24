@@ -56,16 +56,19 @@ export function SaveConfirmation({ saved }: SaveConfirmationProps) {
       role="status"
       className="pointer-events-none fixed inset-x-4 bottom-[calc(76px+env(safe-area-inset-bottom))] z-50 flex justify-center md:top-24 md:bottom-auto"
     >
+      {/* A success-soft tint over an opaque surface: on dark a plain surface pill vanished over the cards. */}
       {message ? (
         <p
           className={cx(
-            "flex max-w-full items-center gap-2 rounded-full border border-border bg-surface px-4 py-3 text-sm font-semibold text-text shadow-lg",
+            "max-w-full rounded-full bg-surface shadow-lg",
             "transition-opacity duration-400 motion-reduce:transition-none",
             phase === "fading" ? "opacity-0" : "opacity-100",
           )}
         >
-          <CircleCheck size={18} className="shrink-0 text-success" aria-hidden="true" />
-          <span className="truncate">{message}</span>
+          <span className="flex items-center gap-2 rounded-full border border-success/30 bg-success-soft px-4 py-3 text-sm font-semibold text-success-soft-text">
+            <CircleCheck size={18} className="shrink-0" aria-hidden="true" />
+            <span className="truncate">{message}</span>
+          </span>
         </p>
       ) : null}
     </div>

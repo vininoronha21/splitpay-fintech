@@ -19,7 +19,7 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
         "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm whitespace-nowrap",
         "transition-colors motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50",
         selected
-          ? "border-accent bg-accent-soft font-semibold text-accent-soft-text"
+          ? "border-accent-edge bg-accent-soft font-semibold text-accent-soft-text"
           : "border-border bg-surface font-medium text-text hover:bg-neutral-soft",
         focusRing,
         className,
