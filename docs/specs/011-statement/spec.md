@@ -1,6 +1,6 @@
 # 011 Statement — Spec
 
-Stories: US03 (detail view and status filter), US01 (closing a friend's share) | Status: draft
+Stories: US03 (detail view and status filter), US01 (closing a friend's share) | Status: approved
 
 ## Problem
 

@@ -1,6 +1,6 @@
 # 011 Statement — Plan
 
-Status: draft
+Status: approved
 
 ## Files to Create/Modify
 
