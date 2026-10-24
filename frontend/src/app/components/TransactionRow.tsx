@@ -1,13 +1,26 @@
+import type { ReactNode } from "react";
 import { ArrowDownToLine, Wallet } from "lucide-react";
+import { Link } from "react-router";
 import { Money } from "./Money.tsx";
-import { Avatar, cx, StatusPill } from "./ui/index.ts";
+import { Avatar, cx, focusRing, StatusPill } from "./ui/index.ts";
 import { formatShortDate } from "../../lib/dates.ts";
+import { formatBRL } from "../../lib/money.ts";
+import { useHideValues } from "../../lib/preferences.ts";
+import { statusLabel } from "../../lib/statement.ts";
 import type { TransactionSummary } from "../../types/api.ts";
 
 interface TransactionRowProps {
   transaction: TransactionSummary;
   /** Status pill of a split expense: always, never, or from `md` only (Início). */
   showStatus?: boolean | "md";
+  /** Makes the row content one link (the detail view, spec 011). */
+  href?: string;
+  /** Status in the link's accessible name, e.g. "Pago em 20 out"; defaults to the pill label. */
+  statusText?: string;
+  /** Line under the description, outside the link (Extrato: status pill and the friend's share). */
+  extra?: ReactNode;
+  /** Buttons outside the link: under the row on mobile, at its right from `md` when they fit. */
+  actions?: ReactNode;
   className?: string;
 }
 
@@ -38,29 +51,76 @@ function RowIcon({ transaction }: { transaction: TransactionSummary }) {
   );
 }
 
+/** Signed full amount as cents: expenses negative, incomes positive. */
+function signedCents(transaction: TransactionSummary): number {
+  return transaction.type === "income" ? transaction.amount_cents : -transaction.amount_cents;
+}
+
 /**
- * One entry of a transaction list (Início, and Extrato in 011). Expenses show
- * the full amount paid with a minus sign; incomes a plus sign in green.
+ * One entry of a transaction list (Início and Extrato). Expenses show the full
+ * amount paid with a minus sign; incomes a plus sign in green. With `href` the
+ * content is a single link named "description, amount, status"; `extra` and
+ * `actions` stay outside it, so no interactive element is nested in another.
  */
-export function TransactionRow({ transaction, showStatus = false, className }: TransactionRowProps) {
+export function TransactionRow({
+  transaction,
+  showStatus = false,
+  href,
+  statusText,
+  extra,
+  actions,
+  className,
+}: TransactionRowProps) {
+  const [hidden] = useHideValues();
   const income = transaction.type === "income";
   const status = transaction.split_status;
+  const cents = signedCents(transaction);
 
-  return (
-    <li className={cx("flex items-center gap-3 border-b border-border py-3 last:border-b-0", className)}>
+  const content = (
+    <>
       <RowIcon transaction={transaction} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{transaction.description}</p>
+        <p className={cx("truncate text-sm font-medium", href && "group-hover:underline")}>{transaction.description}</p>
         <p className="truncate text-xs text-muted">{metaLine(transaction)}</p>
       </div>
       {status && showStatus ? (
         <StatusPill status={status} className={showStatus === "md" ? "max-md:hidden" : undefined} />
       ) : null}
       <Money
-        cents={income ? transaction.amount_cents : -transaction.amount_cents}
+        cents={cents}
         signed={income}
         className={cx("shrink-0 text-right text-sm font-semibold md:min-w-[110px]", income && "text-success")}
       />
+    </>
+  );
+
+  if (!href) {
+    return (
+      <li className={cx("flex items-center gap-3 border-b border-border py-3 last:border-b-0", className)}>{content}</li>
+    );
+  }
+
+  // The visible amount goes through Money; the link's name follows the same mask.
+  const amountText = hidden ? "Valor oculto" : `${income ? "+" : ""}${formatBRL(cents)}`;
+  const statusName = statusText ?? (status ? statusLabel(status, null) : null);
+  const name = [transaction.description, amountText, statusName].filter(Boolean).join(", ");
+
+  return (
+    <li className={cx("border-b border-border py-3 last:border-b-0", className)}>
+      {/* Wraps: the actions sit at the right of the text when both fit (md), under it otherwise. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="min-w-0 flex-[1_1_18rem]">
+          <Link
+            to={href}
+            aria-label={name}
+            className={cx("group -m-1 flex min-h-11 items-center gap-3 rounded-xl p-1", focusRing)}
+          >
+            {content}
+          </Link>
+          {extra ? <div className="mt-1.5 pl-13">{extra}</div> : null}
+        </div>
+        {actions}
+      </div>
     </li>
   );
 }

@@ -1,15 +1,9 @@
 import { ChevronRight, CircleAlert } from "lucide-react";
 import { Chip, cx, focusRing, TextField } from "./ui/index.ts";
 import { FieldFrame, useFieldIds } from "./ui/TextField.tsx";
+import { PAYMENT_METHODS, paymentMethodLabel } from "../../lib/statement.ts";
 import type { DetailValues, FieldName, FormErrors } from "../../lib/transactionForm.ts";
 import type { PaymentMethod } from "../../types/api.ts";
-
-const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: "pix", label: "Pix" },
-  { value: "debito", label: "Débito" },
-  { value: "credito", label: "Crédito" },
-  { value: "dinheiro", label: "Dinheiro" },
-];
 
 /** Detail fields this section can focus when they hold the first error. */
 type DetailField = Extract<FieldName, "place" | "installments" | "notes">;
@@ -134,10 +128,10 @@ function PaymentMethodPicker({ value, onChange }: PaymentMethodPickerProps) {
       </span>
       <div role="group" aria-labelledby="pagamento-rotulo" className="mt-2 flex flex-wrap gap-2">
         {PAYMENT_METHODS.map((method) => {
-          const selected = method.value === value;
+          const selected = method === value;
           return (
-            <Chip key={method.value} selected={selected} onClick={() => onChange(selected ? null : method.value)}>
-              {method.label}
+            <Chip key={method} selected={selected} onClick={() => onChange(selected ? null : method)}>
+              {paymentMethodLabel(method)}
             </Chip>
           );
         })}

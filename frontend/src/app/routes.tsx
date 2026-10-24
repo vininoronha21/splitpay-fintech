@@ -8,6 +8,8 @@ import { RouteError } from "./components/RouteError.tsx";
 import { ScreenPlaceholder } from "./components/ScreenPlaceholder.tsx";
 import { SettingsScreen } from "./components/SettingsScreen.tsx";
 import { SpendingScreen } from "./components/SpendingScreen.tsx";
+import { StatementScreen } from "./components/StatementScreen.tsx";
+import { TransactionDetailScreen } from "./components/TransactionDetailScreen.tsx";
 import { readUserName } from "../lib/userName.ts";
 
 /** /entrar is skipped once a name is saved; "Sair" in Configurações clears it. */
@@ -29,7 +31,8 @@ export const router = createBrowserRouter([
         children: [
           { path: "/inicio", element: <HomeScreen /> },
           { path: "/gastos-do-mes", element: <SpendingScreen /> },
-          { path: "/extrato", element: <ScreenPlaceholder title="Extrato" /> },
+          { path: "/extrato", element: <StatementScreen /> },
+          { path: "/extrato/:id", element: <TransactionDetailScreen /> },
           { path: "/amigos", element: <ScreenPlaceholder title="Amigos" /> },
           { path: "/configuracoes", element: <SettingsScreen /> },
           { path: "/novo-gasto", element: <NewTransactionScreen /> },
