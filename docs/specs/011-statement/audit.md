@@ -110,3 +110,30 @@ Everything else holds under my own runs:
 - empty copy scan, no backend or dependency change (743 passed).
 
 M1 is a one-rule CSS fix with a clear check. T5 stays unchecked until M1 and m1 are fixed and verified: the keyboard sweep at 360/390 in both themes with 0 focus stops under the tab bar, the 010 save-bar sweep unchanged, and the `d-huge`/`d-w-open` details at 360 with the amount inside the padding. The informational notes are optional.
+
+## Closing check (0e1d5bc)
+
+Scope: `0e1d5bc` ("fix(web): apply 011 audit findings"). It changes `theme.css`, `TransactionDetailScreen.tsx`, `StatementSummary.tsx` and `SettleActions.tsx`, and the design skill's line about `scroll-padding-bottom`. The first report is committed as `a412815`. I checked each fix on the running app, with the same setup as the first pass: API on a fresh scratch DB per batch and `vite preview` after a new build. Same scratch directory; the new scripts are `$A/kbd3.cjs`, `$A/kbd4.cjs`, `$A/m1.cjs` and `$A/n36.cjs`.
+
+| # | Check | Result |
+| --- | --- | --- |
+| C1 | Build, greps, copy scan, scope | `npm run build` **passes** (1978 modules). No `any` outside comments, no new cast (only `services/api.ts:75`, `:134`), no `toFixed`, `parseFloat`, `parseInt` or `Math.round`. `rg "[—–·→…]" frontend/src` is **empty**. No backend or dependency change since `a412815`. |
+| C2 | `statement.ts` self-checks (`$A/statement-check.mts`) | **45,563 assertions, 0 failures** in UTC, America/Sao_Paulo and Pacific/Kiritimati. |
+| C3 | Runtime suite on the seeded API | `flow.cjs` **120/0**: summary, chips, deep link, exactly 1 PATCH, balance +share and unchanged, real 409, forced 500, focus, back with the filter, Início rows. `detail.cjs` **27/0**, with **74/74 details** equal to the API. Not found: same 10 ids, only `999999` and `9007199254740991` send a request. `hide.cjs`: **0 amounts exposed** (its one failure is the script looking for the hide toggle on Extrato; the toggle lives on Início, from 008). |
+| C4 | M1: keyboard sweep (`$A/kbd3.cjs`) | 360/390/768/1280 × light/dark. Pages: Extrato Todos and Em aberto, Em aberto with a confirmation opened by keyboard, detail with a confirmation open, a detail with every field, Início, Gastos do mês, Novo gasto (split and details open), and Novo gasto with the API error banner. Tab and Shift+Tab: **1,812 focus stops, 0 covered by the tab bar or the save bar**. Computed `scroll-padding-bottom` below md: **73 px** on Extrato, the detail, Início and Gastos do mês (`--tab-bar-height` 61 + 12, and the measured bar is 61 px). Novo gasto: **146 px**; with the banner **218 px** at 390 and **238 px** at 360 (the banner wraps), so the save-bar rule still wins. `auto` from md. The probe also flagged 42 stops of three kinds, none of them under a bar: an input whose focus style is a border, not an outline (checked in 010); a card link with a top of −0.4 px after rounding; and Novo gasto controls sampled before the native scroll ended. `$A/kbd4.cjs` waits 400 ms after each Tab and Shift+Tab on Novo gasto at 360 and 768: **every stop is fully in the viewport.** The original probes report **0 covered** (`kbd2.cjs`: was 24 to 61 px under the bar) and **788 stops, 0 issues** (`kbd.cjs`: was 42). The 010 sweep (`audit010/a11y.cjs`) still gives **544 stops, 0 hidden, 0 missing rings, 0 small targets**. |
+| C5 | m1: Divisão card (`$A/m1.cjs`) | 320/360/390 × both themes. Details: R$ 10 bi with a fixed share of R$ 9.999.999.999,99 and the long friend name; R$ 5 bi already pago; an equal split with the 60-character single-word friend; a new transaction with that friend and a R$ 9.999.999.999,99 share; and the full seeded-style detail; each with the confirmation closed and open. **54 cases: no element past the card padding, no element overflowing itself, no horizontal scroll.** The label now wraps (`dt min-w-0 shrink`) while the amount stays on one line (`dd shrink-0`, `$A/close-m1-320.png`). |
+| C6 | n3: hidden summary (`$A/n36.cjs`) | With mocked totals of R$ 1,00 and R$ 4.999.999.999,99 at 360 and 390, hidden values give the **same grid, font size and height** for both (two columns, 20 px, 99 px). With values shown, the large totals still stack (one column, 18 px, 192 px), as designed. |
+| C7 | n6: status regions (`$A/n36.cjs`) | On Todos, rows whose share was closed when they loaded render **no `role="status"` and no `sr-only` wrapper**, and the detail of a closed share (`/extrato/7`) renders none. **Every open row has exactly one `role="status"` mounted before any action.** After Recebi, "Reembolso marcado como pago." is written into **that same element** (the handle captured before the click), so it is announced. |
+| C8 | Layout scan (`$A/scan.cjs`) | The same 16 states × 360/390/768/1280 × light/dark with the R$ 10 bi data: **128 screenshots, 0 issues** (no horizontal scroll, overlap, clipped text or text under the tab bar). |
+| C9 | Servers and repo | uvicorn and `vite preview` stopped; ports 8000 and 4173 refuse (`000`). `git status` was clean before this section was appended. |
+
+**Status**
+- **M1: Closed** (C4).
+- **m1: Closed** (C5).
+- **n3: Closed** (C6).
+- **n6: Closed** (C7).
+- n1, n2, n4 and n5 stay informational and are accepted as they are. n1 belongs to 009's `CategorySummaryCard` and appears only with amounts in the billions. n2 was measured safe. n4 needs no action under WCAG 1.4.11. n5 is a process note.
+
+### Final verdict
+
+**PASS with nothing open.** No blocker, major or minor findings remain. All 10 acceptance criteria, the Data Rules and the plan's Test Strategy hold at `HEAD` (`0e1d5bc`). T5 can be marked done.
