@@ -1,11 +1,11 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "./components/AppLayout.tsx";
+import { FriendsScreen } from "./components/FriendsScreen.tsx";
 import { HomeScreen } from "./components/HomeScreen.tsx";
 import { LoginScreen } from "./components/LoginScreen.tsx";
 import { NewTransactionScreen } from "./components/NewTransactionScreen.tsx";
 import { NotFound } from "./components/NotFound.tsx";
 import { RouteError } from "./components/RouteError.tsx";
-import { ScreenPlaceholder } from "./components/ScreenPlaceholder.tsx";
 import { SettingsScreen } from "./components/SettingsScreen.tsx";
 import { SpendingScreen } from "./components/SpendingScreen.tsx";
 import { StatementScreen } from "./components/StatementScreen.tsx";
@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
           { path: "/gastos-do-mes", element: <SpendingScreen /> },
           { path: "/extrato", element: <StatementScreen /> },
           { path: "/extrato/:id", element: <TransactionDetailScreen /> },
-          { path: "/amigos", element: <ScreenPlaceholder title="Amigos" /> },
+          { path: "/amigos", element: <FriendsScreen /> },
           { path: "/configuracoes", element: <SettingsScreen /> },
           { path: "/novo-gasto", element: <NewTransactionScreen /> },
         ],
