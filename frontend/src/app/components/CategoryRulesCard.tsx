@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ChevronDown, Trash2 } from "lucide-react";
 import { CardHeader } from "./CardHeader.tsx";
 import { FormFeedback } from "./FormFeedback.tsx";
@@ -48,7 +48,7 @@ export function CategoryRulesCard() {
 
 function RulesSkeleton() {
   return (
-    <Card aria-busy="true" aria-label="Carregando regras de categoria">
+    <Card aria-busy="true" aria-label="Carregando regras de categoria" className="md:p-6">
       <Skeleton className="h-5 w-44" />
       <Skeleton className="mt-1.5 h-4 w-full max-w-80" />
       {[0, 1, 2].map((index) => (
@@ -148,7 +148,7 @@ function RulesContent({ rules, categories }: RulesContentProps) {
   }
 
   return (
-    <Card aria-labelledby={titleId}>
+    <Card aria-labelledby={titleId} className="md:p-6">
       <CardHeader
         title="Regras de categoria"
         titleId={titleId}
@@ -228,21 +228,21 @@ function RulesContent({ rules, categories }: RulesContentProps) {
           onChange={(event) => update({ keyword: event.target.value })}
           error={errors.keyword}
         />
-        <div className="mt-4 flex items-start gap-2">
-          <CategorySelect
-            selectRef={(element) => {
-              fields.current.category = element;
-            }}
-            className="min-w-0 flex-1"
-            categories={categories}
-            value={values.categoryId}
-            onChange={(categoryId) => update({ categoryId })}
-            error={errors.category}
-          />
-          <Button type="submit" variant="ghost" disabled={saving} className="mt-6 shrink-0 px-4">
-            {saving ? "Adicionando..." : "Adicionar"}
-          </Button>
-        </div>
+        <CategorySelect
+          selectRef={(element) => {
+            fields.current.category = element;
+          }}
+          className="mt-4"
+          categories={categories}
+          value={values.categoryId}
+          onChange={(categoryId) => update({ categoryId })}
+          error={errors.category}
+          action={
+            <Button type="submit" variant="ghost" disabled={saving} className="shrink-0 px-4">
+              {saving ? "Adicionando..." : "Adicionar"}
+            </Button>
+          }
+        />
         <FormFeedback success={success} error={apiError} />
       </form>
     </Card>
@@ -256,41 +256,46 @@ interface CategorySelectProps {
   value: number | null;
   onChange: (categoryId: number | null) => void;
   error?: string;
+  /** The submit button, beside the select in one row; the error line then spans both. */
+  action?: ReactNode;
   className?: string;
 }
 
 /** Native select (spec Decisions): eight options, accessible on every phone without custom keyboard code. */
-function CategorySelect({ selectRef, categories, value, onChange, error, className }: CategorySelectProps) {
+function CategorySelect({ selectRef, categories, value, onChange, error, action, className }: CategorySelectProps) {
   const { inputId, hintId, errorId, describedBy } = useFieldIds(undefined, undefined, error);
   return (
     <FieldFrame inputId={inputId} label="Categoria" error={error} hintId={hintId} errorId={errorId} className={className}>
-      <div className="relative mt-2">
-        <select
-          ref={selectRef}
-          id={inputId}
-          value={value === null ? "" : String(value)}
-          onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy}
-          className={cx(
-            "h-12 w-full min-w-0 appearance-none truncate rounded-xl border bg-surface pr-10 pl-4 text-base text-text",
-            "transition-colors motion-reduce:transition-none",
-            error ? "border-danger" : "border-border focus:border-accent",
-            focusRing,
-          )}
-        >
-          <option value="">Selecione</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={18}
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
-        />
+      <div className="mt-2 flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <select
+            ref={selectRef}
+            id={inputId}
+            value={value === null ? "" : String(value)}
+            onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
+            className={cx(
+              "h-12 w-full min-w-0 appearance-none truncate rounded-xl border bg-surface pr-10 pl-4 text-base text-text",
+              "transition-colors motion-reduce:transition-none",
+              error ? "border-danger" : "border-border focus:border-accent",
+              focusRing,
+            )}
+          >
+            <option value="">Selecione</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={18}
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted"
+          />
+        </div>
+        {action}
       </div>
     </FieldFrame>
   );

@@ -5,7 +5,7 @@ import { Avatar, Card } from "./ui/index.ts";
 export function ProfileCard() {
   const name = useUserName();
   return (
-    <Card className="flex items-center gap-3">
+    <Card className="flex items-center gap-3 md:p-6">
       <Avatar name={name} tone="accent" className="size-12! text-sm!" />
       <div className="min-w-0">
         <p className="truncate text-base leading-snug font-semibold" title={name}>

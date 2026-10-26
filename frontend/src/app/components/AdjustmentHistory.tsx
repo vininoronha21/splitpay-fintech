@@ -31,7 +31,11 @@ export function AdjustmentHistory({ version }: AdjustmentHistoryProps) {
   }
 
   return (
-    <Card aria-labelledby={titleId} aria-busy={adjustments.status === "loading" ? true : undefined}>
+    <Card
+      aria-labelledby={titleId}
+      aria-busy={adjustments.status === "loading" ? true : undefined}
+      className="md:p-6"
+    >
       <CardHeader title="Histórico de ajustes" titleId={titleId} />
       {adjustments.status === "loading" ? (
         <HistorySkeleton />

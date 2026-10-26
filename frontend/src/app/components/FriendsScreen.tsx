@@ -99,7 +99,7 @@ function AddFriendCard({ onAdded }: { onAdded: () => void }) {
   }
 
   return (
-    <Card>
+    <Card className="md:p-6">
       <form noValidate onSubmit={(event) => void handleSubmit(event)}>
         <FieldFrame inputId={inputId} label="Nome do amigo" error={error} hintId={hintId} errorId={errorId}>
           <div className="mt-2 flex gap-2">
@@ -147,7 +147,7 @@ function AddFriendCard({ onAdded }: { onAdded: () => void }) {
 
 function ListSkeleton() {
   return (
-    <Card aria-busy="true" aria-label="Carregando amigos" className="py-1">
+    <Card aria-busy="true" aria-label="Carregando amigos" className="py-1 md:px-6">
       {Array.from({ length: SKELETON_ROWS }, (_, index) => (
         <div key={index} className="flex items-center gap-3 border-b border-border py-3 last:border-b-0">
           <Skeleton className="size-10 rounded-full!" />
@@ -168,7 +168,7 @@ interface FriendListProps {
 function FriendList({ friends, openCents }: FriendListProps) {
   if (friends.length === 0) {
     return (
-      <Card>
+      <Card className="md:p-6">
         <EmptyState icon={Users} title="Nenhum amigo ainda" />
       </Card>
     );

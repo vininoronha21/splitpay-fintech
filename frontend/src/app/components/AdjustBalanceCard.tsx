@@ -54,7 +54,7 @@ export function AdjustBalanceCard({ version, onAdjusted }: AdjustBalanceCardProp
 
 function AdjustSkeleton() {
   return (
-    <Card aria-busy="true" aria-label="Carregando saldo">
+    <Card aria-busy="true" aria-label="Carregando saldo" className="md:p-6">
       <Skeleton className="h-5 w-32" />
       <Skeleton className="mt-1.5 h-4 w-full max-w-72" />
       <Skeleton className="mt-4 h-13 w-full rounded-2xl!" />
@@ -123,7 +123,7 @@ function AdjustForm({ currentCents, refreshing, onAdjusted }: AdjustFormProps) {
   }
 
   return (
-    <Card aria-labelledby={titleId}>
+    <Card aria-labelledby={titleId} className="md:p-6">
       <CardHeader
         title="Ajustar saldo"
         titleId={titleId}

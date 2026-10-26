@@ -19,7 +19,7 @@ export function BudgetInfoCard() {
     <Card
       aria-labelledby={titleId}
       aria-busy={profile.status === "loading" ? true : undefined}
-      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 md:p-6"
     >
       {/* A 10rem basis keeps the amount beside the text (the note wraps first); a huge amount drops below it. */}
       <div className="min-w-0 flex-[1_1_10rem]">

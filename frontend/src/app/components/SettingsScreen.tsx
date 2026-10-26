@@ -29,7 +29,7 @@ export function SettingsScreen() {
     <div className="mx-auto flex w-full max-w-[640px] flex-col gap-3 md:gap-4">
       <ScreenTitle>Configurações</ScreenTitle>
       <ProfileCard />
-      <Card>
+      <Card className="md:p-6">
         <ThemeControl />
       </Card>
       <AdjustBalanceCard version={balanceVersion} onAdjusted={() => setBalanceVersion((version) => version + 1)} />
