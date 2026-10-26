@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useId, useRef, useState } from "react";
 import { CardHeader } from "./CardHeader.tsx";
 import { Money } from "./Money.tsx";
-import { Button, Card, cx, ErrorState, Skeleton } from "./ui/index.ts";
+import { Button, Card, cx, ErrorState, focusRing, Skeleton } from "./ui/index.ts";
 import { formatDateTime } from "../../lib/dates.ts";
 import { useResource } from "../../lib/useResource.ts";
 import { listAdjustments } from "../../services/api.ts";
@@ -124,7 +124,12 @@ const TimelineItem = forwardRef<HTMLLIElement, TimelineItemProps>(function Timel
 ) {
   const positive = adjustment.delta_cents > 0;
   return (
-    <li ref={ref} tabIndex={focusTarget ? -1 : undefined} className={cx("relative pl-6 outline-none", !last && "pb-5")}>
+    <li ref={ref} tabIndex={focusTarget ? -1 : undefined} className={cx(
+        // The item "Ver todos" focuses shows the shared ring, so keyboard users see where they landed.
+        "relative rounded-lg pl-6",
+        focusTarget && focusRing,
+        !last && "pb-5",
+      )}>
       {/* The timeline: a dot per item and a line down to the next one. Decorative; the list carries the order. */}
       <span
         aria-hidden="true"

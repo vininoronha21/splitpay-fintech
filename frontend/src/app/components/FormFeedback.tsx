@@ -5,6 +5,8 @@ interface FormFeedbackProps {
   success: string | null;
   /** pt-BR API error, e.g. the 409 message; null shows nothing. */
   error: string | null;
+  /** Id of the error line, so a field the API rejected can point at it with aria-describedby. */
+  errorId?: string;
 }
 
 /**
@@ -13,11 +15,11 @@ interface FormFeedbackProps {
  * each request so the same text twice is announced twice. Each line carries
  * its own top margin, so nothing adds space while both are empty.
  */
-export function FormFeedback({ success, error }: FormFeedbackProps) {
+export function FormFeedback({ success, error, errorId }: FormFeedbackProps) {
   return (
     <div>
       {error ? (
-        <p role="alert" className="mt-3 flex items-start gap-1.5 text-sm text-danger">
+        <p id={errorId} role="alert" className="mt-3 flex items-start gap-1.5 text-sm text-danger">
           <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span className="min-w-0 break-words">{error}</span>
         </p>

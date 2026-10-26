@@ -170,7 +170,8 @@ function AdjustForm({ currentCents, refreshing, onAdjusted }: AdjustFormProps) {
           error={errors.reason}
         />
 
-        <Button type="submit" fullWidth disabled={saving} className="mt-5">
+        {/* aria-disabled, not disabled, while saving: a disabled button would drop focus to the page; savingRef blocks the second request. */}
+        <Button type="submit" fullWidth aria-disabled={saving ? true : undefined} className="mt-5">
           {saving ? "Salvando..." : "Confirmar ajuste"}
         </Button>
         <FormFeedback success={success} error={apiError} />

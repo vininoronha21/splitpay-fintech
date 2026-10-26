@@ -63,6 +63,24 @@ function RulesSkeleton() {
   );
 }
 
+/** An API error under the rule form and the field it concerns, if any (n4: the field points at it). */
+interface ApiFieldError {
+  message: string;
+  field: RuleField | null;
+}
+
+/** 409 rule_exists and the 422 about letters and length concern the keyword; category_not_found the select. */
+function ruleApiError(caught: unknown): ApiFieldError {
+  if (!(caught instanceof ApiError)) return { message: GENERIC_ERROR_MESSAGE, field: null };
+  const field: RuleField | null =
+    caught.code === "rule_exists" || caught.code === "validation_error"
+      ? "keyword"
+      : caught.code === "category_not_found"
+        ? "category"
+        : null;
+  return { message: caught.message, field };
+}
+
 interface RulesContentProps {
   rules: CategoryRule[];
   categories: Category[];
@@ -80,9 +98,10 @@ function RulesContent({ rules, categories }: RulesContentProps) {
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<ApiFieldError | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const busyRef = useRef(false);
+  const feedbackErrorId = useId();
 
   const fields = useRef<Partial<Record<RuleField, HTMLElement | null>>>({});
   const deleteButtons = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -117,7 +136,7 @@ function RulesContent({ rules, categories }: RulesContentProps) {
       setSubmitted(false);
       setSuccess("Regra criada.");
     } catch (caught) {
-      setApiError(caught instanceof ApiError ? caught.message : GENERIC_ERROR_MESSAGE);
+      setApiError(ruleApiError(caught));
     } finally {
       busyRef.current = false;
       setSaving(false);
@@ -140,7 +159,7 @@ function RulesContent({ rules, categories }: RulesContentProps) {
       const target = neighbor ? deleteButtons.current.get(neighbor.id) : fields.current.keyword;
       target?.focus();
     } catch (caught) {
-      setApiError(caught instanceof ApiError ? caught.message : GENERIC_ERROR_MESSAGE);
+      setApiError({ message: caught instanceof ApiError ? caught.message : GENERIC_ERROR_MESSAGE, field: null });
     } finally {
       busyRef.current = false;
       setDeletingId(null);
@@ -159,13 +178,14 @@ function RulesContent({ rules, categories }: RulesContentProps) {
         <ul aria-label="Suas regras" className="mt-2">
           {userRules.map((rule) => (
             <li key={rule.id} className="flex min-w-0 items-center gap-2 border-b border-border py-0.5">
-              <span className="min-w-0 flex-1 truncate text-sm font-medium" title={rule.keyword}>
-                {rule.keyword}
-              </span>
-              <span className="shrink-0 rounded-full bg-accent-soft px-2 py-[3px] text-xs leading-tight font-semibold text-accent-soft-text">
-                Sua regra
-              </span>
-              <span className="max-w-[35%] shrink-0 truncate text-sm text-muted">{rule.category_name}</span>
+              {/* Keyword, pill and category wrap as a group: a long keyword takes its own line(s) instead of an ellipsis. */}
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 py-2">
+                <span className="min-w-0 text-sm font-medium break-words">{rule.keyword}</span>
+                <span className="shrink-0 rounded-full bg-accent-soft px-2 py-[3px] text-xs leading-tight font-semibold text-accent-soft-text">
+                  Sua regra
+                </span>
+                <span className="ml-auto min-w-0 truncate text-sm text-muted">{rule.category_name}</span>
+              </div>
               <button
                 ref={(element) => {
                   if (element) deleteButtons.current.set(rule.id, element);
@@ -227,6 +247,7 @@ function RulesContent({ rules, categories }: RulesContentProps) {
           value={values.keyword}
           onChange={(event) => update({ keyword: event.target.value })}
           error={errors.keyword}
+          {...(apiError?.field === "keyword" ? { "aria-invalid": true, "aria-describedby": feedbackErrorId } : {})}
         />
         <CategorySelect
           selectRef={(element) => {
@@ -237,13 +258,14 @@ function RulesContent({ rules, categories }: RulesContentProps) {
           value={values.categoryId}
           onChange={(categoryId) => update({ categoryId })}
           error={errors.category}
+          apiErrorId={apiError?.field === "category" ? feedbackErrorId : undefined}
           action={
-            <Button type="submit" variant="ghost" disabled={saving} className="shrink-0 px-4">
+            <Button type="submit" variant="ghost" aria-disabled={saving ? true : undefined} className="shrink-0 px-4">
               {saving ? "Adicionando..." : "Adicionar"}
             </Button>
           }
         />
-        <FormFeedback success={success} error={apiError} />
+        <FormFeedback success={success} error={apiError?.message ?? null} errorId={feedbackErrorId} />
       </form>
     </Card>
   );
@@ -256,13 +278,15 @@ interface CategorySelectProps {
   value: number | null;
   onChange: (categoryId: number | null) => void;
   error?: string;
+  /** Id of an API error line about the category; marks the select invalid and points at it. */
+  apiErrorId?: string;
   /** The submit button, beside the select in one row; the error line then spans both. */
   action?: ReactNode;
   className?: string;
 }
 
 /** Native select (spec Decisions): eight options, accessible on every phone without custom keyboard code. */
-function CategorySelect({ selectRef, categories, value, onChange, error, action, className }: CategorySelectProps) {
+function CategorySelect({ selectRef, categories, value, onChange, error, apiErrorId, action, className }: CategorySelectProps) {
   const { inputId, hintId, errorId, describedBy } = useFieldIds(undefined, undefined, error);
   return (
     <FieldFrame inputId={inputId} label="Categoria" error={error} hintId={hintId} errorId={errorId} className={className}>
@@ -273,12 +297,12 @@ function CategorySelect({ selectRef, categories, value, onChange, error, action,
             id={inputId}
             value={value === null ? "" : String(value)}
             onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={describedBy}
+            aria-invalid={error || apiErrorId ? true : undefined}
+            aria-describedby={[describedBy, apiErrorId].filter(Boolean).join(" ") || undefined}
             className={cx(
               "h-12 w-full min-w-0 appearance-none truncate rounded-xl border bg-surface pr-10 pl-4 text-base text-text",
               "transition-colors motion-reduce:transition-none",
-              error ? "border-danger" : "border-border focus:border-accent",
+              error ? "border-danger" : "border-field-border focus:border-accent",
               focusRing,
             )}
           >

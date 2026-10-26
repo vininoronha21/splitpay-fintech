@@ -48,7 +48,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
           "placeholder:text-muted transition-colors motion-reduce:transition-none",
           "disabled:cursor-not-allowed disabled:opacity-60",
           // In error the border stays red while focused; focus moves here after an error.
-          error ? "border-danger" : "border-border focus:border-accent",
+          error ? "border-danger" : "border-field-border focus:border-accent",
           focusRing,
         )}
         {...rest}

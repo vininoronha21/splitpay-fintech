@@ -23,7 +23,7 @@ The landing page file is dark teal + lime (`#e2ff54`) and the case-study file is
 | --- | --- | --- |
 | Page background | `#001229` / `#001027` | `bg` `#0b0b0c` |
 | Card / panel | `#004852`, `#f6f9f8` | `surface` `#18181b` |
-| Hairline | `#e5e5e5`, `rgba(0,0,0,.06)` | `border` `#27272a` |
+| Hairline | `#e5e5e5`, `rgba(0,0,0,.06)` | `border` `#27272a` (cards); `field-border` for form fields |
 | Highlight word, key stat, primary CTA | lime `#e2ff54`, green `#00b512` | `accent` `#fbbf24` (text on it: `on-accent`) |
 | Body text on dark | `#f9fafb` | `text` |
 | Secondary text | `#dcdcdc`, `#a7a7a7` | `muted` |
@@ -42,6 +42,7 @@ Light is the default; dark is selectable in Configurações (Claro, Escuro, Auto
 - **Status pills** use `*-soft` fills with `*-soft-text`: "Aguardando reembolso" accent-soft, "Pago" success-soft, "Acertado" neutral-soft.
 - **Charts** use `chart-1` to `chart-7` plus `chart-other`, a categorical palette validated for colorblind readers in both themes. Never several amber shades for categories (only Moradia uses the amber-like `chart-1`), never green or red (they mean received and debit). Color follows the category, not its rank, through `categoryColor()` in `lib/charts.ts` (spec 009): Moradia `chart-1`, Educação `chart-2`, Alimentação `chart-3`, Transporte `chart-4`, Lazer `chart-5`, Saúde `chart-6`, Compras `chart-7` (plum, light `#85078b`, dark `#af16b6`), Outros and Sem categoria `chart-other` (neutral, light `#8b8b94`, dark `#71717a`). Percentages come from `sharePercents()` (integer largest remainder, rows sum to 100%).
 - **Selection and switches (spec 010):** amber borders and rings that carry meaning use `accent-edge` (light `#d97706`, dark `#fbbf24`, at least 3:1), not plain `accent`. `ui/Switch` uses fixed `switch-thumb` (white), `switch-off` and `switch-thumb-edge` tokens. Below md `theme.css` sets `scroll-padding-bottom` on every screen to clear the tab bar (`--tab-bar-height` 61 px plus 12 px), and a screen with an extra fixed bar (the Novo gasto save bar) adds that bar's height, so keyboard focus never lands under either.
+- **Field borders (spec 012, WCAG 1.4.11):** the rest-state border of every form field (TextField, TextArea, MoneyField, selects, inline inputs) is `field-border` (light `#8b8b94`, 3.38:1 on `surface` and 3.07:1 on `bg`; dark `#71717a`, 3.67:1 on `surface` and 4.07:1 on `bg`). The hairline `border` (about 1.2:1) stays for cards, rows and ghost buttons only. Focus (`accent` border plus the `accent-text` ring) and error (`danger`) states are unchanged.
 - **Light elevation:** a 1 px `border` plus a very soft shadow on cards; dark keeps border only.
 
 ## Brand

@@ -29,7 +29,7 @@ function controlClasses(invalid: boolean): string {
   return cx(
     "w-full min-w-0 rounded-xl border bg-surface px-4 text-base text-text placeholder:text-muted",
     "transition-colors motion-reduce:transition-none",
-    invalid ? "border-danger" : "border-border focus:border-accent",
+    invalid ? "border-danger" : "border-field-border focus:border-accent",
     focusRing,
   );
 }

@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { Plus, Users } from "lucide-react";
 import { FormFeedback } from "./FormFeedback.tsx";
 import { Money } from "./Money.tsx";
@@ -63,8 +63,11 @@ function AddFriendCard({ onAdded }: { onAdded: () => void }) {
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  /** The API rejected the name itself (409 friend_exists or a 422): the field points at the message. */
+  const [nameRejected, setNameRejected] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const savingRef = useRef(false);
+  const feedbackErrorId = useId();
   const input = useRef<HTMLInputElement>(null);
 
   const error = submitted ? validateFriendName(name) : undefined;
@@ -91,6 +94,7 @@ function AddFriendCard({ onAdded }: { onAdded: () => void }) {
       onAdded();
     } catch (caught) {
       setApiError(caught instanceof ApiError ? caught.message : GENERIC_ERROR_MESSAGE);
+      setNameRejected(caught instanceof ApiError && (caught.code === "friend_exists" || caught.code === "validation_error"));
       input.current?.focus();
     } finally {
       savingRef.current = false;
@@ -113,25 +117,28 @@ function AddFriendCard({ onAdded }: { onAdded: () => void }) {
               onChange={(event) => {
                 setName(event.target.value);
                 setApiError(null);
+                setNameRejected(false);
                 setSuccess(null);
               }}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={describedBy}
+              aria-invalid={error || (apiError && nameRejected) ? true : undefined}
+              aria-describedby={
+                [describedBy, apiError && nameRejected ? feedbackErrorId : null].filter(Boolean).join(" ") || undefined
+              }
               className={cx(
                 "h-12 w-full min-w-0 flex-1 rounded-xl border bg-surface px-4 text-base text-text placeholder:text-muted",
                 "transition-colors motion-reduce:transition-none",
-                error ? "border-danger" : "border-border focus:border-accent",
+                error ? "border-danger" : "border-field-border focus:border-accent",
                 focusRing,
               )}
             />
             <button
               type="submit"
               aria-label="Adicionar amigo"
-              disabled={saving}
+              aria-disabled={saving ? true : undefined}
               className={cx(
                 "grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-on-accent transition",
                 "shadow-[0_3px_13px_rgba(251,191,36,.18)] hover:bg-accent-strong active:scale-[.98]",
-                "disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100",
+                "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100",
                 focusRing,
               )}
             >
@@ -139,7 +146,7 @@ function AddFriendCard({ onAdded }: { onAdded: () => void }) {
             </button>
           </div>
         </FieldFrame>
-        <FormFeedback success={success} error={apiError} />
+        <FormFeedback success={success} error={apiError} errorId={feedbackErrorId} />
       </form>
     </Card>
   );

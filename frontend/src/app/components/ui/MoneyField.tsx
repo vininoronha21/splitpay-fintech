@@ -51,7 +51,7 @@ export const MoneyField = forwardRef<HTMLInputElement, MoneyFieldProps>(function
           "mt-2 flex h-15 items-center gap-2 rounded-xl border-2 bg-surface px-4 transition-colors motion-reduce:transition-none",
           "focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent-text",
           // In error the border stays red while focused; focus moves here after an error.
-          error ? "border-danger" : "border-border focus-within:border-accent",
+          error ? "border-danger" : "border-field-border focus-within:border-accent",
         )}
       >
         <span className="text-lg font-bold text-muted" aria-hidden="true">

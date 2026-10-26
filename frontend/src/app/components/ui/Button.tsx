@@ -42,6 +42,8 @@ export function buttonClasses({ variant = "primary", size = "md", fullWidth = fa
     "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition",
     "active:scale-[.98] motion-reduce:transition-none motion-reduce:active:scale-100",
     "disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100",
+    // Same look for aria-disabled, which forms use while saving so the focused button keeps focus.
+    "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:shadow-none aria-disabled:active:scale-100",
     VARIANT_CLASS[variant],
     SIZE_CLASS[size],
     fullWidth && "w-full",
