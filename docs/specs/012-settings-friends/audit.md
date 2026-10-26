@@ -111,3 +111,34 @@ Everything else holds under my own runs:
 - the 008-011 smoke, an empty copy scan, no backend or dependency change (743 passed), and no dangling `ScreenPlaceholder` reference.
 
 m1 is a one-token change with a clear check. T5 stays unchecked until m1 is fixed and verified: field borders at 3:1 or more against `surface` in both themes, and the layout scan still clean on Configurações, Amigos, Novo gasto and the login. The informational notes are optional. If the team chooses to defer m1 to a shared accessibility pass instead, record that decision in `docs/context.md` (Open Questions) so the audit can close against it.
+
+## Closing check (8eaab6f)
+
+Scope: `8eaab6f` ("fix(web): apply 012 audit findings"). It changes `theme.css`, `ui/Button.tsx`, `ui/TextField.tsx`, `ui/TextArea.tsx`, `ui/MoneyField.tsx`, `MoreDetails.tsx`, `AdjustBalanceCard.tsx`, `AdjustmentHistory.tsx`, `CategoryRulesCard.tsx`, `FormFeedback.tsx`, `FriendsScreen.tsx` and the design skill. The first report is committed as `5d5d186`. I checked each fix on the running app, with the same setup as the first pass: API on a fresh scratch DB per batch and `vite preview` after a new build. The scratch directory is the same; the new script is `$A/close.cjs`.
+
+| # | Check | Result |
+| --- | --- | --- |
+| C1 | Build, greps, copy scan, scope | `npm run build` **passes** (1987 modules). The added lines have no `any`, cast, `toFixed`, `parseFloat`, `parseInt`, `Math.round`, `new Date` or `rgba(`. The only hex values are the three `--color-field-border` values in `theme.css`. `rg "[—–·→…]" frontend/src` is **empty**. No backend or dependency change; `pytest` **743 passed**. |
+| C2 | `settings.ts` self-checks (`$A/settings-check.mts`) | **32,538 assertions, 0 failures** in UTC, America/Sao_Paulo and Pacific/Kiritimati. |
+| C3 | m1: field borders (`$A/close.cjs`) | Every visible `input`, `select` and `textarea` on `/entrar`, Novo gasto (split on, Mais detalhes open), Configurações and Amigos, in both themes: **28 fields**. Each one's computed rest border is compared with the composited background behind it. Light `rgb(139,139,148)` = `#8b8b94` is **3.38:1**; dark `rgb(113,113,122)` = `#71717a` is **3.67:1**; minimum 3.38. MoneyField's 2 px border on its wrapper is included. `rg` finds no `<input>`, `<select>` or `<textarea>` that still uses `border-border`; the remaining `border-border` uses are cards, rows, chips and ghost buttons, as intended. **Focus is unchanged:** `accent` border plus a 2 px `accent-text` ring (light `#b45309`, dark `#fbbf24`). **Error is unchanged:** `danger` (`#b91c1c` / `#f87171`) on Novo gasto's Valor and on Justificativa. The design skill records the token, its ratios and where `border` stays. |
+| C4 | n1: submit buttons | Ajustar saldo, Adicionar and the "+" button use `aria-disabled` while saving and do not set `disabled`. With a 700 ms POST: the button reads "Salvando...", is `aria-disabled="true"`, keeps focus and fades to 0.5 opacity. **Enter, Enter, then forced clicks send exactly 1 POST on each form.** Keyboard Enter on the button (`$A/focus.cjs`): focus **stays on the button** after success and after an API error on Ajustar saldo and Regras, and after success on Amigos; a 409 on Amigos returns focus to the field, as before. The 011 suite (`audit011/flow.cjs`, **120/0**) still gives exactly 1 PATCH and "Salvando..." on the settle buttons, which keep `disabled`. |
+| C5 | n2: "Ver todos" | Enter on "Ver todos (n)" focuses the 6th item, which shows a **2 px solid ring** (light `rgb(180,83,9)`) around the whole item (`$A/close-n2.png`). The other items have no `tabIndex` and no ring. |
+| C6 | n4: API errors on fields | The keyword gets `aria-invalid="true"`, and `aria-describedby` reads "Já existe uma regra com essa palavra-chave." on a 409 and the "no máximo 40 caracteres" text on the API 422. The select stays valid. A mocked `category_not_found` marks **only the select**, which points at its message. Typing in the keyword or changing the select clears the mark and the reference. A 500 marks no field. On Amigos, "zéca" after "Zeca" gives the 409 on the field, typing clears it, and a network abort marks nothing. |
+| C7 | n3: rule keywords (`$A/close-n3-*.png`) | At 320 and 360 px in both themes, "supermercado atacadista do bairro centro" and 40 `a` **wrap in full**: no ellipsis, `scrollWidth` equals `clientWidth`, the keyword stays inside the row, and keyword, pill, category and delete button do not overlap. The pill and the category go to the next line, and there is no horizontal scroll. A short keyword keeps one 49 px row. |
+| C8 | Runtime suites | `$A/flow.cjs` **122/0**: same functional checks as E8; its extra console check again lists only the network lines for the provoked 4xx/5xx, with no page error. Focus now stays on the buttons there too. `$A/states.cjs` **61/0**: per-card errors and retry, skeletons, empty states, and 0 amounts with hide values. |
+| C9 | App-wide smoke | `/entrar` login works (first step of `flow.cjs`). `$A/smoke.cjs` **16/0** on Início, Gastos do mês, Extrato, Novo gasto (save bar, suggestion, balance −1234 cents) and the detail. `audit010/flow.cjs` **174/175**: the one failure expects `scroll-padding-bottom: auto` off the form. That value changed on purpose in 011's M1 fix (73 px on every screen below md), so it is a stale expectation, not a regression. `audit010/a11y.cjs`: **544 focus stops, 0 hidden, 0 missing rings, 0 small targets** on Novo gasto with Mais detalhes and the save bar. |
+| C10 | Layout scan (`$A/scan.cjs`) | The same 13 states × 360/390/768/1280 × light/dark with the long data: **104 screenshots, 0 issues** (no horizontal scroll, overlap, clipped text or text under the tab bar), with a 640 px centered column from md. Only friend names still end in an ellipsis, as designed; rule keywords now wrap. |
+| C11 | Keyboard sweep (`$A/kbd.cjs`) | **1,280 focus stops, 0 issues**: every stop has a ring and is at least 44 px, and none is under the tab bar. `scroll-padding-bottom` is 73 px below md and `auto` from md. |
+| C12 | Servers and repo | uvicorn and `vite preview` stopped; ports 8000 and 4173 refuse (`000`). `git status` was clean before this section was appended. |
+
+**Status**
+- **m1: Closed** (C3).
+- **n1: Closed** (C4).
+- **n2: Closed** (C5).
+- **n3: Closed** (C7).
+- **n4: Closed** (C6).
+- n5 and n6 stay informational and are accepted as they are: n5 cannot store a wrong delta, and n6 is a process note.
+
+### Final verdict
+
+**PASS with nothing open.** No blocker, major or minor findings remain. All 17 acceptance criteria, the Data Rules and the plan's Test Strategy hold at `HEAD` (`8eaab6f`), and the app-wide border and Button changes did not break 008-011. T5 can be marked done.
