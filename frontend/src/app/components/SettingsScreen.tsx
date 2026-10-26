@@ -6,7 +6,7 @@ import { AdjustmentHistory } from "./AdjustmentHistory.tsx";
 import { BudgetInfoCard } from "./BudgetInfoCard.tsx";
 import { CategoryRulesCard } from "./CategoryRulesCard.tsx";
 import { ProfileCard } from "./ProfileCard.tsx";
-import { ScreenTitle } from "./ScreenPlaceholder.tsx";
+import { ScreenTitle } from "./ScreenTitle.tsx";
 import { ThemeControl } from "./ThemeControl.tsx";
 import { Button, Card } from "./ui/index.ts";
 import { clearUserName } from "../../lib/userName.ts";

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, ReceiptText } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { Money } from "./Money.tsx";
-import { ScreenTitle } from "./ScreenPlaceholder.tsx";
+import { ScreenTitle } from "./ScreenTitle.tsx";
 import { SettleActions } from "./SettleActions.tsx";
 import { StatementSummary } from "./StatementSummary.tsx";
 import { StatusFilter } from "./StatusFilter.tsx";

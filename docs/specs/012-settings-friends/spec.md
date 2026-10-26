@@ -60,7 +60,7 @@ Configurações has only Aparência and Sair, and Amigos is a placeholder. The A
 
 - **Money:** integer cents. The difference is `new − current`, both integers. The adjustment sends `new_balance_cents`; the API stores the delta (Business Rule 12).
 - **Visible characters:** emptiness uses `trimInvisible`; maximum lengths count code points after that trim, as the API does (same rule as 010).
-- **Dates:** `created_at` is a Brasília `YYYY-MM-DD HH:MM:SS` string, formatted from the string, never through a browser `Date`.
+- **Dates:** `created_at` is a Brasília date-time string (`YYYY-MM-DDTHH:MM:SS` as the API sends it; the space form is accepted too), formatted from the string, never through a browser `Date`.
 - **Shared demo data:** another visitor may change the balance between load and submit. The API compares with the balance at that moment, so the stored delta is always right; after any adjustment the screen reloads the balance and history.
 
 ## API Contract

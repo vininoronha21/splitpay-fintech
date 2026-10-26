@@ -27,6 +27,12 @@ Status: approved
 - **Friends:** two resources (`listFriends`, `getReimbursementSummary`); the add form calls `retry` on both after success.
 - **Frontend TS Interfaces:** reuse `Profile`, `Balance`, `Adjustment`, `AdjustmentCreate`, `Category`, `CategoryRule`, `CategoryRuleCreate`, `Friend`, `ReimbursementSummary`. New local types: `AdjustmentErrors`, `RuleErrors`.
 - **Database Schema:** no change.
+- **Changes during T2:**
+  - `FormFeedback.tsx` (new) is the shared status and error line of the three forms.
+  - `FieldFrame` gains an `aside` slot on the hint line for the reason counter, so the counter is announced with the hint.
+  - Rules and categories load in one resource, because the card needs both.
+  - `TextArea` scrolls itself fully into view on focus, because Chrome scrolls only the caret and left the field under the tab bar.
+  - The unused `ScreenPlaceholder` component was removed and its file renamed to `ScreenTitle.tsx`.
 
 ## Test Strategy
 

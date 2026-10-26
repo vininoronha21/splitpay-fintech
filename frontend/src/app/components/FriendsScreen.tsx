@@ -2,7 +2,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { Plus, Users } from "lucide-react";
 import { FormFeedback } from "./FormFeedback.tsx";
 import { Money } from "./Money.tsx";
-import { ScreenTitle } from "./ScreenPlaceholder.tsx";
+import { ScreenTitle } from "./ScreenTitle.tsx";
 import { Avatar, Card, cx, EmptyState, ErrorState, focusRing, Skeleton } from "./ui/index.ts";
 import { FieldFrame, useFieldIds } from "./ui/TextField.tsx";
 import { openByPerson, validateFriendName } from "../../lib/settings.ts";
