@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router";
 import { CategoryBreakdown, CategoryBreakdownSkeleton } from "./CategoryBreakdown.tsx";
 import { FriendShares, FriendSharesSkeleton } from "./FriendShares.tsx";
 import { MIN_OFFSET, PeriodNavigator } from "./PeriodNavigator.tsx";
-import { ScreenTitle } from "./ScreenPlaceholder.tsx";
+import { ScreenTitle } from "./ScreenTitle.tsx";
 import { Card, cx, EmptyState, ErrorState, focusRing, Segmented, type SegmentedOption } from "./ui/index.ts";
 import { periodLabel } from "../../lib/dates.ts";
 import { useResource, type Resource } from "../../lib/useResource.ts";

@@ -17,4 +17,5 @@ export { Segmented, type SegmentedOption, type SegmentedProps } from "./Segmente
 export { Skeleton, type SkeletonProps } from "./Skeleton.tsx";
 export { StatusPill, type StatusPillProps } from "./StatusPill.tsx";
 export { Switch, type SwitchProps } from "./Switch.tsx";
+export { TextArea, type TextAreaProps } from "./TextArea.tsx";
 export { TextField, type TextFieldProps } from "./TextField.tsx";

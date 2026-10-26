@@ -3,7 +3,7 @@
  * ("YYYY-MM-DD"), so they are parsed by splitting the string: a `Date` read
  * through local getters would shift the day in other time zones.
  */
-import type { IsoDate, Period } from "../types/api.ts";
+import type { IsoDate, IsoDateTime, Period } from "../types/api.ts";
 
 const SHORT_MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"] as const;
 
@@ -172,4 +172,25 @@ export function greeting(hour: number): string {
     return "Boa tarde";
   }
   return "Boa noite";
+}
+
+/** Brasília datetime from the API; the seconds may carry a fraction, and "T" or a space separates the parts. */
+const ISO_DATE_TIME_PATTERN = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2}):\d{2}(?:\.\d+)?$/;
+
+/**
+ * "2026-10-10 18:00:00" or "2026-10-10T18:00:00" -> "10 out 2026, 18:00".
+ * Read from the string like the other helpers here, so the browser's time zone never shifts it.
+ */
+export function formatDateTime(isoDateTime: IsoDateTime): string {
+  const match = ISO_DATE_TIME_PATTERN.exec(isoDateTime);
+  if (!match) {
+    throw new RangeError(`Expected "YYYY-MM-DD HH:MM:SS", received ${JSON.stringify(isoDateTime)}`);
+  }
+  const { year, month, day } = parseIsoDate(match[1] ?? "");
+  const hour = Number(match[2]);
+  const minute = Number(match[3]);
+  if (hour > 23 || minute > 59) {
+    throw new RangeError(`Invalid time in ${JSON.stringify(isoDateTime)}`);
+  }
+  return `${day} ${shortMonth(month)} ${year}, ${match[2] ?? ""}:${match[3] ?? ""}`;
 }

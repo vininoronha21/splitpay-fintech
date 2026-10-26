@@ -5,7 +5,7 @@ import { CategoryPicker, SuggestionLine, useCategorySuggestion } from "./Categor
 import type { FriendList } from "./FriendPicker.tsx";
 import { DETAIL_FIELDS, MoreDetails } from "./MoreDetails.tsx";
 import type { SavedState } from "./SaveConfirmation.tsx";
-import { ScreenTitle } from "./ScreenPlaceholder.tsx";
+import { ScreenTitle } from "./ScreenTitle.tsx";
 import { SplitSection } from "./SplitSection.tsx";
 import { Button, Card, cx, focusRing, MoneyField, Segmented, TextField, type SegmentedOption } from "./ui/index.ts";
 import { brasiliaToday } from "../../lib/dates.ts";
