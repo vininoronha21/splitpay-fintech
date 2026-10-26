@@ -1,6 +1,6 @@
 # 012 Settings and Friends — Spec
 
-Stories: US05 (balance adjustment with history), US02 (category rules), US01 (friends for 1-to-1 splits) | Status: draft
+Stories: US05 (balance adjustment with history), US02 (category rules), US01 (friends for 1-to-1 splits) | Status: approved
 
 ## Problem
 

@@ -1,6 +1,6 @@
 # 012 Settings and Friends — Plan
 
-Status: draft
+Status: approved
 
 ## Files to Create/Modify
 
