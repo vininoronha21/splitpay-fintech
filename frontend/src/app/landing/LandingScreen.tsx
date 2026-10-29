@@ -1,4 +1,5 @@
 import { ArrowRight, ChevronDown, GraduationCap } from "lucide-react";
+import { useRef } from "react";
 import { Link } from "react-router";
 import { BrandMark } from "../components/BrandMark.tsx";
 import { HeroBackdrop } from "../components/HeroBackdrop.tsx";
@@ -8,6 +9,7 @@ import { API_DOCS_URL } from "../../services/api.ts";
 import { FeatureGrid } from "./FeatureGrid.tsx";
 import { HeroPreview } from "./HeroPreview.tsx";
 import { HowItWorks } from "./HowItWorks.tsx";
+import { useLandingMotion } from "./useLandingMotion.ts";
 
 const GITHUB_URL = "https://github.com/vininoronha21/splitpay-fintech";
 
@@ -60,9 +62,12 @@ export function LandingScreen() {
   // Same check as /entrar: with a saved name the demo opens straight on Início.
   const appTarget = readUserName() ? "/inicio" : "/entrar";
   const headerLabel = appTarget === "/inicio" ? "Abrir o app" : "Entrar";
+  // Scope for the motion hook: its selectors only see this page's data-motion elements.
+  const scopeRef = useRef<HTMLDivElement>(null);
+  useLandingMotion(scopeRef);
 
   return (
-    <div className="relative">
+    <div ref={scopeRef} className="relative">
       <header className={cx("absolute inset-x-0 top-0 z-10", GUTTER)}>
         <div className={cx(CONTAINER, "flex items-center justify-between gap-4 py-4 lg:py-6")}>
           <div className="flex items-center gap-2.5">
