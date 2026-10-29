@@ -28,6 +28,7 @@ Status: approved
   - `services/api.ts` exports `API_DOCS_URL` for the footer, so the base URL logic stays in one place.
   - The lazy `/` route has a dark `hydrateFallbackElement`, so the first visit never flashes a light page while the chunk loads.
   - The counter writes into the text node React owns inside `Money`, and the cleanup writes the final value back if the page unmounts mid-count.
+  - T3: feature cards and steps reveal with `ScrollTrigger.batch` (`top 85%`, `once`), so each card reveals as it arrives on a phone and a desktop row still staggers by 0.1 s. `HeroBackdrop` gains a `landing` variant with larger glows from `lg`; `/entrar` keeps the default.
 
 ## Test Strategy
 

@@ -40,7 +40,7 @@ function CtaLink({ to, tone }: { to: string; tone: CtaTone }) {
         tone === "hero" ? heroFocusRing : focusRing,
       )}
     >
-      <span className="inline-flex h-[52px] items-center rounded-[44px] bg-accent pr-9 pl-5 text-[15px] font-semibold whitespace-nowrap text-on-accent shadow-[0_3px_13px_rgba(251,191,36,.18)] transition-colors group-hover:bg-accent-strong motion-reduce:transition-none sm:pl-6 sm:text-base">
+      <span className="inline-flex h-[52px] items-center rounded-[44px] bg-accent pr-8 pl-4 text-sm font-semibold whitespace-nowrap text-on-accent shadow-[0_3px_13px_rgba(251,191,36,.18)] transition-colors group-hover:bg-accent-strong motion-reduce:transition-none min-[380px]:pr-9 min-[380px]:pl-5 min-[380px]:text-[15px] sm:pl-6 sm:text-base">
         Experimentar a demonstração
       </span>
       <span
@@ -91,9 +91,9 @@ export function LandingScreen() {
       <main>
         <section
           aria-labelledby="landing-title"
-          className={cx("relative overflow-hidden bg-hero pt-[108px] pb-16 lg:pt-[168px] lg:pb-[120px]", GUTTER)}
+          className={cx("relative overflow-hidden border-b border-hero-text/10 bg-hero pt-[108px] pb-16 lg:pt-[168px] lg:pb-[120px]", GUTTER)}
         >
-          <HeroBackdrop />
+          <HeroBackdrop variant="landing" />
           <div className={cx(CONTAINER, "relative lg:grid lg:grid-cols-[minmax(0,1fr)_440px] lg:items-center lg:gap-16")}>
             <div>
               <p
@@ -176,7 +176,7 @@ export function LandingScreen() {
               <div className="mt-8">
                 <CtaLink to={appTarget} tone="surface" />
               </div>
-              <p className="mt-6 max-w-[440px] text-sm text-muted">
+              <p className="mt-6 max-w-[440px] text-sm text-balance text-muted">
                 Os dados são de demonstração e voltam ao estado inicial quando o servidor reinicia.
               </p>
             </div>

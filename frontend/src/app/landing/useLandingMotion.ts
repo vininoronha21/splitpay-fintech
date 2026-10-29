@@ -21,15 +21,37 @@ function all(scope: HTMLElement, name: string): HTMLElement[] {
   return Array.from(scope.querySelectorAll<HTMLElement>(`[data-motion="${name}"]`));
 }
 
-/** Staggered reveal of one list's items, played once when the list reaches 85% of the viewport. */
-function reveal(items: HTMLElement[]) {
-  const list = items[0]?.parentElement;
-  if (!list) return;
-  gsap.from(items, {
-    ...ENTRANCE,
-    stagger: 0.1,
-    clearProps: CLEAR,
-    scrollTrigger: { trigger: list, start: "top 85%", toggleActions: "play none none none" },
+/**
+ * Reveal once per item, as each one reaches 85% of the viewport. Items that enter
+ * together (a row of cards on desktop) share one tween staggered by 0.1 s; on a
+ * phone each card reveals as it arrives. The "from" state is set here, inside
+ * the no-preference branch.
+ */
+function reveal(items: HTMLElement[], context: gsap.Context) {
+  if (items.length === 0) return;
+  gsap.set(items, { y: ENTRANCE.y, opacity: 0 });
+  ScrollTrigger.batch(items, {
+    start: "top 85%",
+    once: true,
+    onEnter: (batch) => {
+      // A jump past the list (a fast scroll, a link) triggers the cards above the
+      // viewport too: show those at once so the stagger starts with what is on screen.
+      const passed = batch.filter((item) => item.getBoundingClientRect().bottom <= 0);
+      const entering = batch.filter((item) => !passed.includes(item));
+      // Created inside the media-query context, so a revert also undoes it.
+      context.add(() => {
+        if (passed.length > 0) gsap.set(passed, { clearProps: CLEAR });
+        if (entering.length === 0) return;
+        gsap.to(entering, {
+          y: 0,
+          opacity: 1,
+          duration: ENTRANCE.duration,
+          ease: ENTRANCE.ease,
+          stagger: 0.1,
+          clearProps: CLEAR,
+        });
+      });
+    },
   });
 }
 
@@ -59,7 +81,7 @@ export function useLandingMotion(scopeRef: RefObject<HTMLElement>) {
       const mm = gsap.matchMedia();
       mm.add(
         "(prefers-reduced-motion: no-preference)",
-        () => {
+        (context) => {
           // Hero: one timeline, pill to preview card.
           const hero = HERO_PARTS.flatMap((name) => all(scope, name));
           const tl = gsap.timeline();
@@ -86,9 +108,9 @@ export function useLandingMotion(scopeRef: RefObject<HTMLElement>) {
             );
           }
 
-          // Feature cards and steps: reveal once when their list scrolls into view.
-          reveal(all(scope, "feature"));
-          reveal(all(scope, "step"));
+          // Feature cards and steps: reveal once as each scrolls into view.
+          reveal(all(scope, "feature"), context);
+          reveal(all(scope, "step"), context);
 
           // Steps rail: the two fills grow in turn, scrubbed to scroll (rail only).
           const steps = scope.querySelector('[data-motion="steps"]');
