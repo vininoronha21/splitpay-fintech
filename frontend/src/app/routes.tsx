@@ -22,8 +22,16 @@ export const router = createBrowserRouter([
     // Pathless root: a render error on any screen shows the pt-BR RouteError, not the router's default page.
     errorElement: <RouteError />,
     children: [
-      // The landing page replaces this redirect in 013.
-      { path: "/", element: <Navigate to="/inicio" replace /> },
+      {
+        // Public landing page, outside AppLayout. Lazy: its own chunk, so app screens never download it.
+        path: "/",
+        // Shown while the chunk loads on a first visit: the hero's dark, so the page never flashes light.
+        hydrateFallbackElement: <div className="min-h-dvh bg-hero" />,
+        lazy: async () => {
+          const { LandingScreen } = await import("./landing/LandingScreen.tsx");
+          return { Component: LandingScreen };
+        },
+      },
       { path: "/entrar", element: <EntryRoute /> },
       {
         // Guard: every child redirects to /entrar while no name is saved.

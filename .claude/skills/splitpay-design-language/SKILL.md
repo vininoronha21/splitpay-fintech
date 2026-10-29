@@ -146,7 +146,7 @@ The Figma IA lists Cards, Top up, Convert, Transfer, Payment, Referral and ATM c
 2. Confirm the task sits inside an approved spec in `docs/specs/NNN-<feature>/`. Styling work still follows the SDD flow.
 3. Reuse an existing component, or build from `references/components.md`.
 4. Use tokens only. Build at 360 px first.
-5. Add motion last, from `references/motion.md`. GSAP is not in `package.json` yet: adding it needs the problem it solves and a pinned version in `plan.md`.
+5. Add motion last, from `references/motion.md`. GSAP (3.15.0, `@gsap/react` 2.1.2) is installed for the landing only and imported only from `app/landing/`.
 6. Run `npm run build` in `frontend/` (strict TypeScript), check contrast for any new color pair in both themes, and run the overlap scan.
 7. Explain each non-trivial visual choice as what, why and the simpler alternative rejected, so it can be repeated in the presentation.
 
