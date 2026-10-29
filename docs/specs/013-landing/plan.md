@@ -1,6 +1,6 @@
 # 013 Landing Page — Plan
 
-Status: draft
+Status: approved
 
 ## Files to Create/Modify
 

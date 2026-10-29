@@ -1,6 +1,6 @@
 # 013 Landing Page — Spec
 
-Stories: none directly; presents US01 to US05 | Status: draft
+Stories: none directly; presents US01 to US05 | Status: approved
 
 ## Problem
 
