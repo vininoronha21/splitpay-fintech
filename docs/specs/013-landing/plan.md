@@ -23,6 +23,11 @@ Status: approved
 - **Reduced motion:** `gsap.matchMedia()` with `(prefers-reduced-motion: no-preference)`; the reduce branch does nothing, so the CSS final state stays.
 - **Frontend TS Interfaces:** none new beyond component props.
 - **Database Schema:** no change.
+- **Changes during T1 and T2:**
+  - The glows and grid of the dark hero moved from `LoginScreen.tsx` into a shared `components/HeroBackdrop.tsx`, used by `/entrar` and the landing.
+  - `services/api.ts` exports `API_DOCS_URL` for the footer, so the base URL logic stays in one place.
+  - The lazy `/` route has a dark `hydrateFallbackElement`, so the first visit never flashes a light page while the chunk loads.
+  - The counter writes into the text node React owns inside `Money`, and the cleanup writes the final value back if the page unmounts mid-count.
 
 ## Test Strategy
 

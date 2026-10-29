@@ -4,7 +4,7 @@ The Figma files contain no animation: everything here is a recommendation for th
 
 ## Prerequisites
 
-- GSAP is not in `frontend/package.json` yet. Adding it needs the problem it solves (timeline control, ScrollTrigger, stagger), why CSS transitions are not enough for the landing choreography, and a pinned version, in the feature's `plan.md`.
+- GSAP is installed for the landing only: `gsap` 3.15.0 and `@gsap/react` 2.1.2 (spec 013), imported only from `frontend/src/app/landing/` (see `useLandingMotion.ts`). Using it in app screens needs a spec that says why CSS transitions are not enough and accepts loading GSAP in the app chunk.
 - For API details load the `gsap-skills` skills (`gsap-core`, `gsap-scrolltrigger`, `gsap-react`, `gsap-timeline`, `gsap-performance`). They are the reference, this file only sets SplitPay's choices.
 - CSS covers hover, press and focus states. Use GSAP only for sequencing, scroll and number tweens.
 
