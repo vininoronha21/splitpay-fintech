@@ -4,25 +4,11 @@ import { useNavigate } from "react-router";
 import { formatBRL, parseBRL } from "../../lib/money.ts";
 import { ApiError, getProfile, updateProfile } from "../../services/api.ts";
 import { BrandMark } from "./BrandMark.tsx";
+import { HeroBackdrop } from "./HeroBackdrop.tsx";
 import { Button, MoneyField, Skeleton, TextField } from "./ui/index.ts";
 import { saveUserName, validateUserName } from "../../lib/userName.ts";
 
-// Hero decoration, built from the fixed hero and accent tokens (the hero is dark in both themes).
-const GLOW_TOP: CSSProperties = {
-  background: "radial-gradient(circle, color-mix(in srgb, var(--color-accent) 38%, transparent), transparent 70%)",
-};
-const GLOW_BOTTOM: CSSProperties = {
-  background:
-    "radial-gradient(circle, color-mix(in srgb, var(--color-accent-strong) 16%, transparent), transparent 70%)",
-};
-const GRID_LINE = "color-mix(in srgb, var(--color-hero-text) 3.5%, transparent)";
-const GRID_MASK = "radial-gradient(circle at 50% 45%, black 0%, transparent 75%)";
-const GRID: CSSProperties = {
-  backgroundImage: `linear-gradient(${GRID_LINE} 1px, transparent 1px), linear-gradient(90deg, ${GRID_LINE} 1px, transparent 1px)`,
-  backgroundSize: "32px 32px",
-  maskImage: GRID_MASK,
-  WebkitMaskImage: GRID_MASK,
-};
+// Hero logo ring, built from the fixed hero and accent tokens.
 const LOGO_RING: CSSProperties = {
   boxShadow:
     "0 0 0 1px color-mix(in srgb, var(--color-hero-text) 12%, transparent), 0 0 48px color-mix(in srgb, var(--color-accent) 28%, transparent)",
@@ -113,9 +99,7 @@ export function LoginScreen() {
   return (
     <div className="flex min-h-dvh flex-col bg-hero lg:flex-row">
       <section className="relative flex h-[clamp(192px,39.4dvh,332px)] flex-none flex-col items-center justify-center gap-3.5 overflow-hidden lg:h-auto lg:flex-1 lg:gap-5">
-        <div aria-hidden="true" className="absolute -top-[170px] -right-[130px] size-[380px] rounded-full" style={GLOW_TOP} />
-        <div aria-hidden="true" className="absolute -bottom-[190px] -left-[150px] size-[340px] rounded-full" style={GLOW_BOTTOM} />
-        <div aria-hidden="true" className="absolute inset-0" style={GRID} />
+        <HeroBackdrop />
         <div className="relative rounded-full" style={LOGO_RING}>
           <BrandMark size={88} className="block lg:size-28" />
         </div>
