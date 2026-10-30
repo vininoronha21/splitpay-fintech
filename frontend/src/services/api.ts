@@ -29,6 +29,9 @@ import type {
 
 const API_URL: string = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 
+/** Swagger page of the API, linked from the landing page footer. */
+export const API_DOCS_URL = `${API_URL}/docs`;
+
 /** Code used when the request never reached the API (offline, CORS, DNS). */
 export const NETWORK_ERROR_CODE = "network_error";
 

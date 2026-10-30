@@ -12,6 +12,8 @@
   --color-surface: #ffffff;
   /* 1 px hairlines around cards and inputs. */
   --color-border: #e4e4e7;
+  /* Rest-state border of form fields: 3.38:1 on surface, 3.07:1 on bg (WCAG 1.4.11); cards keep `border`. */
+  --color-field-border: #8b8b94;
   /* Empty part of progress bars and meters. */
   --color-track: #e4e4e7;
   /* Primary text. */
@@ -87,6 +89,7 @@
   --color-bg: #0b0b0c;
   --color-surface: #18181b;
   --color-border: #27272a;
+  --color-field-border: #71717a;
   --color-track: #27272a;
   --color-text: #fafafa;
   --color-muted: #a1a1aa;
@@ -121,6 +124,7 @@
     --color-bg: #0b0b0c;
     --color-surface: #18181b;
     --color-border: #27272a;
+    --color-field-border: #71717a;
     --color-track: #27272a;
     --color-text: #fafafa;
     --color-muted: #a1a1aa;

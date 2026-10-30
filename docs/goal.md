@@ -26,7 +26,7 @@ Priority order is fixed by the backlog matrix.
 - Money is always exact. No float rounding drift, and split shares always sum to the total.
 - The MVP is delivered in about one month.
 - The frontend is built with React and TypeScript, deployed on Vercel. The API is on Render; the public Swagger UI (`/docs`) opens.
-- **The design is strictly mobile-first, closely resembling a native mobile banking app. It will be configured as a PWA (Progressive Web App) so users can install it on their phones.**
+- **The design is strictly mobile-first, closely resembling a native mobile banking app. It will be configured as a PWA (Progressive Web App) so users can install it on their phones.** While it is an unpublished prototype, the PWA is visual only: manifest and icons, with the install button shown but disabled (Business Rule 21, decided 2026-10-30).
 - Each technical decision can be explained in one or two sentences during the presentation.
 - The final UI is polished, responsive, and does not look like a generic template.
 

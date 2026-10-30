@@ -9,12 +9,14 @@ interface FieldFrameProps {
   error?: string;
   hintId: string;
   errorId: string;
+  /** Right end of the hint line (a character counter); part of the hint, so it is announced with it. */
+  aside?: ReactNode;
   className?: string;
   children: ReactNode;
 }
 
-/** Label, control slot, hint and error, shared by TextField and MoneyField. */
-export function FieldFrame({ inputId, label, hint, error, hintId, errorId, className, children }: FieldFrameProps) {
+/** Label, control slot, hint and error, shared by TextField, TextArea and MoneyField. */
+export function FieldFrame({ inputId, label, hint, error, hintId, errorId, aside, className, children }: FieldFrameProps) {
   return (
     <div className={className}>
       <label htmlFor={inputId} className="block text-xs font-semibold tracking-[0.06em] text-muted uppercase">
@@ -28,8 +30,9 @@ export function FieldFrame({ inputId, label, hint, error, hintId, errorId, class
         </p>
       ) : null}
       {hint ? (
-        <p id={hintId} className="mt-2 text-xs text-muted">
-          {hint}
+        <p id={hintId} className="mt-2 flex items-start justify-between gap-3 text-xs text-muted">
+          <span className="min-w-0">{hint}</span>
+          {aside ? <span className="num shrink-0">{aside}</span> : null}
         </p>
       ) : null}
     </div>
@@ -82,7 +85,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
           "transition-colors motion-reduce:transition-none",
           "disabled:cursor-not-allowed disabled:opacity-60",
           // In error the border stays red while focused; focus moves here after an error.
-          error ? "border-danger" : "border-border focus:border-accent",
+          error ? "border-danger" : "border-field-border focus:border-accent",
           focusRing,
         )}
         {...rest}

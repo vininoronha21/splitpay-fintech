@@ -9,7 +9,7 @@ interface QuickAction {
   primary?: boolean;
 }
 
-// Novo gasto reads `tipo` (010) and Extrato reads `status` (011); Amigos opens a placeholder until 012.
+// Novo gasto reads `tipo` (010), Extrato reads `status` (011) and Amigos is the friends screen (012).
 const ACTIONS: QuickAction[] = [
   { to: "/novo-gasto", label: "Novo gasto", icon: Plus, primary: true },
   { to: "/novo-gasto?tipo=receita", label: "Receita", icon: ArrowDownToLine },

@@ -6,6 +6,12 @@
     <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Static PWA files (spec 014): no service worker until the app is published. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="SplitPay" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>SplitPay</title>
     <script>
       // Applies the saved theme before first paint, so the page never flashes the wrong one.

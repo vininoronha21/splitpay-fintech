@@ -78,19 +78,22 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
     ├── vite.config.ts            # React + Tailwind 4 (@tailwindcss/vite plugin, no PostCSS config)
     ├── .env.example              # VITE_API_URL
     ├── public/
-    │   └── favicon.svg           # The logo (Vite serves public/ as-is at the site root)
+    │   ├── favicon.svg           # The logo (Vite serves public/ as-is at the site root)
+    │   ├── manifest.webmanifest  # Static web app manifest (spec 014; no service worker while the app is an unpublished prototype)
+    │   └── icons/                # Home screen icons drawn from favicon.svg: 192, 512, maskable 512, apple-touch 180
     └── src/
         ├── main.tsx
         ├── vite-env.d.ts         # Types for import.meta.env (VITE_API_URL)
         ├── app/
         │   ├── App.tsx
         │   ├── routes.tsx
-        │   └── components/       # Screens, the app shell and shared pieces (BrandMark, Money, ...)
-        │       └── ui/           # Reusable primitives: Button, TextField, MoneyField, Card, states
+        │   ├── landing/          # Public landing page at /, lazy-loaded as its own chunk; the only folder that imports GSAP
+        │   └── components/       # Screens, the app shell and shared pieces (BrandMark, Money, HeroBackdrop, ...)
+        │       └── ui/           # Reusable primitives: Button, TextField, TextArea, MoneyField, Card, states
         ├── services/
         │   └── api.ts            # The only module that calls fetch()
         ├── types/                # Shared TypeScript interfaces (API contracts)
-        ├── lib/                  # Small shared helpers: money.ts (formatBRL, parseBRL), storage.ts, preferences.ts (theme, hide values), userName.ts (fake-login name), text.ts (invisible-character trim, graphemes), dates.ts (Brasília day and period labels), charts.ts (percentages, category colors), useResource.ts (one API call with loading, error and retry), transactionForm.ts (new transaction validation, split preview, payload), statement.ts (statement join, status filter, totals, settle update, detail labels)
+        ├── lib/                  # Small shared helpers: money.ts (formatBRL, parseBRL), storage.ts, preferences.ts (theme, hide values), userName.ts (fake-login name), text.ts (invisible-character trim, graphemes), dates.ts (Brasília day and period labels), charts.ts (percentages, category colors), useResource.ts (one API call with loading, error and retry), transactionForm.ts (new transaction validation, split preview, payload), statement.ts (statement join, status filter, totals, settle update, detail labels), settings.ts (balance adjustment, category rule and friend name validation), online.ts (browser online and offline state)
         └── styles/               # Theme tokens (light default, dark override) and Tailwind config
 ```
 
@@ -102,6 +105,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 - **Frontend:** screens never call `fetch` directly; they go through `services/api.ts`.
 - **TypeScript:** Frontend must define and use strict interfaces (in `src/types/`) that mirror the backend's Pydantic schemas. No `any` types for API payloads.
 - No global state library. Local state plus a small fetch hook is enough; app-wide preferences (theme, hide values) live in `lib/preferences.ts` on `useSyncExternalStore`.
+- **Motion:** `gsap` 3.15.0 and `@gsap/react` 2.1.2 (spec 013) are imported only from `app/landing/`, so app screens never download them. App screens use CSS transitions.
 - `docs/specs/` is the only home for specs, plans, tasks and audits.
 
 ## Change Rules
