@@ -1,58 +1,48 @@
-# 014 PWA — Spec
+# 014 PWA (prototype) — Spec
 
-Stories: none directly; `docs/goal.md` success criterion "configured as a PWA so users can install it on their phones" | Status: draft
+Stories: none directly; `docs/goal.md` PWA success criterion, scoped down for the prototype | Status: approved
 
 ## Problem
 
-The app looks like a banking app on a phone, but it opens only as a browser tab: no install, no home screen icon, no standalone window, and a blank page when the network drops. `goal.md` lists the PWA as a success criterion and `context.md` chose "Mobile-first Web + PWA" over a native app. This spec makes the frontend installable and keeps the app shell available offline, without caching money data.
+`goal.md` asks for an installable PWA. On 2026-10-30 Vinicius decided that SplitPay is a prototype that will not be published for now, so the install and update buttons must look right but do nothing real yet. This spec delivers the static parts that make the app look like a mobile app (manifest, icons, iOS meta), the offline notice, and an install card whose button is visual only. The service worker, real installation and update flow wait for the publication spec.
 
 ## Acceptance Criteria
 
-1. **Manifest:**
+1. **Manifest** (`public/manifest.webmanifest`, linked from `index.html`), static and with no service worker:
    - `name` "SplitPay", `short_name` "SplitPay", `description` "Divida gastos com um amigo e acompanhe os reembolsos.", `lang` "pt-BR";
-   - `start_url` "/inicio" (it already redirects to `/entrar` when no name is saved), `scope` "/", `display` "standalone", `orientation` "portrait";
-   - `theme_color` "#f4f4f5" and `background_color` "#0b0b0c" (the splash uses the brand dark behind the logo);
-   - icons: 192 and 512 px PNG (`purpose: "any"`), 512 px maskable PNG with the roundel inside the safe zone, and a 180 px `apple-touch-icon`, all drawn from the existing logo.
-2. **iOS meta:** `apple-touch-icon`, `apple-mobile-web-app-capable` "yes", `apple-mobile-web-app-title` "SplitPay" and `apple-mobile-web-app-status-bar-style` "default". The existing `theme-color` tags stay.
-3. **Service worker:**
-   - precaches the built app shell: `index.html`, every JS and CSS chunk (the landing chunk included), the Inter font files, the icons and the favicon;
-   - navigations fall back to the cached `index.html`, so every route opens offline;
-   - API requests are never cached and always go to the network (Business Rule 17: shared demo data must not show stale money);
-   - registers only in production builds.
-4. **Offline state:**
-   - when the device is offline, a banner at the top of the app screens reads "Você está sem internet. Os dados voltam a carregar quando a conexão voltar." (`role="status"`);
-   - cards that fail show their existing error state with "Tentar novamente"; nothing else changes;
-   - when the connection returns, the banner disappears and the screen reloads its data once.
-5. **Updates:** when a new version is deployed and the old one is open, a small bar reads "Nova versão disponível." with an "Atualizar" button, which activates the new service worker and reloads. The page never reloads by itself, so a form in progress is never lost.
-6. **Install in Configurações:** a card "Instalar o app":
-   - where the browser offers installation (`beforeinstallprompt`, Chrome and Android), the text "Use o SplitPay como um app, direto da tela inicial." and an "Instalar" button that opens the browser prompt; after install or when already running standalone, the card reads "O app já está instalado neste aparelho." with no button;
-   - on iPhone and iPad Safari, the text "No iPhone, toque em Compartilhar e depois em Adicionar à Tela de Início.";
-   - elsewhere (desktop Firefox, Safari on Mac), the card is hidden.
-7. **Standalone layout:** in standalone mode the safe-area insets keep the header and the tab bar clear of the notch and the home indicator (they already use `env(safe-area-inset-*)`; verify, fix if not).
-8. **Lighthouse:** the PWA installability checks pass (manifest, service worker, icons, HTTPS on the deploy) on `vite preview`.
-9. **Layout and copy:** the banners and the install card follow the 008 layout rules at 360, 390, 768 and 1280 in both themes, never cover content or focus (the scroll padding accounts for them), have 44 px targets and AA contrast; pt-BR copy with no em or en dash, "·", arrows or "…".
-10. `npm run build` passes with strict TypeScript; the app entry grows by at most 3 kB gzip.
+   - `start_url` "/inicio", `scope` "/", `display` "standalone", `orientation` "portrait";
+   - `theme_color` "#f4f4f5" and `background_color` "#0b0b0c";
+   - icons: 192 and 512 px PNG (`purpose: "any"`), 512 px maskable PNG with the roundel inside the safe zone, and a 180 px `apple-touch-icon`, drawn from the existing logo.
+2. **iOS meta:** `apple-touch-icon`, `apple-mobile-web-app-capable` "yes", `apple-mobile-web-app-title` "SplitPay", `apple-mobile-web-app-status-bar-style` "default". The existing `theme-color` tags stay.
+3. **No service worker:** nothing registers a worker, nothing is cached by the app, and no new dependency is added.
+4. **Offline notice:** on the app screens, when the browser reports offline, a banner at the top reads "Você está sem internet. Os dados voltam a carregar quando a conexão voltar." (`role="status"`). Cards that fail keep their existing error state. When the connection returns, the banner disappears and the screen reloads its data once. Without a service worker the app cannot open offline from scratch; the banner covers losing the connection while the app is open.
+5. **Install card in Configurações** ("Instalar o app"), after Aparência, visual only:
+   - the text "Use o SplitPay como um app, direto da tela inicial." and an "Instalar" button in the app's button style;
+   - the button is `aria-disabled="true"`, does nothing when pressed, and has the note "Disponível quando o app for publicado." tied to it with `aria-describedby`, so nobody is surprised that nothing happens;
+   - the card shows on every device (no browser detection).
+6. **Standalone layout:** the header and the tab bar keep clear of the notch and the home indicator through `env(safe-area-inset-*)` (already in place; verify).
+7. **Layout and copy:** the banner and the card follow the 008 layout rules at 360, 390, 768 and 1280 in both themes, never cover content or focus, have 44 px targets and AA contrast; pt-BR copy with no em or en dash, "·", arrows or "…".
+8. `npm run build` passes with strict TypeScript; the app entry grows by at most 1 kB gzip.
 
 ## Data Rules
 
-- No money, balance or transaction data is stored by the service worker or in browser storage beyond what the app already keeps (`splitpay.name`, theme, hide values).
+- Nothing new is stored in the browser.
 
 ## API Contract
 
 No backend change.
 
-## Out of Scope
+## Out of Scope (until the publication spec)
 
-- Offline writes or a sync queue (shared demo data changes under everyone).
-- Push notifications, background sync, app shortcuts and share targets.
-- The deploy itself (Vercel and Render), which needs HTTPS for the service worker; it gets its own spec.
+- Service worker, offline shell, real install prompt, update bar.
+- Push notifications, background sync, shortcuts, share targets.
+- The deploy (Vercel and Render).
 
 ## Decisions
 
 | Decision | Why | Rejected |
 | --- | --- | --- |
-| `vite-plugin-pwa` 1.3.0 (Workbox 7.4) as a dev dependency | It reads the hashed chunk names from the Vite build and writes the precache list and the manifest, and it supports the prompt-for-update flow. Version 1.3.0 is the latest 1.x and supports Vite 6. | A hand-written service worker: the precache list of hashed files would have to be generated by hand on every build. Version 2.0.0: released this month, no need to take the risk before the presentation. |
-| Network-only for the API | Money must be current; the demo data is shared and changes under every visitor. | Stale-while-revalidate: shows an old balance as if it were true. |
-| Prompt for updates, no automatic reload | A reload in the middle of Novo gasto would lose the form. | `autoUpdate`: silent reloads; also risks a lazy chunk missing from the new cache. |
-| Icons as committed PNGs drawn once from the SVG logo | Four small files; no image tool in the build. | `@vite-pwa/assets-generator`: a native image dependency (sharp) for four icons. |
-| Install card in Configurações, not a pop-up | The visitor asks for it when they want it; nothing interrupts the demo. | An automatic install banner on Início: interrupts the first view. |
+| Static manifest and icons now, service worker later | Vinicius's call on 2026-10-30: a prototype not yet published. The static files cost nothing at runtime and make "Adicionar à Tela de Início" look right in the demo. | `vite-plugin-pwa` now: a dependency and cache behavior for an app that is not deployed. |
+| Install button visible but `aria-disabled`, with a note | Shows the planned feature in the presentation without a button that silently fails. | A working prompt: out of scope now. A button with no note: looks broken when tapped. Hiding the card: the feature would not appear in the demo. |
+| No update bar | Without a service worker there are no updates to announce; a fake bar would be noise. | A permanent decorative "Atualizar" bar: it would always look like something is pending. |
+| Keep the offline banner | It needs no service worker, reuses the cards' error states, and explains a real situation during a live demo. | Dropping it: a lost connection would only show error cards. |
