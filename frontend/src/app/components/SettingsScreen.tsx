@@ -5,6 +5,7 @@ import { AdjustBalanceCard } from "./AdjustBalanceCard.tsx";
 import { AdjustmentHistory } from "./AdjustmentHistory.tsx";
 import { BudgetInfoCard } from "./BudgetInfoCard.tsx";
 import { CategoryRulesCard } from "./CategoryRulesCard.tsx";
+import { InstallCard } from "./InstallCard.tsx";
 import { ProfileCard } from "./ProfileCard.tsx";
 import { ScreenTitle } from "./ScreenTitle.tsx";
 import { ThemeControl } from "./ThemeControl.tsx";
@@ -32,6 +33,7 @@ export function SettingsScreen() {
       <Card className="md:p-6">
         <ThemeControl />
       </Card>
+      <InstallCard />
       <AdjustBalanceCard version={balanceVersion} onAdjusted={() => setBalanceVersion((version) => version + 1)} />
       <AdjustmentHistory version={balanceVersion} />
       <BudgetInfoCard />

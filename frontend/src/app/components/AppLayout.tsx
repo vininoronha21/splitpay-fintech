@@ -1,7 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { FileText, House, Plus, Settings, Users, type LucideIcon } from "lucide-react";
 import { Link, Navigate, NavLink, Outlet, useMatch, useOutletContext } from "react-router";
 import { BrandMark } from "./BrandMark.tsx";
+import { OfflineBanner } from "./OfflineBanner.tsx";
 import { Avatar, buttonClasses, cx, focusRing } from "./ui/index.ts";
+import { useOnline } from "../../lib/online.ts";
 import { readUserName } from "../../lib/userName.ts";
 
 interface NavItem {
@@ -37,6 +40,25 @@ export function useUserName(): string {
 }
 
 /**
+ * Screen key that changes once each time the connection comes back (spec 014).
+ * Keying the outlet with it remounts the screen, so every card fetches again
+ * through its own useResource, as when the screen opens (spec 009).
+ */
+function useReconnectKey(online: boolean): number {
+  const [reconnects, setReconnects] = useState(0);
+  const wasOnline = useRef(online);
+  // An effect, not a state update during render: React 18 then skips the
+  // useSyncExternalStore snapshot update in useOnline, and "online" is missed.
+  useEffect(() => {
+    if (online && !wasOnline.current) {
+      setReconnects((count) => count + 1);
+    }
+    wasOnline.current = online;
+  }, [online]);
+  return reconnects;
+}
+
+/**
  * Guarded layout for every app screen: without a saved name it redirects to
  * /entrar. Top nav from `md`, bottom tab bar below it (CSS only).
  */
@@ -44,6 +66,17 @@ export function AppLayout() {
   const userName = readUserName();
   // Início's amber header runs to the screen edges below md, so that screen sets its own gutter there.
   const fullBleed = useMatch("/inicio") !== null;
+  const online = useOnline();
+  const reconnectKey = useReconnectKey(online);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // The remount removes the focused element; keep keyboard users in the screen, not back at the page top.
+  useEffect(() => {
+    if (reconnectKey > 0 && document.activeElement === document.body) {
+      mainRef.current?.focus({ preventScroll: true });
+    }
+  }, [reconnectKey]);
+
   if (!userName) {
     return <Navigate to="/entrar" replace />;
   }
@@ -64,6 +97,7 @@ export function AppLayout() {
       <TopNav userName={userName} />
       {/* Bottom padding keeps the last content above the fixed tab bar (60 px plus safe area). */}
       <main
+        ref={mainRef}
         id="conteudo"
         tabIndex={-1}
         className={cx(
@@ -71,7 +105,9 @@ export function AppLayout() {
           !fullBleed && "px-4 pt-4",
         )}
       >
-        <Outlet context={context} />
+        {/* In the flow above the screen: it pushes content down instead of covering it. */}
+        <OfflineBanner online={online} className={cx("mb-3 md:mb-4", fullBleed && "mx-4 mt-4 md:mx-0 md:mt-0")} />
+        <Outlet key={reconnectKey} context={context} />
       </main>
       <TabBar />
     </div>
