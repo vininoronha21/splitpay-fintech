@@ -20,6 +20,11 @@ Status: approved
 - **Install button:** `Button` with `aria-disabled` (the pattern from 012) and an `onClick` that returns early.
 - **Frontend TS Interfaces:** none new.
 - **Database Schema:** no change.
+- **Changes during T2:**
+  - The reconnect counter updates in a `useEffect`; updating it during render broke `useSyncExternalStore` and the banner stayed up.
+  - The banner sits in the page flow at the top of `main`, so it needs no scroll padding.
+  - After the remount, focus moves to `main` when it would otherwise fall to `body`.
+  - The reconnect remount skips the screens that hold form state (`/novo-gasto`, `/configuracoes`, `/amigos`), so a half-filled form is never discarded; their cards keep "Tentar novamente".
 
 ## Test Strategy
 
