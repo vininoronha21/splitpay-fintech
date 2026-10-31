@@ -6,7 +6,7 @@ Usage:
     python run.py web    # web app only
 
 On the first start it creates backend/.venv, installs requirements.txt and runs
-npm install; later starts reinstall only when requirements.txt changes.
+npm install; later starts reinstall only when requirements.txt or package-lock.json changes.
 Press Ctrl+C to stop.
 """
 
@@ -86,7 +86,11 @@ def web_command() -> list[str]:
     npm = shutil.which("npm")
     if npm is None:
         sys.exit("npm not found. Install Node.js (nodejs.org or Homebrew) and try again.")
-    if not (FRONTEND / "node_modules").exists():
+    # npm writes node_modules/.package-lock.json on install; an older copy means
+    # package-lock.json gained packages since (for example after a git pull).
+    installed = FRONTEND / "node_modules" / ".package-lock.json"
+    lock = FRONTEND / "package-lock.json"
+    if not installed.exists() or lock.stat().st_mtime > installed.stat().st_mtime:
         run_step("Installing frontend packages (npm install)...", [npm, "install"], FRONTEND)
     return [npm, "run", "dev"]
 
