@@ -8,7 +8,8 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 .
 ├── CLAUDE.md                     # Agent entry point: reading order, scope restrictions, and rules
 ├── README.md                     # Human entry point: what it is, how to run, live URLs
-├── run.py                        # One command to start the API and the web app locally (stdlib only)
+├── requirements.txt              # Points to backend/requirements.txt so `pip install -r requirements.txt` works from the root
+├── run.py                        # One command to install dependencies and start the API and the web app locally (stdlib only)
 ├── .gitignore
 ├── .claude/
 │   ├── agents/                   # One file per agent role, with name/description frontmatter (see CLAUDE.md)
