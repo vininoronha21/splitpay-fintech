@@ -20,6 +20,8 @@ __pycache__/
 # SQLite (rebuilt from schema.sql + seed.sql on startup)
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 
 # Node / Vite
 node_modules/

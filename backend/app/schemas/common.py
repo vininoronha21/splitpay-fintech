@@ -8,13 +8,15 @@ silently converted. MAX_CENTS (R$ 10 bilhões) keeps values inside SQLite's
 
 Text fields use VisibleText: invisible characters are trimmed from both ends,
 so a value made only of spaces or zero-width characters is rejected as empty.
+A value with nothing drawable left (only accents or other marks) is rejected
+too (app.text.is_blank).
 """
 
 from typing import Annotated, Any
 
-from pydantic import BaseModel, BeforeValidator, Field, StrictInt, StringConstraints
+from pydantic import AfterValidator, BaseModel, BeforeValidator, Field, StrictInt, StringConstraints
 
-from app.text import trim_invisible
+from app.text import is_blank, trim_invisible
 
 MAX_CENTS = 10**12
 # SQLite's largest INTEGER: a bigger id would overflow (a 500) instead of a 422.
@@ -59,11 +61,18 @@ def error_responses(errors: dict[int, str]) -> dict[int | str, dict[str, Any]]:
 
 def _blank_to_none(value: Any) -> Any:
     value = trim_invisible(value)
-    return None if value == "" else value
+    return None if isinstance(value, str) and is_blank(value) else value
+
+
+def _reject_blank(value: str) -> str:
+    if is_blank(value):
+        raise ValueError("text has no visible character")
+    return value
 
 
 def VisibleText(max_length: int, min_length: int = 1) -> Any:  # noqa: N802 (a type)
-    """Required text: trimmed, then min_length..max_length characters.
+    """Required text: trimmed, then min_length..max_length characters, then
+    not blank (only marks or invisible characters left, see is_blank).
 
     The trim runs first (the BeforeValidator is the outermost annotation), so
     the length limits count what is stored, the same as SQLite length().
@@ -71,12 +80,14 @@ def VisibleText(max_length: int, min_length: int = 1) -> Any:  # noqa: N802 (a t
     return Annotated[
         str,
         StringConstraints(min_length=min_length, max_length=max_length),
+        AfterValidator(_reject_blank),
         BeforeValidator(trim_invisible),
     ]
 
 
 def OptionalVisibleText(max_length: int) -> Any:  # noqa: N802 (a type)
-    """Optional text: trimmed; blank or invisible-only becomes null."""
+    """Optional text: trimmed; blank (invisible characters or marks only)
+    becomes null."""
     return Annotated[
         Annotated[str, StringConstraints(max_length=max_length)] | None,
         BeforeValidator(_blank_to_none),

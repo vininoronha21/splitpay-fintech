@@ -37,10 +37,8 @@ FROM user_profile p
 WHERE p.id = 1
 """
 
-# An adjustment's new balance = initial + movements up to the adjustment +
-# every adjustment up to and including it. The running total uses a window
-# ordered by (created_at, id), which is unique, so each row sums exactly the
-# rows before it plus itself.
+# An adjustment's new balance = initial + every movement up to the adjustment
+# + every adjustment up to and including it (Business Rule 19).
 #
 # "Up to the adjustment" for an income or expense: dated before the
 # adjustment's day, or dated that same day and recorded (created_at) no later
@@ -49,36 +47,41 @@ WHERE p.id = 1
 # shows the balance as of that date. A 'pago' share counts when it was settled
 # (settled_at) no later than the adjustment, so marking a share 'pago' after
 # an adjustment, even the same day, does not change the balance the user typed.
-COUNTS_FOR_ADJUSTMENT = """
-    (t.occurred_on < date(r.created_at)
-     OR (t.occurred_on = date(r.created_at) AND t.created_at <= r.created_at))
-"""
-
+#
+# Both conditions are one comparison of (day, timestamp) keys: a movement's
+# key is (occurred_on, created_at), a 'pago' share's is (date(settled_at),
+# settled_at) and an adjustment's is (date(created_at), created_at); it counts
+# when its key is <= the adjustment's. Timestamps are canonical
+# 'YYYY-MM-DD HH:MM:SS' text, so text order is time order and date(x) never
+# reorders them. So the history is one running sum over every event sorted by
+# that key, with movements (kind 0) before adjustments (kind 1) on an equal key
+# and adjustments in (created_at, id) order. One sort instead of one scan of
+# the transactions per adjustment.
 HISTORY_SQL = """
-WITH running AS (
-    SELECT
-        id,
-        created_at,
-        delta_cents,
-        reason,
-        sum(delta_cents) OVER (ORDER BY created_at, id) AS adjustments_to_date
+WITH events AS (
+    SELECT occurred_on AS day, created_at AS at, 0 AS kind, id,
+           CASE type WHEN 'income' THEN amount_cents ELSE -amount_cents END AS cents,
+           NULL AS reason
+    FROM transactions
+    UNION ALL
+    SELECT date(settled_at), settled_at, 0, id, share_cents, NULL
+    FROM split_share
+    WHERE status = 'pago'
+    UNION ALL
+    SELECT date(created_at), created_at, 1, id, delta_cents, reason
     FROM balance_adjustment
 ),
-history AS (
+running AS (
     SELECT
-        r.id,
-        r.created_at,
-        r.delta_cents,
-        r.reason,
+        kind,
+        id,
+        at AS created_at,
+        cents AS delta_cents,
+        reason,
         (SELECT initial_balance_cents FROM user_profile WHERE id = 1)
-        + (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
-           WHERE t.type = 'income' AND """ + COUNTS_FOR_ADJUSTMENT + """)
-        + (SELECT coalesce(sum(share_cents), 0) FROM split_share
-           WHERE status = 'pago' AND settled_at <= r.created_at)
-        - (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
-           WHERE t.type = 'expense' AND """ + COUNTS_FOR_ADJUSTMENT + """)
-        + r.adjustments_to_date AS new_balance_cents
-    FROM running r
+        + sum(cents) OVER (ORDER BY day, at, kind, id ROWS UNBOUNDED PRECEDING)
+            AS new_balance_cents
+    FROM events
 )
 SELECT
     id,
@@ -87,7 +90,8 @@ SELECT
     reason,
     new_balance_cents - delta_cents AS previous_balance_cents,
     new_balance_cents
-FROM history
+FROM running
+WHERE kind = 1
 """
 
 
@@ -163,7 +167,7 @@ def create_adjustment(
             (delta_cents, reason),
         )
         entry = dict(
-            conn.execute(HISTORY_SQL + " WHERE id = ?", (cursor.lastrowid,)).fetchone()
+            conn.execute(HISTORY_SQL + " AND id = ?", (cursor.lastrowid,)).fetchone()
         )
         conn.commit()
     except Exception:
