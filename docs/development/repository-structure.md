@@ -11,9 +11,6 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 ├── requirements.txt              # Points to backend/requirements.txt so `pip install -r requirements.txt` works from the root
 ├── run.py                        # One command to install dependencies and start the API and the web app locally (stdlib only)
 ├── .gitignore
-├── .claude/
-│   ├── agents/                   # One file per agent role, with name/description frontmatter (see CLAUDE.md)
-│   └── skills/                   # One folder per skill: SKILL.md plus optional references/ (e.g. splitpay-design-language)
 ├── docs/
 │   ├── goal.md                   # Purpose, user stories (1-to-1 splits), success criteria, out-of-scope items
 │   ├── context.md                # Current state, stack (TS, GSAP, SQLite ephemeral), decisions
@@ -98,6 +95,8 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
         ├── lib/                  # Small shared helpers: money.ts (formatBRL, parseBRL), storage.ts, preferences.ts (theme, hide values), userName.ts (fake-login name), text.ts (invisible-character trim, graphemes), dates.ts (Brasília day and period labels), charts.ts (percentages, category colors), useResource.ts (one API call with loading, error and retry), transactionForm.ts (new transaction validation, split preview, payload), statement.ts (statement join, status filter, totals, settle update, detail labels), settings.ts (balance adjustment, category rule and friend name validation), online.ts (browser online and offline state)
         └── styles/               # Theme tokens (light default, dark override) and Tailwind config
 ```
+
+`CLAUDE.md` is versioned. Claude Code's `.claude/` configuration and `CLAUDE.local.md` are local-only and ignored by Git.
 
 ## Layer Rules
 

@@ -23,7 +23,7 @@ If a request conflicts with these documents, stop and ask instead of picking sil
 - **TypeScript:** Frontend code must be strictly typed. Catch API contract errors early.
 - **Scope guard:** anything listed under "Out of Scope" in `goal.md` (like group splits or real auth) is rejected unless the user explicitly changes the goal.
 
-## Agents (`.claude/agents/`)
+## Agent Roles
 
 | Agent | Phase | Role |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ If a request conflicts with these documents, stop and ask instead of picking sil
 | `frontend-engineer` | 2 | React+TS API integration, UI states, fake login, responsiveness |
 | `ui-ux-designer` | 2 | Visual direction, accessibility, GSAP motion, using design skills for LP and Dashboard |
 
-The main session orchestrates: it dispatches one implementer per task, then the `auditor`, and loops until the audit passes (see `sdd-guide.md`). Implementers never audit their own work.
+Agent definitions and local Claude Code skills live in the ignored `.claude/` directory and are not versioned. The main session orchestrates: it dispatches one implementer per task, then the `auditor`, and loops until the audit passes (see `sdd-guide.md`). Implementers never audit their own work.
 
 ## Commands
 

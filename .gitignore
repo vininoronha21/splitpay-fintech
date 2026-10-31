@@ -11,6 +11,12 @@
 # Agent worktrees
 .worktrees/
 
+# Claude Code local configuration
+.claude/
+CLAUDE.local.md
+/development/
+/specs/
+
 # Python
 __pycache__/
 *.py[cod]
