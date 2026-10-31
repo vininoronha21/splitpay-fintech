@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.db import SQL_DIR, connect
+from app.db import SQL_DIR, connect, init_db
 from app.main import create_app
 from app.services import brasilia_today
 from app.services.balance import get_balance
@@ -486,6 +486,42 @@ def test_app_startup_discards_previous_data(database_path):
         assert conn.execute("SELECT count(*) FROM balance_adjustment").fetchone()[0] == 2
     finally:
         conn.close()
+
+
+def test_init_db_turns_on_wal(database_path):
+    # WAL: readers and the writer never block each other (015 m1).
+    init_db(database_path)
+
+    conn = connect(database_path)
+    try:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    finally:
+        conn.close()
+
+
+def test_init_db_deletes_stale_wal_files(database_path):
+    for suffix in ("-wal", "-shm"):
+        Path(database_path + suffix).write_bytes(b"stale from the last run")
+
+    init_db(database_path)
+
+    for suffix in ("-wal", "-shm"):
+        leftover = Path(database_path + suffix)
+        assert not leftover.exists() or not leftover.read_bytes().startswith(b"stale")
+    conn = connect(database_path)
+    try:
+        assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+        assert conn.execute("SELECT id FROM user_profile").fetchone()["id"] == 1
+    finally:
+        conn.close()
+
+
+def test_init_db_creates_missing_parent_folder(tmp_path):
+    database_path = str(tmp_path / "missing" / "nested" / "splitpay.db")
+
+    init_db(database_path)
+
+    assert Path(database_path).is_file()
 
 
 def test_brasilia_today_matches_sql_brasilia_date(db):

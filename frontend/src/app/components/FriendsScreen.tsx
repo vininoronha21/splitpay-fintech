@@ -138,7 +138,7 @@ function AddFriendCard({ onAdded }: { onAdded: () => void }) {
               className={cx(
                 "grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-on-accent transition",
                 "shadow-[0_3px_13px_rgba(251,191,36,.18)] hover:bg-accent-strong active:scale-[.98]",
-                "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100",
+                "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:focus-visible:opacity-100 motion-reduce:transition-none motion-reduce:active:scale-100",
                 focusRing,
               )}
             >

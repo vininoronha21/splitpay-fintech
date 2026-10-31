@@ -58,13 +58,15 @@ export function SpendingScreen() {
   const canonical = params.get("periodo") === periodo && params.get("offset") === String(offset);
   useEffect(() => {
     if (hasParams && !canonical) {
-      setParams({ periodo, offset: String(offset) }, { replace: true });
+      setParams({ periodo, offset: String(offset) }, { replace: true, preventScrollReset: true });
     }
   }, [hasParams, canonical, periodo, offset, setParams]);
 
   // A new period is a new view (back returns to it); stepping through offsets is not.
-  const changePeriod = (next: PeriodParam) => setParams({ periodo: next, offset: "0" });
-  const changeOffset = (next: number) => setParams({ periodo, offset: String(next) }, { replace: true });
+  // Both stay on this screen, so the page keeps its scroll position.
+  const changePeriod = (next: PeriodParam) => setParams({ periodo: next, offset: "0" }, { preventScrollReset: true });
+  const changeOffset = (next: number) =>
+    setParams({ periodo, offset: String(next) }, { replace: true, preventScrollReset: true });
 
   const label =
     charts.status === "ready"

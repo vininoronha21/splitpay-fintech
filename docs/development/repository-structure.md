@@ -32,8 +32,8 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   ├── app/
 │   │   ├── main.py               # App factory: CORS, routers, error handlers, startup DB init
 │   │   ├── config.py             # Settings read from environment variables
-│   │   ├── db.py                 # sqlite3 connection, PRAGMA foreign_keys, schema + seed load (ephemeral)
-│   │   ├── text.py               # Invisible-character trim, normalize_text, words (shared by schemas and services)
+│   │   ├── db.py                 # sqlite3 connection, PRAGMA foreign_keys and WAL, schema + seed load (ephemeral)
+│   │   ├── text.py               # Invisible-character trim, blank-text check, normalize_text, words (shared by schemas and services)
 │   │   ├── schemas/              # Pydantic request/response models (the API contract), one module per domain
 │   │   │   ├── common.py         # Money and id types, ErrorResponse, visible-text types
 │   │   │   ├── balance.py

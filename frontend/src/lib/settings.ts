@@ -10,7 +10,7 @@
  */
 import { parseBRL } from "./money.ts";
 import { MAX_AMOUNT_CENTS } from "./transactionForm.ts";
-import { trimInvisible } from "./text.ts";
+import { isBlank, trimInvisible } from "./text.ts";
 import type {
   AdjustmentCreate,
   Cents,
@@ -112,7 +112,8 @@ export function validateAdjustment(values: AdjustmentValues, currentCents: Cents
   const balance = newBalanceError(values.newBalanceText, currentCents);
   if (balance) errors.newBalance = balance;
   const length = visibleLength(values.reason);
-  if (length < REASON_MIN) errors.reason = MESSAGES.reasonTooShort;
+  // Ten accents alone count as ten characters but draw nothing; the API rejects them as blank.
+  if (length < REASON_MIN || isBlank(trimInvisible(values.reason))) errors.reason = MESSAGES.reasonTooShort;
   else if (length > REASON_MAX) errors.reason = tooLong(REASON_MAX);
   return errors;
 }
@@ -157,7 +158,7 @@ export function toRulePayload(values: RuleValues): CategoryRuleCreate {
 /** pt-BR error for "Nome do amigo", or undefined when the API will accept it. */
 export function validateFriendName(name: string): string | undefined {
   const length = visibleLength(name);
-  if (length === 0) return MESSAGES.friendRequired;
+  if (isBlank(trimInvisible(name))) return MESSAGES.friendRequired;
   if (length > FRIEND_NAME_MAX) return tooLong(FRIEND_NAME_MAX);
   return undefined;
 }

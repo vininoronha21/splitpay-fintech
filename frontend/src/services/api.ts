@@ -73,10 +73,16 @@ function isApiErrorBody(value: unknown): value is ApiErrorBody {
   );
 }
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
 async function readJson(response: Response): Promise<unknown> {
   try {
     return (await response.json()) as unknown;
-  } catch {
+  } catch (error) {
+    // An abort while the body streams stays an abort, so callers ignore it.
+    if (isAbortError(error)) throw error;
     // Empty body (204) or non-JSON body.
     return null;
   }
@@ -108,7 +114,7 @@ function jsonBody(method: "POST" | "PATCH", body: object, signal?: AbortSignal):
 
 /**
  * The only place in the app that calls `fetch`. Resolves with the parsed JSON
- * body (null for an empty body such as a 204) or throws `ApiError`.
+ * body (null for a 204) or throws `ApiError`.
  */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
@@ -118,7 +124,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`${API_URL}${path}`, { ...init, headers });
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (isAbortError(error)) {
       throw error;
     }
     throw new ApiError(NETWORK_ERROR_CODE, NETWORK_ERROR_MESSAGE, null);
@@ -130,6 +136,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     if (isApiErrorBody(body)) {
       throw new ApiError(body.error.code, body.error.message, response.status);
     }
+    throw new ApiError(UNKNOWN_ERROR_CODE, UNKNOWN_ERROR_MESSAGE, response.status);
+  }
+
+  // Only a 204 has no body. A 2xx with HTML (a wrong VITE_API_URL hitting the SPA
+  // fallback, a captive portal) fails like an unknown error, so each card shows its retry.
+  if (body === null && response.status !== 204) {
     throw new ApiError(UNKNOWN_ERROR_CODE, UNKNOWN_ERROR_MESSAGE, response.status);
   }
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { CircleAlert, Plus, RotateCw } from "lucide-react";
 import { Button, cx, focusRing, initials, Skeleton, TextField } from "./ui/index.ts";
-import { trimInvisible } from "../../lib/text.ts";
+import { isBlank, trimInvisible } from "../../lib/text.ts";
 import { ApiError, createFriend } from "../../services/api.ts";
 import type { Friend } from "../../types/api.ts";
 
@@ -21,7 +21,8 @@ export function firstName(name: string): string {
 
 function friendNameError(name: string): string | undefined {
   const trimmed = trimInvisible(name);
-  if (trimmed === "") return "Informe o nome do amigo.";
+  // Blank as the API sees it: empty, or only invisible characters and accents.
+  if (isBlank(trimmed)) return "Informe o nome do amigo.";
   if (Array.from(trimmed).length > FRIEND_NAME_MAX) return `Use até ${FRIEND_NAME_MAX} caracteres.`;
   return undefined;
 }
@@ -30,8 +31,11 @@ interface FriendPickerProps {
   list: FriendList;
   selectedId: number | null;
   onSelect: (friendId: number) => void;
-  /** A friend saved through "Novo": the parent adds it to the list and selects it. */
-  onCreated: (friend: Friend) => void;
+  /**
+   * A friend saved through "Novo": the parent adds it to the list, and selects it when `select`.
+   * `select` is false when the picker closed before the save finished (split off, Receita).
+   */
+  onCreated: (friend: Friend, select: boolean) => void;
   /** Id of the visible label that names the group. */
   labelledBy: string;
   /** "Escolha um amigo." when the split has no friend. */
@@ -52,6 +56,8 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
   const radios = useRef<Map<number, HTMLButtonElement>>(new Map());
   const newButton = useRef<HTMLButtonElement | null>(null);
   const [adding, setAdding] = useState(false);
+  /** True while the inline form saves: Escape and "Novo" cannot close it then. */
+  const [savingFriend, setSavingFriend] = useState(false);
   /** Set after a friend is created, so its avatar gets focus once it renders. */
   const [focusFriendId, setFocusFriendId] = useState<number | null>(null);
   const errorId = `${labelledBy}-erro`;
@@ -91,7 +97,7 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
 
   function handleCreated(friend: Friend) {
     setAdding(false);
-    onCreated(friend);
+    onCreated(friend, true);
     setFocusFriendId(friend.id);
   }
 
@@ -159,9 +165,15 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
           ref={newButton}
           type="button"
           aria-expanded={adding}
-          onClick={() => setAdding((open) => !open)}
+          // aria-disabled, not disabled, while the new friend saves: it keeps focus, and closing then would lose the friend.
+          aria-disabled={savingFriend ? true : undefined}
+          onClick={() => {
+            if (savingFriend) return;
+            setAdding((open) => !open);
+          }}
           className={cx(
             "flex w-15 shrink-0 flex-col items-center gap-1.5 rounded-xl pb-0.5 text-xs font-medium text-muted hover:text-text",
+            "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:text-muted aria-disabled:focus-visible:opacity-100",
             focusRing,
           )}
         >
@@ -200,6 +212,9 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
             newButton.current?.focus();
           }}
           onCreated={handleCreated}
+          // The picker may close while the save runs (split off, Receita): the parent still lists the friend.
+          onCreatedAfterClose={(friend) => onCreated(friend, false)}
+          onSavingChange={setSavingFriend}
         />
       ) : null}
     </div>
@@ -209,13 +224,16 @@ export function FriendPicker({ list, selectedId, onSelect, onCreated, labelledBy
 interface NewFriendFormProps {
   onCancel: () => void;
   onCreated: (friend: Friend) => void;
+  /** Called instead of `onCreated` when the form closed before the save finished. */
+  onCreatedAfterClose: (friend: Friend) => void;
+  onSavingChange: (saving: boolean) => void;
 }
 
 /**
  * Inline "Novo amigo" field. Not a nested <form> (invalid HTML inside the
  * transaction form): Enter saves and Escape cancels by hand.
  */
-function NewFriendForm({ onCancel, onCreated }: NewFriendFormProps) {
+function NewFriendForm({ onCancel, onCreated, onCreatedAfterClose, onSavingChange }: NewFriendFormProps) {
   const [name, setName] = useState("");
   const [showError, setShowError] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -245,15 +263,18 @@ function NewFriendForm({ onCancel, onCreated }: NewFriendFormProps) {
     }
     savingRef.current = true;
     setSaving(true);
+    onSavingChange(true);
     try {
       const friend = await createFriend({ name: trimInvisible(name) });
       if (mounted.current) onCreated(friend);
+      else onCreatedAfterClose(friend);
     } catch (caught) {
       if (!mounted.current) return;
       setApiError(caught instanceof ApiError ? caught.message : "Algo deu errado. Tente novamente.");
       input.current?.focus();
     } finally {
       savingRef.current = false;
+      onSavingChange(false);
       if (mounted.current) setSaving(false);
     }
   }
@@ -265,7 +286,8 @@ function NewFriendForm({ onCancel, onCreated }: NewFriendFormProps) {
       void save();
     } else if (event.key === "Escape") {
       event.preventDefault();
-      onCancel();
+      // Cancelling mid-save would close the form while the friend is still being created.
+      if (!savingRef.current) onCancel();
     }
   }
 

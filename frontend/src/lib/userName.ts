@@ -1,5 +1,5 @@
 import { readString, removeKey, writeString } from "./storage.ts";
-import { graphemes, trimInvisible } from "./text.ts";
+import { graphemes, isBlank, trimInvisible } from "./text.ts";
 
 /** The fake login (Business Rule 4): the name lives only in localStorage. */
 const USER_NAME_KEY = "splitpay.name";
@@ -25,9 +25,10 @@ export function clearUserName(): void {
 
 /** pt-BR validation message for the name field, or null when it is valid. */
 export function validateUserName(name: string): string | null {
-  // A zero-width-only name trims to "", and a decomposed "é" counts once.
-  const length = graphemes(trimInvisible(name)).length;
-  if (length === 0) return "Informe seu nome.";
+  // A zero-width-only name trims to "", a name of accents alone is blank, and a decomposed "é" counts once.
+  const trimmed = trimInvisible(name);
+  if (isBlank(trimmed)) return "Informe seu nome.";
+  const length = graphemes(trimmed).length;
   if (length > USER_NAME_MAX) return `Use até ${USER_NAME_MAX} caracteres.`;
   return null;
 }

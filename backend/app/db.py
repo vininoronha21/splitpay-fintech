@@ -22,11 +22,23 @@ def connect(path: str) -> sqlite3.Connection:
     return conn
 
 
+# Files SQLite keeps next to the database in WAL mode: the write-ahead log and
+# its shared-memory index. A stale pair from the last run would be replayed
+# into the new file, so they are deleted with it.
+WAL_SUFFIXES = ("-wal", "-shm")
+
+
 def init_db(path: str) -> None:
     """Delete the database file and rebuild it from schema.sql and seed.sql."""
-    Path(path).unlink(missing_ok=True)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    for suffix in ("", *WAL_SUFFIXES):
+        Path(path + suffix).unlink(missing_ok=True)
     conn = connect(path)
     try:
+        # WAL: readers never block the writer and the writer never blocks
+        # readers, so a slow read cannot make a write wait out the busy
+        # timeout. The mode is stored in the file, so connect() needs nothing.
+        conn.execute("PRAGMA journal_mode = WAL")
         conn.executescript((SQL_DIR / "schema.sql").read_text(encoding="utf-8"))
         conn.executescript((SQL_DIR / "seed.sql").read_text(encoding="utf-8"))
     finally:

@@ -1,4 +1,8 @@
+import sqlite3
+
 from fastapi.testclient import TestClient
+
+import app.db
 
 from app.config import FRONTEND_ORIGIN
 from app.main import create_app
@@ -98,3 +102,64 @@ def test_openapi_documents_003_error_codes(client):
     post_adjustment = paths["/balance/adjustments"]["post"]["responses"]["422"]
     assert "validation_error" in post_adjustment["description"]
     assert "no_change" in post_adjustment["description"]
+
+
+# --- Database busy (015 m1) ---------------------------------------------------
+
+
+def test_database_locked_returns_busy_503_with_cors(database_path, monkeypatch):
+    # Another connection holds the write lock longer than the busy timeout.
+    monkeypatch.setattr(app.db, "BUSY_TIMEOUT_SECONDS", 0.1)
+    client = TestClient(create_app(database_path), raise_server_exceptions=False)
+    with client:
+        blocker = sqlite3.connect(database_path, isolation_level=None)
+        blocker.execute("BEGIN EXCLUSIVE")
+        try:
+            response = client.post(
+                "/friends", json={"name": "Bruno"}, headers={"Origin": FRONTEND_ORIGIN}
+            )
+        finally:
+            blocker.execute("ROLLBACK")
+            blocker.close()
+
+        assert response.status_code == 503
+        assert response.json() == {
+            "error": {
+                "code": "busy",
+                "message": "O servidor está ocupado. Tente de novo em instantes.",
+            }
+        }
+        assert response.headers["retry-after"] == "1"
+        assert response.headers["access-control-allow-origin"] == FRONTEND_ORIGIN
+        # Nothing was written, and the same write goes through once the lock is free.
+        assert client.post("/friends", json={"name": "Bruno"}).status_code == 201
+
+
+def test_reads_are_not_blocked_by_a_writer(client, database_path):
+    # WAL: a write in progress does not stop GET requests.
+    blocker = sqlite3.connect(database_path, isolation_level=None)
+    blocker.execute("BEGIN EXCLUSIVE")
+    blocker.execute("INSERT INTO person (name) VALUES ('Escrita pendente')")
+    try:
+        assert client.get("/balance/adjustments").status_code == 200
+        names = [friend["name"] for friend in client.get("/friends").json()]
+        assert "Escrita pendente" not in names
+    finally:
+        blocker.execute("ROLLBACK")
+        blocker.close()
+
+
+def test_other_operational_error_stays_internal_error(database_path):
+    app = create_app(database_path)
+
+    @app.get("/test-operational")
+    def broken() -> dict:
+        raise sqlite3.OperationalError("no such table: secret_table")
+
+    client = TestClient(app, raise_server_exceptions=False)
+
+    response = client.get("/test-operational")
+
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "internal_error"
+    assert "secret_table" not in response.text
