@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, ScrollRestoration, type Location } from "react-router";
 import { AppLayout } from "./components/AppLayout.tsx";
 import { FriendsScreen } from "./components/FriendsScreen.tsx";
 import { HomeScreen } from "./components/HomeScreen.tsx";
@@ -17,9 +17,40 @@ function EntryRoute() {
   return readUserName() ? <Navigate to="/inicio" replace /> : <LoginScreen />;
 }
 
+let fragmentEntries = 0;
+
+/**
+ * Scroll position key per history entry. A plain `#id` link (landing "Como
+ * funciona", "Pular para o conteúdo") adds an entry the router did not create,
+ * so it has the shared "default" key and would restore a saved position instead
+ * of the anchor. Such entries get a key that is never saved, so the router
+ * scrolls to the anchor as the browser does.
+ */
+function scrollKey(location: Location): string {
+  if (location.key === "default" && location.hash !== "") {
+    fragmentEntries += 1;
+    return `fragment-${fragmentEntries}`;
+  }
+  return location.key;
+}
+
+/**
+ * Root of every route. ScrollRestoration opens each new screen at the top and
+ * restores the position on Back (browser history), as a native app does.
+ */
+function RootLayout() {
+  return (
+    <>
+      <ScrollRestoration getKey={scrollKey} />
+      <Outlet />
+    </>
+  );
+}
+
 export const router = createBrowserRouter([
   {
     // Pathless root: a render error on any screen shows the pt-BR RouteError, not the router's default page.
+    element: <RootLayout />,
     errorElement: <RouteError />,
     children: [
       {

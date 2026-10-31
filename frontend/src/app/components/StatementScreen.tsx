@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Plus, ReceiptText } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import { Money } from "./Money.tsx";
 import { ScreenTitle } from "./ScreenTitle.tsx";
 import { SettleActions } from "./SettleActions.tsx";
@@ -34,6 +34,46 @@ async function loadEntries(signal: AbortSignal): Promise<StatementEntry[]> {
   return buildEntries(transactions, reimbursements);
 }
 
+/** Window scroll of each Extrato history entry (by location key), kept when the screen closes. */
+const savedScroll = new Map<string, number>();
+
+/**
+ * Back to Extrato returns to the row the user left. ScrollRestoration in the
+ * root restores the position before the list loads, so the short skeleton
+ * clamps it; this applies the same position again once the rows are drawn.
+ * A new visit has a new location key, so only Back and the reconnect remount
+ * (spec 014, same entry) find a saved position.
+ */
+function useListScrollRestore(ready: boolean) {
+  const location = useLocation();
+  const key = useRef(location.key);
+  const pending = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    key.current = location.key;
+  }, [location.key]);
+
+  // Read once at mount, not during render: on the reconnect remount the old
+  // screen saves its position in the same commit, just before this runs.
+  useLayoutEffect(() => {
+    pending.current ??= savedScroll.get(location.key) ?? null;
+  }, []);
+
+  // A layout cleanup runs before the next screen resets the scroll, so it reads this screen's position.
+  useLayoutEffect(
+    () => () => {
+      savedScroll.set(key.current, window.scrollY);
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    if (!ready || pending.current === null) return;
+    window.scrollTo(0, pending.current);
+    pending.current = null;
+  }, [ready]);
+}
+
 /** Rows settled while a chip is selected stay on screen until the chip changes. */
 interface KeptRows {
   status: SplitStatus | null;
@@ -58,11 +98,12 @@ export function StatementScreen() {
   useEffect(() => () => reload.current?.abort(), []);
 
   const entries = override ?? (resource.status === "ready" ? resource.data : null);
+  useListScrollRestore(entries !== null);
 
   // A new chip starts a new view: rows settled under the previous one are not kept.
   const changeStatus = (next: SplitStatus | null) => {
     setKept({ status: next, ids: new Set() });
-    setParams(next === null ? {} : { status: next }, { replace: true });
+    setParams(next === null ? {} : { status: next }, { replace: true, preventScrollReset: true });
   };
 
   function keep(id: number) {

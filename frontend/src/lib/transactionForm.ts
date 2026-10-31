@@ -7,7 +7,7 @@
  * form that passes here is never a 422. Amounts are integer cents throughout.
  */
 import { parseBRL } from "./money.ts";
-import { trimInvisible } from "./text.ts";
+import { isBlank, trimInvisible } from "./text.ts";
 import type {
   Cents,
   IsoDate,
@@ -211,7 +211,8 @@ export function validate(values: FormValues, today: IsoDate): FormErrors {
   if (amount) errors.amount = amount;
 
   const description = trimInvisible(values.description);
-  if (description === "") errors.description = MESSAGES.descriptionRequired;
+  // Blank as the API sees it: empty, or only invisible characters and accents.
+  if (isBlank(description)) errors.description = MESSAGES.descriptionRequired;
   else if (storedLength(description) > DESCRIPTION_MAX) errors.description = tooLong(DESCRIPTION_MAX);
 
   // A cleared date is omitted and the API uses today; ISO days compare as strings.
@@ -301,16 +302,16 @@ function buildSplit(values: FormValues, amountCents: Cents): SplitCreate {
 export function toPayload(values: FormValues): TransactionCreate {
   const amountCents = parseAmount(values.amountText) ?? invalidField("amount");
   const description = trimInvisible(values.description);
-  if (description === "") invalidField("description");
+  if (isBlank(description)) invalidField("description");
 
   const payload: TransactionCreate = { type: values.type, description, amount_cents: amountCents };
   if (ISO_DATE_PATTERN.test(values.occurredOn)) payload.occurred_on = values.occurredOn;
 
   const place = trimInvisible(values.details.place);
-  if (place !== "") payload.place = place;
+  if (!isBlank(place)) payload.place = place;
   if (values.details.paymentMethod !== null) payload.payment_method = values.details.paymentMethod;
   const notes = trimInvisible(values.details.notes);
-  if (notes !== "") payload.notes = notes;
+  if (!isBlank(notes)) payload.notes = notes;
 
   if (values.type === "expense") {
     if (values.categoryId !== null) payload.category_id = values.categoryId;

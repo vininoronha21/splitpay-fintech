@@ -110,9 +110,18 @@ function NewTransactionForm({ initialType }: NewTransactionFormProps) {
   const [friendsRequested, setFriendsRequested] = useState(false);
 
   const savingRef = useRef(false);
+  // The save can finish after the user left (another tab, Back): then it must not move them to Início.
+  const mounted = useRef(true);
   const categoryPickedByUser = useRef(false);
   const fields = useRef<Partial<Record<FieldName, HTMLElement | null>>>({});
   const [saveBar, saveBarHeight] = useElementHeight<HTMLDivElement>();
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   // The theme.css scroll-padding rule reads this, so focus clears the bar even when the error banner grows it.
   useLayoutEffect(() => {
@@ -171,9 +180,9 @@ function NewTransactionForm({ initialType }: NewTransactionFormProps) {
     setValues((current) => ({ ...current, details: { ...current.details, ...patch } }));
     setApiError(null);
   }
-  function handleFriendCreated(friend: Friend) {
+  function handleFriendCreated(friend: Friend, select: boolean) {
     addFriend(friend);
-    updateSplit({ personId: friend.id });
+    if (select) updateSplit({ personId: friend.id });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -195,10 +204,13 @@ function NewTransactionForm({ initialType }: NewTransactionFormProps) {
     setApiError(null);
     try {
       await createTransaction(toPayload(values));
+      // Already left: the entry is saved and shows on the next screen that loads it.
+      if (!mounted.current) return;
       const state: SavedState = { saved: values.type };
       navigate("/inicio", { replace: true, state });
     } catch (caught) {
       savingRef.current = false;
+      if (!mounted.current) return;
       setSaving(false);
       setApiError(caught instanceof ApiError ? caught.message : GENERIC_ERROR_MESSAGE);
     }
@@ -328,7 +340,8 @@ function NewTransactionForm({ initialType }: NewTransactionFormProps) {
               <span className="min-w-0">{apiError}</span>
             </p>
           ) : null}
-          <Button type="submit" fullWidth disabled={saving}>
+          {/* aria-disabled, not disabled, while saving: a disabled button would drop focus to the page after an error; savingRef blocks the second request. */}
+          <Button type="submit" fullWidth aria-disabled={saving ? true : undefined}>
             {saving ? "Salvando..." : saveLabel}
           </Button>
         </div>

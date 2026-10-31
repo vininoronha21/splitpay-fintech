@@ -22,7 +22,7 @@ function useSavedConfirmation(): TransactionType | null {
 
   useEffect(() => {
     if (hasState) {
-      navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: null });
+      navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: null, preventScrollReset: true });
     }
   }, [hasState, navigate, location.pathname, location.search]);
 
