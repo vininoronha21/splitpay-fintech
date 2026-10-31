@@ -1,6 +1,6 @@
 # 016 Landing v2 and User Menu — Spec
 
-Stories: none; product polish after `commit v4.4` | Status: draft (requested by Vinicius, 2026-10-31)
+Stories: none; product polish after `commit v4.4` | Status: approved (Vinicius, 2026-10-31: "continue")
 
 ## Problem
 
