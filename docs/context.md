@@ -61,6 +61,8 @@ Browser ── Vercel (React + Vite + TypeScript SPA)
 - CORS allow-list from env; no wildcard in production.
 - No stack traces or SQL in error responses. Errors use a consistent JSON shape.
 - No secrets in the repo. `.env` is git-ignored and `.env.example` is committed.
+- Text fields (015): invisible characters (whitespace, format and control characters, Default_Ignorable code points such as zero-width spaces, variation selectors and tag characters) are trimmed from both ends, and text that is only invisible characters or combining marks is rejected as blank. The frontend mirrors the rule in `src/lib/text.ts`. Accepted trade-off: a trailing emoji variation selector is trimmed ("Bar ❤️" is stored as "Bar ❤") and a lone accent "´" is rejected. Rejected: plain `strip()`, which let zero-width or combining-only names through as visually empty rows.
+- Concurrent writes (015): SQLite runs in WAL mode, and a write that still finds the database locked returns 503 `busy` with `Retry-After: 1` instead of a 500. Rejected: a server-side write queue, too much machinery for shared demo traffic.
 
 ## Data Consistency Checks (audited in phase 1)
 
@@ -69,6 +71,7 @@ Browser ── Vercel (React + Vite + TypeScript SPA)
 - Displayed balance equals initial balance + inflows − outflows + adjustments, recomputed from rows, never stored as a free-standing number.
 - Budget usage counts only the user's own share.
 - Seed dates cover the weekly, monthly and yearly filters, plus at least one empty period.
+- The adjustment history (previous and new balance) is computed in one query with a running sum (`sum() OVER (ORDER BY day, at, kind, id)`), so it stays fast as entries grow (015: about 0.02 s for 1,000 adjustments over 5,000 transactions). Rejected: recomputing the balance per adjustment, which grew quadratically.
 
 ## Business Rules (approved 2026-10)
 
