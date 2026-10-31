@@ -1,7 +1,8 @@
-import { RotateCw } from "lucide-react";
+import { ChevronDown, RotateCw } from "lucide-react";
 import { useUserName } from "./AppLayout.tsx";
 import { HideValuesButton } from "./HideValuesButton.tsx";
 import { Money } from "./Money.tsx";
+import { UserMenu } from "./UserMenu.tsx";
 import { cx, focusRingOnAccent, initials } from "./ui/index.ts";
 import { brasiliaHour, greeting } from "../../lib/dates.ts";
 import { formatBRL } from "../../lib/money.ts";
@@ -34,18 +35,30 @@ export function BalanceHeader() {
         "md:rounded-[20px] md:p-6",
       )}
     >
-      <div className="flex items-center gap-3">
-        {/* on-accent is the same near-black in both themes, so a tint of it is theme-safe. */}
-        <span
-          aria-hidden="true"
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-on-accent/12 text-[13px] font-bold md:hidden"
-        >
-          {initials(userName)}
+      {/* Below md the initials and greeting open the user menu; from md the top nav avatar does. */}
+      <UserMenu
+        label={`${hello}, ${userName}, menu do usuário`}
+        tone="accent"
+        align="start"
+        className="-mx-1.5 flex md:hidden"
+      >
+        <span className="flex min-w-0 items-center gap-3 px-1.5">
+          {/* on-accent is the same near-black in both themes, so a tint of it is theme-safe. */}
+          <span
+            aria-hidden="true"
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-on-accent/12 text-[13px] font-bold"
+          >
+            {initials(userName)}
+          </span>
+          <span className="min-w-0 truncate text-[17px] font-semibold">
+            {hello}, {userName}
+          </span>
+          <ChevronDown size={18} aria-hidden="true" className="-ml-1.5 shrink-0" />
         </span>
-        <p className="min-w-0 truncate text-[17px] font-semibold md:text-lg">
-          {hello}, {userName}
-        </p>
-      </div>
+      </UserMenu>
+      <p className="hidden min-w-0 truncate text-lg font-semibold md:block">
+        {hello}, {userName}
+      </p>
       <h2 id="saldo-titulo" className="mt-5 text-[13px] font-medium text-on-accent/72 md:mt-4">
         Saldo disponível
       </h2>

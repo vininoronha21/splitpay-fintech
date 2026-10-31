@@ -173,7 +173,7 @@ export function LoginScreen() {
         </form>
 
         <p className="mx-auto mt-auto max-w-[420px] pt-6 text-center text-xs text-muted lg:mt-0">
-          Projeto acadêmico FIAP com dados de demonstração.
+          Dados de demonstração compartilhados.
         </p>
       </section>
     </div>

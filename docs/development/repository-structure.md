@@ -89,7 +89,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
         ├── app/
         │   ├── App.tsx
         │   ├── routes.tsx
-        │   ├── landing/          # Public landing page at /, lazy-loaded as its own chunk; the only folder that imports GSAP
+        │   ├── landing/          # Public landing page at /, lazy-loaded as its own chunk; the only folder that imports GSAP (hero, feature tour with screens drawn in markup, differentiators, startup pitch, Como funciona)
         │   └── components/       # Screens, the app shell and shared pieces (BrandMark, Money, HeroBackdrop, ...)
         │       └── ui/           # Reusable primitives: Button, TextField, TextArea, MoneyField, Card, states
         ├── services/

@@ -3,6 +3,7 @@ import { FileText, House, Plus, Settings, Users, type LucideIcon } from "lucide-
 import { Link, Navigate, NavLink, Outlet, useLocation, useMatch, useOutletContext } from "react-router";
 import { BrandMark } from "./BrandMark.tsx";
 import { OfflineBanner } from "./OfflineBanner.tsx";
+import { UserMenu } from "./UserMenu.tsx";
 import { Avatar, buttonClasses, cx, focusRing } from "./ui/index.ts";
 import { useOnline } from "../../lib/online.ts";
 import { readUserName } from "../../lib/userName.ts";
@@ -193,7 +194,9 @@ function TopNav({ userName }: { userName: string }) {
           <Plus size={18} aria-hidden="true" />
           Novo gasto
         </Link>
-        <Avatar name={userName} tone="accent" label={userName} />
+        <UserMenu label={`${userName}, menu do usuário`} tone="surface" align="end" className="shrink-0">
+          <Avatar name={userName} tone="accent" className="m-0.5" />
+        </UserMenu>
       </div>
     </header>
   );
