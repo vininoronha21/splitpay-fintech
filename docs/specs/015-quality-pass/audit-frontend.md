@@ -98,3 +98,31 @@ Scripts and screenshots are in the session scratchpad, folder `audit015fe/` (cal
 - Each finding has a small, local fix.
 - Per spec AC3, each one is fixed in 015 or recorded with a reason in `docs/context.md` Open Questions.
 - After that, rerun `$A/scroll2.cjs`, `$A/staleNav.cjs`, `$A/races.cjs`, `$A/edges.cjs` and `$A/focus2.cjs`, and `npm run build`.
+
+## Closing audit
+
+Scope: `662698f` (the frontend fixes) and the `lib/text.ts` port of `backend/app/text.py`, against the backend at `ab75c9f`. The production build was rebuilt. The old preview on :4173 was stopped and restarted, and it serves the new bundle (`index-fXrz-_u6.js`). The API ran on :8000 with a fresh scratch DB. Scripts are in `$A` (`close*.cjs` and `text-parity.mts` are new).
+
+| # | Check | Result |
+| --- | --- | --- |
+| C1 | `npm run build` | Clean (strict TS). |
+| C2 | Copy scan `rg "[—–·→…]" frontend/src` | Empty. |
+| C3 | Demo flow (`flow.cjs`) on a fresh DB | Every step passes with the API values checked. Split R$ 100,01 gives friend R$ 50,00 and you R$ 50,01 (balance −10001, budget +5001). Recebi gives +5000, and Início shows it. Income +25000. Adjustment to R$ 5.000,00 with history "De R$ 7.263,96 para R$ 5.000,00". The rule is created and suggested. The friend is listed. No console errors. (`flow2.cjs` then got the expected 409, because `flow.cjs` had already created the same rule.) |
+| C4 | AC1 (`ac1.cjs`) | Unchanged: focused saving buttons are at opacity 1 with a ring of 5.02:1 (light) and 10.61:1 (dark). The other saving buttons are at 0.5. |
+| C5 | **M1** (`scroll.cjs`, `scroll2.cjs`, `close*.cjs`) | **Closed.** Each new screen opens at the top: Início from a scrolled Extrato is at `scrollY` 0, and Amigos from the bottom of Configurações is at 0 with the `h1` at y 16. Back from a detail returns Extrato to **3208**, the exact position the user left. Staying on the same screen keeps the position: a chip change (60 stays 60), a settle (4677 stays 4677), an offset step (120 stays 120), a period change (40 stays 40), and the reconnect remount on Extrato (1500 stays 1500). The landing link "Como funciona" still scrolls to its section (top 0). "Pular para o conteúdo" focuses `#conteudo`. |
+| C6 | **m1** (`staleNav.cjs`) | **Closed.** After leaving to Extrato mid-save, the user stays on `/extrato` when the POST finishes, and no toast shows. |
+| C7 | **m2** (`races.cjs`, `close.cjs`) | **Closed.** Escape is ignored while the friend saves, and the friend is created and listed. "Novo" is `aria-disabled` during the save. If the split is switched off mid-save, the friend still joins the list after reopening, and it is not selected. |
+| C8 | **m3** (`edges.cjs`) | **Closed.** A 200 non-JSON response now gives each card's "Algo deu errado. Tente novamente." with a retry on all six screens; none falls into `RouteError`. An `AbortError` while the body streams is rethrown (code read). Refused, HTML 500 and enveloped 500 are unchanged. |
+| C9 | **m4** (`races.cjs`, `close.cjs`, `focus2.cjs`) | **Closed.** "Próximo mês" reaching offset 0 moves focus to "Mês anterior", and "Ano anterior" reaching −520 moves focus to "Próximo ano". After an API error on "Salvar gasto", focus stays on the button (`aria-disabled`). |
+| C10 | Text rule port (`text-parity.mts`) | `trimInvisible` matches `is_invisible` on all **1,112,064** code points (**0 differences**). `isBlank` differs on 51 code points, all unassigned (`Cn`) in the backend's Unicode 15.1 but marks in Node's Unicode 16. See n4. In the browser, an accents-only description ("́́") gets "Informe uma descrição.", and "​́" as a friend name gets "Informe o nome do amigo.", with **0 POSTs**. |
+| C11 | Regression sweep | Deep links, guard and API errors: same results as E5 and E6. Races and blocked storage: unchanged. Layout scan: **96 runs, 0 issues**. Hide values: no amount visible. Contrast: no failure on app screens (the same 3 landing false positives as E11). |
+
+### Informational (new)
+
+- **n4. Unicode version gap.** Node 22 has Unicode 16 and the backend's Python has 15.1. 51 new marks count as blank in the browser but not in the API. A user typing only those would get the field message, which is the stricter side and safe. Nothing to do.
+
+### Closing verdict
+
+M1 and m1 to m4 are closed. n1 to n4 are informational and accepted as they are. Build, copy scan, demo flow, keyboard focus, layout and contrast show no regression.
+
+**PASS with nothing open.**

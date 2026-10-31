@@ -1,6 +1,6 @@
 # 015 Quality Pass — Spec
 
-Stories: none; maintenance after `commit v4.0` | Status: approved (Vinicius, 2026-10-31: "faça o ajuste do 2 e uma auditoria geral")
+Stories: none; maintenance after `commit v4.0` | Status: done (approved by Vinicius, 2026-10-31: "faça o ajuste do 2 e uma auditoria geral"; closing audits PASS)
 
 ## Problem
 
