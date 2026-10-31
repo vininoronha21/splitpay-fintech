@@ -14,6 +14,9 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 const HERO_PARTS: readonly string[] = ["hero-title", "hero-lead", "hero-ctas", "hero-preview"];
 
 /** Entrance values from the design language (references/motion.md). */
+/** Scroll per feature in the pinned tour, as a share of the viewport height. */
+const STEP_SCROLL = 0.45;
+
 const ENTRANCE: gsap.TweenVars = { y: 24, opacity: 0, duration: 0.6, ease: "power2.out" };
 /** Reveals leave no inline style behind once played, so the settled page is the static markup. */
 const CLEAR = "transform,opacity";
@@ -168,7 +171,7 @@ function parallax(section: HTMLElement) {
  * Feature tour as a pinned stage (md and up, enough height). The five blocks are
  * stacked in one place; scrolling crossfades copy and screen contents while the
  * device chrome of the first block stays, so the screen seems to change inside
- * one device. Snaps to each feature. Returns null when the stage would not fit
+ * one device. Each feature switches at a fixed scroll step. Returns null when the stage would not fit
  * the viewport, so the caller keeps the stacked list.
  */
 function tourStage(tour: HTMLElement, motions: Map<HTMLElement, ScreenMotion>, fine: boolean): Cleanup | null {
@@ -222,43 +225,46 @@ function tourStage(tour: HTMLElement, motions: Map<HTMLElement, ScreenMotion>, f
     motion?.play();
   };
 
-  // Holds and transitions of one unit each: hold 0, transition 1, hold 1, ...
-  const tl = gsap.timeline({
-    defaults: { ease: "none" },
-    scrollTrigger: {
-      trigger: tour,
-      start: "center center",
-      end: () => `+=${(n - 1) * window.innerHeight * 0.85}`,
-      pin: true,
-      scrub: 0.6,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      // No inertia: a fast flick settles on the next feature instead of skipping several.
-      snap: {
-        snapTo: "labelsDirectional",
-        inertia: false,
-        duration: { min: 0.2, max: 0.6 },
-        delay: 0.08,
-        ease: "power1.inOut",
-      },
-      // Transition i runs from 2i - 1 to 2i; its midpoint hands the stage to feature i.
-      onUpdate: (self) => setActive(Math.min(n - 1, Math.floor((self.progress * (2 * n - 1) + 0.5) / 2))),
+  // Discrete steps: each feature owns an equal slice of the pinned scroll, and
+  // crossing into a slice plays a short, fixed-length switch. Nothing is scrubbed
+  // or snapped, so the page never pulls the scroll back and the screen always
+  // answers the gesture right away.
+  gsap.set([...copies.slice(1), ...contents.slice(1)], { opacity: 0 });
+  gsap.set(bars, { scaleX: 0, transformOrigin: "left center" });
+  let shown = 0;
+  let switching: gsap.core.Timeline | null = null;
+  const show = (index: number) => {
+    if (index === shown) return;
+    const from = shown;
+    const down = index > from ? 1 : -1;
+    shown = index;
+    switching?.progress(1);
+    switching = gsap
+      .timeline()
+      .to([copies[from], contents[from]], { y: -24 * down, opacity: 0, duration: 0.2, ease: "power2.in" })
+      .fromTo(
+        [copies[index], contents[index]],
+        { y: 24 * down, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.3, ease: "power2.out", stagger: 0.04 },
+      );
+  };
+
+  ScrollTrigger.create({
+    trigger: tour,
+    start: "center center",
+    end: () => `+=${n * window.innerHeight * STEP_SCROLL}`,
+    pin: true,
+    anticipatePin: 1,
+    invalidateOnRefresh: true,
+    onUpdate: (self) => {
+      const position = self.progress * n;
+      const index = Math.min(n - 1, Math.floor(position));
+      // Bars fill with the scroll inside each slice, with no lag.
+      bars.forEach((bar, at) => gsap.set(bar, { scaleX: Math.min(1, Math.max(0, position - at)) }));
+      show(index);
+      setActive(index);
     },
   });
-  tl.addLabel("step0", 0.5);
-  const firstBar = bars[0];
-  if (firstBar) tl.fromTo(firstBar, { scaleX: 0 }, { scaleX: 1, duration: 1 }, 0);
-  for (let index = 1; index < n; index += 1) {
-    const at = 2 * index - 1;
-    const bar = bars[index];
-    tl.to(copies[index - 1] ?? [], { y: -40, opacity: 0, duration: 0.5, ease: "power2.in" }, at)
-      .to(contents[index - 1] ?? [], { y: -28, opacity: 0, duration: 0.45, ease: "power2.in" }, at)
-      .fromTo(copies[index] ?? [], { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, at + 0.5)
-      .fromTo(contents[index] ?? [], { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }, at + 0.45)
-      .addLabel(`step${index}`, at + 1.5);
-    if (bar) tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: 2 }, at);
-  }
-  tl.to({}, { duration: 1 }, 2 * (n - 1));
 
   // The first screen builds as the stage scrolls into view, before the pin starts.
   ScrollTrigger.create({
@@ -283,6 +289,9 @@ function tourStage(tour: HTMLElement, motions: Map<HTMLElement, ScreenMotion>, f
     steps.forEach((step) => {
       step.style.pointerEvents = "";
     });
+    switching?.kill();
+    // Switch tweens run after setup, outside the context, so clear what they wrote.
+    gsap.set([...copies, ...contents], { clearProps: "transform,opacity" });
     gsap.set([list, ...steps, ...devices], { clearProps: "height" });
   };
 }
