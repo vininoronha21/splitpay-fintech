@@ -14,8 +14,8 @@
 # Claude Code local configuration
 .claude/
 CLAUDE.local.md
-development/
-specs/
+/development/
+/specs/
 
 # Python
 __pycache__/
