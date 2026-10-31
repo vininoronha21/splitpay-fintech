@@ -5,4 +5,4 @@
 - [x] T3 — Landing content and visual direction | owner: ui-ux-designer | files: `landing/*` | verify: AC4, AC7, AC9; copy reviewed for no invented facts
 - [x] T4 — Landing motion | owner: frontend-engineer | files: `landing/useLandingMotion.ts`, `landing/*` | verify: AC5, AC6, AC8 (chunk size), Playwright scroll captures
 - [x] T5 — Sync docs (context.md, repository-structure.md if files are added) | owner: main session | verify: docs match code
-- [ ] T6 — Audit | owner: auditor | files: `docs/specs/016-landing-v2/audit.md` | verify: PASS with nothing open
+- [x] T6 — Audit | owner: auditor | files: `docs/specs/016-landing-v2/audit.md` | verify: PASS with nothing open

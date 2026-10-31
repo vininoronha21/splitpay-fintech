@@ -80,3 +80,33 @@ Every other acceptance criterion passed with evidence:
 - the AC10 build and pytest.
 
 After the fixes, re-run `npm run build`, the dash scan and `$A/landing.cjs`, and look at the split screen in `$A/tour.cjs`.
+
+## Closing audit
+
+Date: 2026-10-31 | Branch: `feature/mvp-plan` at `2112a8f` ("fix(web): apply 016 audit findings"). The fixes changed 6 files and 8 lines and touched no backend file. The servers were restarted the same way as before (fresh scratch database) and stopped by PID afterwards. Scripts are `$A/fixes.cjs` plus the earlier scripts, re-run.
+
+### Findings
+
+| Finding | Change | Verification | Status |
+| --- | --- | --- | --- |
+| M1 | The literal `R$` span was removed (`FeatureScreens.tsx:66`) | 1280 light and 390 dark, sampled every 150 ms while the count-up runs: "R$ 49,39", "R$ 111,76", "R$ 173,42" … "R$ 187,90", then "R$ 187,90" when settled. "R$" appears once in every frame. Split shares are R$ 93,95 / R$ 93,95, "Metade para cada um". Screenshots: `$A/shots/fix-split-during-1280.png`, `fix-split-after-1280.png`, `fix-split-during-390.png`, `fix-split-after-390.png` | Closed |
+| m1 | `from={0}` was removed from Total and both parts (`WhyDifferent.tsx:100-108`) | Five samples, 150 ms apart, as the card enters: always "Total R$ 100,01, Parte da Ana R$ 50,00, Sua parte R$ 50,01, Soma R$ 100,01". Screenshots: `$A/shots/fix-cents-1280.png`, `fix-cents-390.png` | Closed |
+| n1 | The comment now says the ring sits just outside the item (`UserMenu.tsx:25`) | It matches the computed `outline-offset: 2px`. The ring fits the popover padding and passes contrast (E5) | Closed |
+| n2 | The tag uses `text-xs` (`StartupSection.tsx:57`) | Both "Proposta" tags compute to `12px` | Closed |
+| n3 | The `plan.md` file list was updated, and `components.md:139` was reworded | The plan lists `LandingParts.tsx`, `FeatureScreens.tsx`, `screenMotion.ts` and the other landing files. The trust strip line now says "no academic wording in the UI (spec 016)" | Closed |
+| n4 | The row now reads "Uber com Carlos, acertado" | It no longer reads as part of the janta bill. R$ 0,00 stays as the change to the balance (BR 1) | Closed |
+
+### Regression
+
+| Check | Result |
+| --- | --- |
+| `npm run build` | Clean. Landing chunk 61.05 kB gzip. App `index` 117.06 kB gzip, unchanged. GSAP only in `LandingScreen-*.js`. |
+| `rg "[—–·→…]" frontend/src`, academic copy scan | Both empty. |
+| User menu, 8 runs (`$A/menu.cjs`) | Same as E4: one trigger per viewport, 44 px. Enter and Space open the menu, the items are 48 px, and Escape returns focus to the trigger. Tab out, an outside click and choosing an item all close it. The items go to `/` and to `/entrar` (name cleared). The popover fits at 360. No errors. |
+| Landing scan, 16 runs (`$A/landing.cjs`) | 0 overflow, overlap or clipping issues. Motion: 2 pins from md, 0 below. Reduced motion: 0 pins, 0 inline transform or opacity, 0 hidden text, every value final. No console errors. |
+| Tour (`$A/tour.cjs`) | 768 and 1280: pinned stage, 5 steps, then the statement. 1366×650: stacked fallback. Screenshot: `$A/shots/mt2-1280.png`. |
+| Cleanup (`$A/cleanup.cjs`, `$A/tilt.cjs`) | On `/entrar`: 0 pin spacers and clean `html`/`body` styles. After Back and after 3 SPA round trips: still 2 pins. Tilt only with a fine pointer. No errors. |
+
+### Verdict
+
+**PASS with nothing open.**
