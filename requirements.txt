@@ -1,0 +1,3 @@
+# Python dependencies for the API. The pinned list lives in backend/requirements.txt;
+# this file lets `pip install -r requirements.txt` work from the repo root.
+-r backend/requirements.txt

@@ -20,7 +20,7 @@ SplitPay is a personal-finance MVP whose differentiator is **shared expense spli
 
 ## Running Locally
 
-After the one-time setup below, `python3 run.py` starts both servers (API on :8000, web on :5173); `python3 run.py api` or `python3 run.py web` starts one. Ctrl+C stops them.
+Quick start: `python3 run.py` (Python 3.12+ and Node required). The first run creates `backend/.venv`, installs `requirements.txt` and runs `npm install`; then it starts the API on :8000 and the web app on :5173. `python3 run.py api` or `python3 run.py web` starts one. Ctrl+C stops them. The manual steps below do the same by hand.
 
 ### Backend (Python 3.12+)
 
