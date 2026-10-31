@@ -63,7 +63,6 @@ export function SplitScreen() {
       <ScreenCard>
         <ScreenLabel>Valor</ScreenLabel>
         <p className="mt-1.5 flex items-baseline gap-2 rounded-xl border border-accent-edge bg-surface px-4 py-2">
-          <span className="text-base font-semibold text-muted">R$</span>
           <Amount cents={SPLIT_TOTAL_CENTS} className="text-2xl leading-tight font-bold" from={0} />
         </p>
         <p className="mt-2 truncate text-[13px] text-muted">Janta no japonês, Alimentação</p>

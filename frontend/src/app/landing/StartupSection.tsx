@@ -54,7 +54,7 @@ const ROADMAP: readonly Milestone[] = [
 /** Small "Proposta" tag on content that is a plan, not a shipped feature. */
 function ProposalTag() {
   return (
-    <span className="rounded-full border border-accent/40 px-2 py-0.5 text-[11px] font-semibold tracking-[0.06em] text-accent uppercase">
+    <span className="rounded-full border border-accent/40 px-2 py-0.5 text-xs font-semibold tracking-[0.06em] text-accent uppercase">
       Proposta
     </span>
   );

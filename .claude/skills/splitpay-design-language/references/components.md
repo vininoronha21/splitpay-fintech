@@ -136,7 +136,7 @@ Dark only, to match the app. Replace Figma's teal and lime with `bg`, `surface` 
 
 - **Hero background**: `bg` with a faint grid and an amber glow. Grid with CSS only: `background-image: linear-gradient(to right, rgb(255 255 255 / .06) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / .06) 1px, transparent 1px); background-size: 96px 96px;` masked with `mask-image: radial-gradient(ellipse at 70% 30%, #000, transparent 70%)`. Glow: absolutely positioned blurred circle `bg-accent/10 blur-3xl`.
 - **Hero copy**: pill eyebrow, title Display scale on `lg` (36 to 40 px on mobile) with the last word in `text-accent` (on the dark hero only; use `text-accent-text` on light surfaces), lead 16 to 18 px `text-muted`, CTA pair. App preview on the right (stacked below on mobile) using real screenshots of the running app, never the Figma mockups.
-- **Trust strip** (Figma partner band): only with real, truthful content. Do not invent partners. A simple strip of the stack or "Projeto FIAP" is acceptable.
+- **Trust strip** (Figma partner band): only with real, truthful content. Do not invent partners. A simple strip of the stack is acceptable; no academic wording in the UI (spec 016).
 - **Bento features**: grid `gap-3 md:gap-6`, cards `rounded-[20px]`, a mix of `surface` and one `accent` card (dark text) for the highlight. Icon chip 42 px `rounded-full bg-accent text-on-accent` over each title.
 - **Step list**: vertical 11 px rail, filled segment `bg-accent`, active card `bg-accent/10 border-accent/40`, inactive `border-border`. Good for "como funciona" (registrar gasto, dividir, acompanhar reembolso).
 - **Testimonials**: only if real or clearly labeled as demo. Trio of cards with the middle one inverted (`bg-accent text-on-accent`).

@@ -22,7 +22,7 @@ const TRIGGER_TONE = {
   accent: cx("rounded-xl text-on-accent hover:bg-on-accent/10", focusRingOnAccent),
 } as const;
 
-// Inset ring: the popover is tight around its items, so an outer ring would touch the edge.
+// The ring sits just outside the item; the popover padding leaves room for it.
 const ITEM_CLASS = cx(
   "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] font-medium text-text",
   "transition-colors hover:bg-neutral-soft motion-reduce:transition-none",

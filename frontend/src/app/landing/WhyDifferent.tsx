@@ -97,15 +97,15 @@ function CentsVisual() {
     <VisualBox className="space-y-2">
       <p className="flex items-center justify-between gap-3">
         <span className="text-muted">Total</span>
-        <Amount cents={EXAMPLE_TOTAL} from={0} className="font-semibold" />
+        <Amount cents={EXAMPLE_TOTAL} className="font-semibold" />
       </p>
       <p className="flex items-center justify-between gap-3">
         <span className="text-muted">Parte da Ana</span>
-        <Amount cents={EXAMPLE_FRIEND} from={0} className="font-semibold" />
+        <Amount cents={EXAMPLE_FRIEND} className="font-semibold" />
       </p>
       <p className="flex items-center justify-between gap-3">
         <span className="text-muted">Sua parte</span>
-        <Amount cents={EXAMPLE_USER} from={0} className="font-semibold text-accent-text" />
+        <Amount cents={EXAMPLE_USER} className="font-semibold text-accent-text" />
       </p>
       <p className="flex items-center justify-between gap-3 border-t border-border pt-2">
         <span className="flex items-center gap-1.5 font-semibold text-success">
@@ -158,7 +158,7 @@ function BalanceVisual() {
         <Amount cents={9_395} signed from={0} className="font-semibold text-success" />
       </p>
       <p className="flex items-center justify-between gap-3">
-        <span className="min-w-0 truncate text-muted">Já acertamos com Carlos</span>
+        <span className="min-w-0 truncate text-muted">Uber com Carlos, acertado</span>
         <Amount cents={0} className="font-semibold" />
       </p>
       <p className="border-t border-border pt-2 text-xs text-muted">Só o que voltou de fato entra no saldo.</p>
