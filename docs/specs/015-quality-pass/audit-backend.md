@@ -97,3 +97,38 @@ Auditor: `auditor` (backend). Scope: all of `backend/app`, `backend/sql`, `backe
 No blockers and no majors. Business Rules 1, 3, 5, 7, 8, 9, 12, 14, 16, 18, 19 and 20 hold under random and concurrent input. Money stays exact, SQL is parameterized everywhere and the seed is consistent at every start time.
 
 **Verdict: CHANGES REQUIRED.** Per spec AC3, m1–m3 are fixed in T4 or recorded with a reason in `docs/context.md` Open Questions. After the fixes, the closing check re-runs E1, E5 (with `grow.py`), E6 and the m3 reproductions.
+
+## Closing audit
+
+I reviewed fix commit `ab75c9f` (backend) and doc commit `6daf051` (`docs/context.md`) against HEAD `662698f`. I did not change any product code. The server ran on port 8001 with `DATABASE_PATH=$S/re/be.db` and is now stopped.
+
+| # | Check | Result |
+| --- | --- | --- |
+| R1 | `.venv/bin/pytest -q`, default TZ and `TZ=Pacific/Kiritimati` | **807 passed** in both (743 before, plus 64 new tests in `test_balance`, `test_db`, `test_errors` and `test_text`). |
+| R2 | m1: `lockrepro.py` on a fresh seed, then after `grow.py 300 1500` | Fresh 8w+8r: 160/160 × 201. Grown 8w+8r: **160/160 × 201** (before: 18 × 500 plus 26 failed reads). Grown 16w+16r: **320/320 × 201**, max 3.8 s. The server log has no `locked` line. `PRAGMA journal_mode` → `wal`. |
+| R3 | m1: deterministic lock (an outside `BEGIN EXCLUSIVE`) | A read during the lock → 200, because WAL does not block readers. `POST /friends` → **503** `{"error":{"code":"busy",…}}` after 5.0 s, with `Retry-After: 1` and `access-control-allow-origin: http://localhost:4173`. The next request on the **same** keep-alive connection → 200 (before: connection reset). The friend was not inserted. `test_other_operational_error_stays_internal_error` keeps every other `OperationalError` a 500. |
+| R4 | m1: startup files | `init_db` deletes the database plus `-wal` and `-shm`. After a clean stop only `be.db` remains. `.gitignore` lists `*.db-wal` and `*.db-shm`. `git status` is clean. |
+| R5 | m2: new `HISTORY_SQL` vs the pre-fix query (`git show 74b0a4e:…/balance.py`) | **60 random datasets**: back-dated and same-day movements at shared timestamps, 1,192 `pago` shares settled at random times, 1,267 adjustment rows. **0 rows differ** (ids, timestamps, deltas, previous and new balances, order). |
+| R6 | m2: timing | `list_adjustments` at 300×1,500: 0.004 s. At 1,000×5,000: **0.011 s** (before: 7.9 s). At 3,000×20,000: 0.045 s. `create_adjustment` (`HISTORY_SQL + " AND id = ?"`) takes 0.005–0.047 s and returns the typed balance. Live `GET /balance/adjustments` with 596 entries: 0.018 s. |
+| R7 | m3: the original reproductions | Each of `"Ana Lima͏"`, `"Ana Lima️"` and `"Ana͏ Lima"` → **409 `friend_exists`**. `"́"`, `"͏"`, `"️"`, `"឴"` and `"́"×3` → **422**. A description `"́"` → 422, and a reason `"́"×10` → 422. A place of only `"͏"` is stored as null. Real names still work: `"Zoë"` → 201, `"José́"` → 201. Matching still works: `"Uber͏"` suggests Transporte. |
+| R8 | Seed simulation (`seedsim.py`, 4,386 instants, now using the new `HISTORY_SQL`) | **0 problems.** |
+| R9 | Fuzz (`fuzz.py`, seed 2, 5,000 requests) | **No 5xx**, and every error is in the JSON shape. The only exceptions are httpx refusing `\n` or NUL in a URL (client side). |
+| R10 | Burst (`burst.py`, 16 threads × 200 requests) | **0 bad**. No 500 or 503 (before: 11 × 500). `checks.sql` returns 0 rows, `integrity_check` is ok, `/balance` = recomputed balance, budget = own share, charts and summary match the DB, and every split share is exact. |
+| R11 | i4 | Starting with `DATABASE_PATH=$S/re/be.db` created the missing `re/` folder. |
+| R12 | Docs vs code | `context.md` says WAL plus 503 `busy` with `Retry-After: 1`; that matches `db.py` and `main.py`. The window query is `sum() OVER (ORDER BY day, at, kind, id)`, matching `balance.py`. The text rule (Default_Ignorable, marks-only text is blank, a trailing VS16 is trimmed) matches `text.py` and `schemas/common.py`. The emoji trade-off is real: `"Bar ❤️"` is stored as `"Bar ❤"`, as documented. `text.py`'s list of ranges matches Unicode `Default_Ignorable_Code_Point`. |
+
+### Closing notes (informational, nothing to fix)
+
+- **n1. Two one-line descriptions in `docs/development/repository-structure.md` are slightly stale.** `:35` for `db.py` does not mention WAL or the `-wal`/`-shm` cleanup, and `:36` for `text.py` does not mention `is_blank`. No file, folder or dependency was added, so the change rule is not broken. Updating them is optional.
+- **n2. Small side effect of the new `normalize_text`.** Control characters (Cc) other than whitespace are now dropped instead of kept. So `"jan\x00ta"` now reads as `"janta"` for matching and duplicate checks, where 005 n2 recorded it as two words. NUL is rejected in stored text anyway, and a suggestion request only reads. This is harmless.
+- i1–i3 stay informational, as agreed.
+
+| ID | Status |
+| --- | --- |
+| m1 | **Closed** (R2–R4, R10) |
+| m2 | **Closed** (R5, R6) |
+| m3 | **Closed** (R7) |
+| i4 | **Closed** (R11) |
+| i1–i3 | Informational, unchanged |
+
+**Closing verdict: PASS with nothing open.**
