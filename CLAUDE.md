@@ -8,7 +8,7 @@ Shared-expense fintech MVP for a FIAP presentation. Simple, explainable, not ove
 2. `docs/context.md`: current state, stack (FastAPI + React/TS + SQLite), decisions, open questions.
 3. `docs/development/repository-structure.md`: where things live and the rules for changing the layout.
 4. `docs/development/sdd-guide.md`: the required workflow (spec → plan → tasks → implementation → validation).
-5. `docs/development/git-workflow.md`: branches and merge flow (`feature/mvp-plan` → `dev` → `main`).
+5. `docs/development/git-workflow.md`: branches and merge flow (`claude/project-thread-siyso9` → `dev` → `main`).
 
 If a request conflicts with these documents, stop and ask instead of picking silently.
 
@@ -48,7 +48,7 @@ Commands become valid once `001-restructure` creates `backend/` and `frontend/`.
 
 ## Git
 
-- Every complete change is a conventional commit on `feature/mvp-plan` (worktree `.worktrees/mvp-plan/` locally). Each mini sprint (feature) merges into `dev`; each sprint merges into `main` as `commit vX.X`. Never commit on `dev` or `main` directly (see `git-workflow.md`).
+- Every complete change is a conventional commit on `claude/project-thread-siyso9` (worktree `.worktrees/mvp-plan/` locally). Each mini sprint (feature) merges into `dev`; each sprint merges into `main` as `commit vX.X`. Never commit on `dev` or `main` directly (see `git-workflow.md`).
 - Conventional commits with a scope: `feat(api): ...`, `feat(web): ...`, `feat(db): ...`, `docs: ...`, `chore: ...`, `test(api): ...`.
 - One logical change per commit. Review `git status` and `git diff --staged` before committing.
 - Never commit `.env`, `*.db` or `node_modules/`.

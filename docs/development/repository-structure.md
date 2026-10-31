@@ -17,7 +17,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   ├── development/
 │   │   ├── repository-structure.md
 │   │   ├── sdd-guide.md          # Workflow to prevent scope creep
-│   │   └── git-workflow.md       # Branch flow: feature/mvp-plan → dev → main
+│   │   └── git-workflow.md       # Branch flow: claude/project-thread-siyso9 → dev → main
 │   ├── specs/
 │   │   ├── TEMPLATE/             # Standard templates for SDD (spec.md, plan.md, tasks.md, audit.md)
 │   │   └── NNN-<feature>/        # One folder per feature, numbered in order
