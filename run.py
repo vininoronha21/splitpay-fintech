@@ -5,7 +5,9 @@ Usage:
     python run.py api    # API only
     python run.py web    # web app only
 
-Press Ctrl+C to stop. Setup steps (venv, npm install) are in README.md.
+On the first start it creates backend/.venv, installs requirements.txt and runs
+npm install; later starts reinstall only when requirements.txt changes.
+Press Ctrl+C to stop.
 """
 
 from __future__ import annotations
@@ -22,19 +24,59 @@ BACKEND = ROOT / "backend"
 FRONTEND = ROOT / "frontend"
 
 
-def backend_python() -> Path | None:
+MIN_PYTHON = (3, 12)
+REQUIREMENTS = ROOT / "requirements.txt"
+VENV = BACKEND / ".venv"
+# Written after a successful install, so later starts skip pip unless requirements change.
+INSTALLED_MARK = VENV / ".requirements-installed"
+
+
+def venv_python() -> Path | None:
     for candidate in ("bin/python", "Scripts/python.exe"):
-        path = BACKEND / ".venv" / candidate
+        path = VENV / candidate
         if path.exists():
             return path
     return None
 
 
+def base_python() -> str:
+    """A Python 3.12+ to create the venv with: this one, or python3.13/3.12 on PATH."""
+    if sys.version_info >= MIN_PYTHON:
+        return sys.executable
+    for name in ("python3.13", "python3.12"):
+        found = shutil.which(name)
+        if found:
+            return found
+    sys.exit("Python 3.12 or newer is required for the API. Install it (python.org or Homebrew) and try again.")
+
+
+def run_step(message: str, command: list[str], cwd: Path) -> None:
+    print(message)
+    if subprocess.run(command, cwd=cwd).returncode != 0:
+        sys.exit(f"Failed: {' '.join(command)}")
+
+
+def prepare_api() -> Path:
+    if venv_python() is None:
+        run_step("Creating backend/.venv...", [base_python(), "-m", "venv", str(VENV)], ROOT)
+    python = venv_python()
+    assert python is not None
+    stale = not INSTALLED_MARK.exists() or any(
+        path.stat().st_mtime > INSTALLED_MARK.stat().st_mtime
+        for path in (REQUIREMENTS, BACKEND / "requirements.txt")
+    )
+    if stale:
+        run_step(
+            "Installing requirements.txt...",
+            [str(python), "-m", "pip", "install", "-q", "--disable-pip-version-check", "-r", str(REQUIREMENTS)],
+            ROOT,
+        )
+        INSTALLED_MARK.touch()
+    return python
+
+
 def api_command() -> list[str]:
-    python = backend_python()
-    if python is None:
-        sys.exit("backend/.venv not found. Create it first (see README.md, Running Locally).")
-    command = [str(python), "-m", "uvicorn", "app.main:app", "--reload"]
+    command = [str(prepare_api()), "-m", "uvicorn", "app.main:app", "--reload"]
     if (BACKEND / ".env").exists():
         command += ["--env-file", ".env"]
     return command
@@ -43,9 +85,9 @@ def api_command() -> list[str]:
 def web_command() -> list[str]:
     npm = shutil.which("npm")
     if npm is None:
-        sys.exit("npm not found. Install Node.js first (see README.md, Running Locally).")
+        sys.exit("npm not found. Install Node.js (nodejs.org or Homebrew) and try again.")
     if not (FRONTEND / "node_modules").exists():
-        sys.exit("frontend/node_modules not found. Run `npm install` in frontend/ first.")
+        run_step("Installing frontend packages (npm install)...", [npm, "install"], FRONTEND)
     return [npm, "run", "dev"]
 
 
@@ -54,7 +96,7 @@ def main() -> None:
     if target not in ("all", "api", "web"):
         sys.exit(__doc__)
 
-    # Resolve both commands before starting anything, so a missing setup step fails fast.
+    # Prepare both services before starting either, so a failed install stops everything.
     services = []
     if target in ("all", "api"):
         services.append(("API", api_command(), BACKEND, "http://localhost:8000/docs"))
