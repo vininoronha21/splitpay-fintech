@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CircleAlert, RotateCw, Sparkles } from "lucide-react";
 import { Button, Chip, Skeleton } from "./ui/index.ts";
-import { trimInvisible } from "../../lib/text.ts";
+import { isBlank, trimInvisible } from "../../lib/text.ts";
 import type { Resource } from "../../lib/useResource.ts";
 import { suggestCategory } from "../../services/api.ts";
 import type { Category } from "../../types/api.ts";
@@ -25,7 +25,8 @@ export function useCategorySuggestion(description: string, enabled: boolean): Su
   const text = trimInvisible(description);
 
   useEffect(() => {
-    if (!enabled || text === "") {
+    // A blank description (accents or invisible characters only) is a 422 for the API: not asked.
+    if (!enabled || isBlank(text)) {
       setSuggestion(null);
       return;
     }

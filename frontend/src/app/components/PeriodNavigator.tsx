@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cx, focusRing, Skeleton } from "./ui/index.ts";
 import type { Period } from "../../types/api.ts";
@@ -26,17 +27,31 @@ const iconButton = cx(
   focusRing,
 );
 
-/** Previous and next buttons around the period label; next stops at the current period. */
+/**
+ * Previous and next buttons around the period label; next stops at the current period.
+ * A press that reaches a limit disables that button, which would drop focus to
+ * the page, so focus moves to the other arrow first.
+ */
 export function PeriodNavigator({ period, offset, label, onOffsetChange }: PeriodNavigatorProps) {
   const labels = BUTTON_LABELS[period];
+  const previousButton = useRef<HTMLButtonElement>(null);
+  const nextButton = useRef<HTMLButtonElement>(null);
+
+  function step(next: number) {
+    onOffsetChange(next);
+    if (next <= MIN_OFFSET) nextButton.current?.focus();
+    else if (next >= 0) previousButton.current?.focus();
+  }
+
   return (
     <div className="flex items-center justify-between gap-3">
       <button
         type="button"
         className={iconButton}
         aria-label={labels.previous}
+        ref={previousButton}
         disabled={offset <= MIN_OFFSET}
-        onClick={() => onOffsetChange(offset - 1)}
+        onClick={() => step(offset - 1)}
       >
         <ChevronLeft size={18} aria-hidden="true" />
       </button>
@@ -48,8 +63,9 @@ export function PeriodNavigator({ period, offset, label, onOffsetChange }: Perio
         type="button"
         className={iconButton}
         aria-label={labels.next}
+        ref={nextButton}
         disabled={offset >= 0}
-        onClick={() => onOffsetChange(offset + 1)}
+        onClick={() => step(offset + 1)}
       >
         <ChevronRight size={18} aria-hidden="true" />
       </button>

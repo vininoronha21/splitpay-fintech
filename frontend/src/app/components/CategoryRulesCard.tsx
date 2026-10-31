@@ -198,7 +198,7 @@ function RulesContent({ rules, categories }: RulesContentProps) {
                 className={cx(
                   "-mr-2 grid size-11 shrink-0 place-items-center rounded-xl text-muted transition-colors hover:text-danger",
                   // aria-disabled, not disabled: a disabled button would drop focus while the request runs.
-                  "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 motion-reduce:transition-none",
+                  "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:focus-visible:opacity-100 motion-reduce:transition-none",
                   focusRing,
                 )}
               >

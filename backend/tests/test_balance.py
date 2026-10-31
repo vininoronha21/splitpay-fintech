@@ -1,7 +1,10 @@
+import random
 import time
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
+from app.services.balance import list_adjustments
 
 VALID_REASON = "Conferência com o extrato"
 VALIDATION_ERROR = {
@@ -474,3 +477,112 @@ def test_openapi_lists_profile_and_balance_endpoints(client):
     assert response_ref("/balance/adjustments", "get", "200").endswith("/Adjustment")
     assert response_ref("/balance/adjustments", "post", "201").endswith("/Adjustment")
     assert request_ref("/balance/adjustments", "post").endswith("/AdjustmentCreate")
+
+
+# --- One-pass history vs the per-adjustment query (015 m2) --------------------
+
+# The history query before 015, kept verbatim as the oracle: three correlated
+# subqueries per adjustment (quadratic, but obviously Business Rule 19).
+OLD_COUNTS_FOR_ADJUSTMENT = """
+    (t.occurred_on < date(r.created_at)
+     OR (t.occurred_on = date(r.created_at) AND t.created_at <= r.created_at))
+"""
+
+OLD_HISTORY_SQL = """
+WITH running AS (
+    SELECT
+        id,
+        created_at,
+        delta_cents,
+        reason,
+        sum(delta_cents) OVER (ORDER BY created_at, id) AS adjustments_to_date
+    FROM balance_adjustment
+),
+history AS (
+    SELECT
+        r.id,
+        r.created_at,
+        r.delta_cents,
+        r.reason,
+        (SELECT initial_balance_cents FROM user_profile WHERE id = 1)
+        + (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
+           WHERE t.type = 'income' AND """ + OLD_COUNTS_FOR_ADJUSTMENT + """)
+        + (SELECT coalesce(sum(share_cents), 0) FROM split_share
+           WHERE status = 'pago' AND settled_at <= r.created_at)
+        - (SELECT coalesce(sum(t.amount_cents), 0) FROM transactions t
+           WHERE t.type = 'expense' AND """ + OLD_COUNTS_FOR_ADJUSTMENT + """)
+        + r.adjustments_to_date AS new_balance_cents
+    FROM running r
+)
+SELECT
+    id,
+    created_at,
+    delta_cents,
+    reason,
+    new_balance_cents - delta_cents AS previous_balance_cents,
+    new_balance_cents
+FROM history
+"""
+
+
+def random_history_dataset(conn, rng: random.Random) -> None:
+    """Replace every movement, share and adjustment with random rows.
+
+    Few days and few seconds, so many keys tie: same day, same second, an
+    adjustment at the exact second of a movement or a settlement.
+    """
+    conn.execute("DELETE FROM split_share")
+    conn.execute("DELETE FROM transactions")
+    conn.execute("DELETE FROM balance_adjustment")
+    days = ["2026-03-01", "2026-03-02", "2026-03-03"]
+    seconds = ["08:00:00", "08:00:01", "12:30:00", "23:59:59"]
+    persons = [row[0] for row in conn.execute("SELECT id FROM person")]
+
+    def stamp() -> str:
+        return f"{rng.choice(days)} {rng.choice(seconds)}"
+
+    for _ in range(rng.randint(0, 40)):
+        kind = rng.choice(["income", "expense", "expense"])
+        amount = rng.randint(1, 10_000)
+        created_at = stamp()
+        split = kind == "expense" and rng.random() < 0.6
+        cursor = conn.execute(
+            "INSERT INTO transactions (type, description, amount_cents, occurred_on,"
+            " split_mode, created_at) VALUES (?, 'Aleatória', ?, ?, ?, ?)",
+            (kind, amount, rng.choice(days), "fixed" if split else None, created_at),
+        )
+        if split:
+            status = rng.choice(["em_aberto", "pago", "pago", "acertado"])
+            settled_at = None if status == "em_aberto" else max(created_at, stamp())
+            conn.execute(
+                "INSERT INTO split_share (transaction_id, person_id, share_cents, status,"
+                " settled_at) VALUES (?, ?, ?, ?, ?)",
+                (cursor.lastrowid, rng.choice(persons), rng.randint(0, amount), status, settled_at),
+            )
+    for _ in range(rng.randint(0, 15)):
+        conn.execute(
+            "INSERT INTO balance_adjustment (delta_cents, reason, created_at) VALUES (?, ?, ?)",
+            (rng.choice([-1, 1]) * rng.randint(1, 10_000), VALID_REASON, stamp()),
+        )
+    conn.execute(
+        "UPDATE user_profile SET initial_balance_cents = ? WHERE id = 1", (rng.randint(0, 10_000),)
+    )
+    conn.commit()
+
+
+def test_history_matches_per_adjustment_query_on_random_data(db):
+    rng = random.Random(15)
+    order = " ORDER BY created_at DESC, id DESC"
+    for _ in range(300):
+        random_history_dataset(db, rng)
+
+        expected = [dict(row) for row in db.execute(OLD_HISTORY_SQL + order)]
+
+        assert list_adjustments(db) == expected
+
+
+def test_history_matches_per_adjustment_query_on_seed(db):
+    old = [dict(row) for row in db.execute(OLD_HISTORY_SQL + " ORDER BY created_at DESC, id DESC")]
+
+    assert list_adjustments(db) == old
+    assert len(old) > 0

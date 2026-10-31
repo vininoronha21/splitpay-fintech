@@ -10,7 +10,7 @@ Read with `goal.md`. This file records the current state, the stack, the decisio
 ## Current State of the Repository
 
 - Phase 1 (API) complete: 001 restructure, 002 database, 003 balance, 004 split, 005 categories, 006 reimbursements, 007 dashboard. Phase 2 (frontend) in progress.
-- Phase 2 started: 008 app shell delivered the fake login at `/entrar`, the tab bar and top nav, light and dark themes, hide values, the typed API client and shared UI primitives. 009 delivered Início and Gastos do mês (balance, budget, a receber, category donut with expandable items, friend shares, period filters). 010 delivered Novo gasto and Receita (category suggestion, 1-to-1 split with live preview, inline new friend, details). 011 delivered Extrato (all transactions, status chips, a receber and já recebido, Recebi and Já acertamos with inline confirmation) and the transaction detail view (US03). 012 delivered Configurações (balance adjustment with reason and history, read-only budget, category rules) and Amigos (add friend, a receber per friend). 013 delivered the public landing page at `/` (dark hero with a sample preview, the five stories as features, Como funciona, GSAP motion with a reduced-motion path). 014 delivered the visual-only PWA for the prototype (Business Rule 21): web app manifest, home screen icons, iOS meta, an offline banner and a disabled "Instalar" card in Configurações; no service worker.
+- Phase 2 started: 008 app shell delivered the fake login at `/entrar`, the tab bar and top nav, light and dark themes, hide values, the typed API client and shared UI primitives. 009 delivered Início and Gastos do mês (balance, budget, a receber, category donut with expandable items, friend shares, period filters). 010 delivered Novo gasto and Receita (category suggestion, 1-to-1 split with live preview, inline new friend, details). 011 delivered Extrato (all transactions, status chips, a receber and já recebido, Recebi and Já acertamos with inline confirmation) and the transaction detail view (US03). 012 delivered Configurações (balance adjustment with reason and history, read-only budget, category rules) and Amigos (add friend, a receber per friend). 013 delivered the public landing page at `/` (dark hero with a sample preview, the five stories as features, Como funciona, GSAP motion with a reduced-motion path). 014 delivered the visual-only PWA for the prototype (Business Rule 21): web app manifest, home screen icons, iOS meta, an offline banner and a disabled "Instalar" card in Configurações; no service worker. 015 (quality pass) fixed the findings of a full frontend and backend audit: scroll restoration, save races, focus on disabled controls, SQLite WAL with a 503 busy error, a one-pass balance history and a stricter blank-text rule shared by API and web.
 - Agents are in `.claude/agents/`; reference material (`tela_*.png`, `USER-STORIES.pdf`) is in `docs/assets/`. The visual identity is light by default with an amber accent and an optional dark theme, approved in the prototype (`docs/assets/prototype-*.png`).
 - The reference screens are **visual inspiration only**. They show group splits, an "Em Atraso" status and "Lembrar" buttons, all of which are out of scope (see Business Rules 1 and 6).
 - No linting and no CI.
@@ -61,6 +61,8 @@ Browser ── Vercel (React + Vite + TypeScript SPA)
 - CORS allow-list from env; no wildcard in production.
 - No stack traces or SQL in error responses. Errors use a consistent JSON shape.
 - No secrets in the repo. `.env` is git-ignored and `.env.example` is committed.
+- Text fields (015): invisible characters (whitespace, format and control characters, Default_Ignorable code points such as zero-width spaces, variation selectors and tag characters) are trimmed from both ends, and text that is only invisible characters or combining marks is rejected as blank. The frontend mirrors the rule in `src/lib/text.ts`. Accepted trade-off: a trailing emoji variation selector is trimmed ("Bar ❤️" is stored as "Bar ❤") and a lone accent "´" is rejected. Rejected: plain `strip()`, which let zero-width or combining-only names through as visually empty rows.
+- Concurrent writes (015): SQLite runs in WAL mode, and a write that still finds the database locked returns 503 `busy` with `Retry-After: 1` instead of a 500. Rejected: a server-side write queue, too much machinery for shared demo traffic.
 
 ## Data Consistency Checks (audited in phase 1)
 
@@ -69,6 +71,7 @@ Browser ── Vercel (React + Vite + TypeScript SPA)
 - Displayed balance equals initial balance + inflows − outflows + adjustments, recomputed from rows, never stored as a free-standing number.
 - Budget usage counts only the user's own share.
 - Seed dates cover the weekly, monthly and yearly filters, plus at least one empty period.
+- The adjustment history (previous and new balance) is computed in one query with a running sum (`sum() OVER (ORDER BY day, at, kind, id)`), so it stays fast as entries grow (015: about 0.02 s for 1,000 adjustments over 5,000 transactions). Rejected: recomputing the balance per adjustment, which grew quadratically.
 
 ## Business Rules (approved 2026-10)
 

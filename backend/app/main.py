@@ -1,3 +1,4 @@
+import sqlite3
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -68,6 +69,26 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     return response
 
 
+async def database_busy_handler(
+    request: Request, exc: sqlite3.OperationalError
+) -> JSONResponse:
+    """A write that waited the whole busy timeout for the lock is a busy
+    server, not a bug: 503 tells the visitor to try again. Any other
+    OperationalError is re-raised and becomes the generic 500."""
+    if not is_database_busy(exc):
+        raise exc
+    response = error_response(
+        503, "busy", "O servidor está ocupado. Tente de novo em instantes."
+    )
+    response.headers["Retry-After"] = "1"
+    return response
+
+
+def is_database_busy(exc: sqlite3.OperationalError) -> bool:
+    message = str(exc)
+    return "database is locked" in message or "database is busy" in message
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     init_db(app.state.database_path)
@@ -86,6 +107,9 @@ def create_app(database_path: str | None = None) -> FastAPI:
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(DomainError, domain_error_handler)
+    # Registered for the exact class, so it runs inside CORSMiddleware (the
+    # 503 carries the CORS header) and the connection stays open.
+    app.add_exception_handler(sqlite3.OperationalError, database_busy_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
     app.include_router(health.router)
     app.include_router(profile.router)

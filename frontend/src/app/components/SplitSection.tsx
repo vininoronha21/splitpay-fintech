@@ -24,7 +24,8 @@ interface SplitSectionProps {
   /** Errors to show now (already filtered by touched or submitted). */
   errors: FormErrors;
   friendList: FriendList;
-  onFriendCreated: (friend: Friend) => void;
+  /** `select` is false when the inline form closed before the save finished: the friend only joins the list. */
+  onFriendCreated: (friend: Friend, select: boolean) => void;
   registerField: (field: SplitField, element: HTMLElement | null) => void;
   onFieldBlur: (field: SplitField) => void;
 }

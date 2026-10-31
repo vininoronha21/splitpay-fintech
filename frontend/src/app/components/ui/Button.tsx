@@ -43,7 +43,9 @@ export function buttonClasses({ variant = "primary", size = "md", fullWidth = fa
     "active:scale-[.98] motion-reduce:transition-none motion-reduce:active:scale-100",
     "disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100",
     // Same look for aria-disabled, which forms use while saving so the focused button keeps focus.
+    // A keyboard-focused button stays opaque, so the fade never dims its focus ring below 3:1.
     "aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:shadow-none aria-disabled:active:scale-100",
+    "aria-disabled:focus-visible:opacity-100",
     VARIANT_CLASS[variant],
     SIZE_CLASS[size],
     fullWidth && "w-full",
