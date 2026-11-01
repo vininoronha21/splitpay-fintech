@@ -1,9 +1,9 @@
 """Start SplitPay locally: the API (port 8000) and the web app (port 5173).
 
 Usage:
-    python run.py        # API and web app
-    python run.py api    # API only
-    python run.py web    # web app only
+    python run/run.py        # API and web app
+    python run/run.py api    # API only
+    python run/run.py web    # web app only
 
 On the first start it creates backend/.venv, installs requirements.txt and runs
 npm install; later starts reinstall only when requirements.txt or package-lock.json changes.
@@ -19,7 +19,8 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+# run.py lives in run/, so the repository root is one level up.
+ROOT = Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "backend"
 FRONTEND = ROOT / "frontend"
 
