@@ -9,7 +9,9 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 ├── CLAUDE.md                     # Agent entry point: reading order, scope restrictions, and rules
 ├── README.md                     # Human entry point: what it is, how to run, live URLs
 ├── requirements.txt              # Points to backend/requirements.txt so `pip install -r requirements.txt` works from the root
-├── run.py                        # One command to install dependencies and start the API and the web app locally (stdlib only)
+├── LICENSE                       # MIT license
+├── run/
+│   └── run.py                    # One command to install dependencies and start the API and the web app locally (stdlib only)
 ├── .gitignore
 ├── docs/
 │   ├── goal.md                   # Purpose, user stories (1-to-1 splits), success criteria, out-of-scope items
@@ -27,6 +29,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 │   │       └── audit.md          # Auditor report(s) and final verdict
 │   ├── presentation/             # Phase 3: talking points, diagrams, demo script
 │   └── assets/                   # Reference material (Figma screenshots, UI ideas, approved prototype-*.png captures)
+│       └── screenshots/          # Current app captures used by README.md (desktop-* 1600 px, mobile-* 520 px wide)
 ├── backend/
 │   ├── app/
 │   │   ├── main.py               # App factory: CORS, routers, error handlers, startup DB init
