@@ -10,8 +10,7 @@ This is the target layout for the 1-month MVP. Any path not listed here needs ju
 ├── README.md                     # Human entry point: what it is, how to run, live URLs
 ├── requirements.txt              # Points to backend/requirements.txt so `pip install -r requirements.txt` works from the root
 ├── LICENSE                       # MIT license
-├── run/
-│   └── run.py                    # One command to install dependencies and start the API and the web app locally (stdlib only)
+├── run.py                        # One command to install dependencies and start the API and the web app locally (stdlib only)
 ├── .gitignore
 ├── docs/
 │   ├── goal.md                   # Purpose, user stories (1-to-1 splits), success criteria, out-of-scope items

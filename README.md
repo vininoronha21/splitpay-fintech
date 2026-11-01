@@ -148,7 +148,7 @@ O banco é recriado a partir dos dados de demonstração toda vez que a API inic
 Pré-requisitos: Python 3.12 ou mais novo e Node.js.
 
 ```bash
-python3 run/run.py
+python3 run.py
 ```
 
 Na primeira execução o script cria o ambiente virtual em `backend/.venv`, instala o `requirements.txt` e roda o `npm install`. Depois ele sobe:
@@ -156,7 +156,7 @@ Na primeira execução o script cria o ambiente virtual em `backend/.venv`, inst
 - a API em http://localhost:8000 (documentação em http://localhost:8000/docs)
 - o app em http://localhost:5173
 
-Para subir só uma das partes, use `python3 run/run.py api` ou `python3 run/run.py web`. Ctrl+C encerra tudo.
+Para subir só uma das partes, use `python3 run.py api` ou `python3 run.py web`. Ctrl+C encerra tudo.
 
 <details>
 <summary>Passo a passo manual</summary>
@@ -198,7 +198,7 @@ npm run build
 │       ├── lib/        # Dinheiro, datas, texto e preferências
 │       └── services/   # Cliente tipado da API
 ├── docs/               # Objetivo, contexto, specs de cada funcionalidade e capturas
-└── run/run.py          # Sobe API e app com um comando
+└── run.py              # Sobe API e app com um comando
 ```
 
 ## 📐 Como o projeto foi construído
