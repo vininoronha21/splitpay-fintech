@@ -16,6 +16,8 @@
 CLAUDE.local.md
 /development/
 /specs/
+/docs/development/
+/docs/specs/
 
 # Python
 __pycache__/

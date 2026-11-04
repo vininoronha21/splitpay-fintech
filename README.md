@@ -1,6 +1,6 @@
 # SplitPay
 
-**Um app de finanças pessoais para quem divide gastos: registre a despesa, divida com um amigo e acompanhe o dinheiro voltar para o seu saldo.**
+SplitPay é o app que divide despesas e mostra o seu dinheiro. Registre gastos compartilhados, saiba exatamente quanto você tem a receber e acompanhe seu saldo em tempo real, considerando o que você pagou e o que já foi reembolsado.
 
 <p align="center">
   <img src="docs/assets/screenshots/desktop-landing-escuro.png" alt="Página inicial do SplitPay com o título Divida um gasto com um amigo e saiba quanto volta para você" width="860">
@@ -8,9 +8,12 @@
 
 ## 🎯 Problema
 
-Dividir uma conta é fácil na hora. O difícil vem depois: lembrar quem ficou devendo, quanto era a parte de cada um e se o dinheiro já voltou. Na prática isso acaba em conversas perdidas no WhatsApp, planilhas e contas de cabeça.
+Dividir contas parece simples, mas logo vira confusão. Quem pagou? Quanto cada um
+deve? O dinheiro já voltou?
 
-Os apps de banco mostram o valor total que saiu da conta, mas não sabem que metade daquela janta era de outra pessoa. Por isso o orçamento do mês parece estourado e o saldo nunca conta a história inteira.
+No fim, são conversas perdidas no WhatsApp, planilhas improvisadas e contas feitas de cabeça.
+
+Os apps do banco mostram só o valor que saiu da sua conta. Eles não sabem que metade daquela janta era de outra pessoa. Por isso seu orçamento parece estourado e seu saldo nunca conta a história completa.
 
 ## 💡 Solução
 
@@ -18,7 +21,7 @@ O SplitPay junta saldo, gastos, divisões e reembolsos em um só lugar. Ao regis
 
 Três ideias guiam o produto:
 
-- **Cada centavo no lugar certo.** Todo valor é guardado em centavos inteiros, do banco de dados até a tela. Uma conta de R$ 100,01 dividida ao meio vira R$ 50,00 para o amigo e R$ 50,01 para você, e a soma sempre fecha.
+- **Cada centavo no lugar certo.** Todo valor é guardado em centavos inteiros, do banco de dados até a tela. Uma conta de R$ 100,00 dividida ao meio vira R$ 50,00 para o amigo e R$ 50,00 para você, e a soma sempre fecha.
 - **Categorias que seguem as suas palavras.** Ao digitar "Janta", o gasto vai para Alimentação. Quando uma palavra é só sua, você cria uma regra e ela passa na frente das regras padrão.
 - **Um saldo que você consegue explicar.** Saldo inicial, mais entradas, menos saídas, mais ajustes. Todo ajuste manual pede um motivo e fica no histórico com o saldo de antes e o de depois.
 
@@ -197,15 +200,9 @@ npm run build
 │       ├── app/        # Telas, componentes e página inicial
 │       ├── lib/        # Dinheiro, datas, texto e preferências
 │       └── services/   # Cliente tipado da API
-├── docs/               # Objetivo, contexto, specs de cada funcionalidade e capturas
+├── docs/               # Documentos
 └── run.py              # Sobe API e app com um comando
 ```
-
-## 📐 Como o projeto foi construído
-
-O desenvolvimento seguiu um fluxo orientado a especificação: cada funcionalidade tem uma spec com critérios de aceite, um plano e uma lista de tarefas em `docs/specs/`. Ela só vira código depois de aprovada e só entra na branch `dev` depois de passar por uma auditoria. São 16 specs até aqui, da estrutura do repositório à página de apresentação.
-
-As decisões de produto e de tecnologia, com o motivo de cada uma e a alternativa descartada, estão registradas em [`docs/context.md`](docs/context.md).
 
 ## 🗺️ Próximos passos
 
@@ -216,7 +213,7 @@ As decisões de produto e de tecnologia, com o motivo de cada uma e a alternativ
 
 ## 🎓 Contexto
 
-Projeto desenvolvido na FIAP, turma 1TDSOE, como MVP de uma fintech de finanças pessoais com foco em despesas compartilhadas.
+Projeto desenvolvido na FIAP, como MVP de uma fintech de finanças pessoais com foco em despesas compartilhadas.
 
 ## 📝 Licença
 
