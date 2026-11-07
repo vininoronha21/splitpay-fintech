@@ -206,6 +206,7 @@ npm run build
 
 ## 🗺️ Próximos passos
 
+- Terminal deployment instructions: see the [Vercel and Render CLI guide](docs/presentation/deploy-from-terminal.md).
 - Publicar o app na Vercel e a API no Render.
 - Divisão em grupo, com mais de um amigo por gasto.
 - Integração com Pix para cobrar e receber a parte de cada um.
