@@ -15,7 +15,7 @@ const HERO_PARTS: readonly string[] = ["hero-title", "hero-lead", "hero-ctas", "
 
 /** Entrance values from the design language (references/motion.md). */
 /** Scroll per feature in the pinned tour, as a share of the viewport height. */
-const STEP_SCROLL = 0.45;
+const STEP_SCROLL = 0.9;
 
 const ENTRANCE: gsap.TweenVars = { y: 24, opacity: 0, duration: 0.6, ease: "power2.out" };
 /** Reveals leave no inline style behind once played, so the settled page is the static markup. */
