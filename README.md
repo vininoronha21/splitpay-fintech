@@ -2,6 +2,8 @@
 
 SplitPay é o app que divide despesas e mostra o seu dinheiro. Registre gastos compartilhados, saiba exatamente quanto você tem a receber e acompanhe seu saldo em tempo real, considerando o que você pagou e o que já foi reembolsado.
 
+> **Acesse na Web:** [splitpay-fintech.vercel.app](https://splitpay-fintech.vercel.app)  
+
 <p align="center">
   <img src="docs/assets/screenshots/desktop-landing-escuro.png" alt="Página inicial do SplitPay com o título Divida um gasto com um amigo e saiba quanto volta para você" width="860">
 </p>
@@ -27,9 +29,8 @@ Três ideias guiam o produto:
 
 > Este MVP trabalha com divisão **1 para 1**: o usuário paga e divide com exatamente um amigo. Divisão em grupo é o próximo passo do roadmap.
 
-## 🖥️ Demonstração
 
-A aplicação ainda não está publicada. Para rodar na sua máquina, veja [Como rodar](#-como-rodar). As capturas abaixo foram feitas a partir do app rodando localmente, com os dados de demonstração.
+## 🖥️ Telas do Projeto
 
 ### 🚪 Entrada
 
@@ -115,7 +116,7 @@ A página inicial apresenta o produto com animações em GSAP. Um tour fixa a te
 - **Receitas:** entradas de dinheiro no mesmo formulário do gasto.
 - **Esconder valores:** um toque mascara todos os valores da tela.
 - **Temas claro, escuro e automático**, com contraste dentro do padrão WCAG AA.
-- **Visual de app instalável:** manifesto e ícones de PWA. A instalação fica disponível quando o app for publicado.
+- **Visual de app instalável:** manifesto e ícones de PWA instalável diretamente pelo navegador.
 
 ## 🧠 Como funciona a divisão
 
@@ -137,7 +138,7 @@ Entradas são as receitas e os reembolsos marcados como **Pago**. O saldo nunca 
 
 | Camada | Tecnologia | Por quê |
 |---|---|---|
-| API | Python 3.12+, FastAPI, Pydantic | API REST real com validação automática e documentação Swagger em `/docs`. |
+| API | Python 3.12+, FastAPI, Pydantic | API REST real com validação automática e documentação Swagger em [/docs](https://splitpay-fintech-api.onrender.com/docs). |
 | Banco | SQLite com SQL puro, sem ORM | Modelagem relacional com chaves, restrições e consultas legíveis, sem infraestrutura extra. |
 | Frontend | React 18, TypeScript, Vite | Tipagem estrita pega erros de contrato com a API antes de chegar na tela. |
 | Estilo | Tailwind CSS 4, Inter, Lucide | Layout mobile first com tokens de tema para claro e escuro. |
@@ -160,6 +161,8 @@ Na primeira execução o script cria o ambiente virtual em `backend/.venv`, inst
 - o app em http://localhost:5173
 
 Para subir só uma das partes, use `python3 run.py api` ou `python3 run.py web`. Ctrl+C encerra tudo.
+
+> 📖 **API Docs (Swagger):** [splitpay-fintech-api.onrender.com/docs](https://splitpay-fintech-api.onrender.com/docs) *(Pode levar ~30s para responder no primeiro acesso)
 
 <details>
 <summary>Passo a passo manual</summary>
@@ -206,11 +209,8 @@ npm run build
 
 ## 🗺️ Próximos passos
 
-- Terminal deployment instructions: see the [Vercel and Render CLI guide](docs/presentation/deploy-from-terminal.md).
-- Publicar o app na Vercel e a API no Render.
-- Divisão em grupo, com mais de um amigo por gasto.
-- Integração com Pix para cobrar e receber a parte de cada um.
-- Open Finance para importar lançamentos do banco.
+- [x] Publicar o app na Vercel e a API no Render.
+- [ ] Divisão em grupo, com mais de um amigo por gasto.
 
 ## 🎓 Contexto
 
@@ -219,3 +219,11 @@ Projeto desenvolvido na FIAP, como MVP de uma fintech de finanças pessoais com 
 ## 📝 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes. Créditos de terceiros estão em [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+
+## 👨‍💻 Autor
+
+Desenvolvido por **Vinícius Forte**
+
+- 🐙 GitHub: [vininoronha21](https://github.com/vininoronha21)
+- 💼 LinkedIn: [Vinícius Noronha](https://linkedin.com/in/viniciusnoronha)
+- 📧 Email: contatovininoronha@gmail.com
